@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "general": {
+      "type": "object",
+      "properties": {
+        "SERVERTYPE": {
+          "type": "string"
+        },
+        "ENABLEAUTOLOGON": {
+          "type": "string"
+        },
+        "NAMEMACHINE": {
+          "type": "string"
+        },
+        "MACHINENAME": {
+          "type": "string"
+        },
+        "TIMEZONE": {
+          "type": "string"
+        },
+        "UPDATEWINDOWS": {
+          "type": "string"
+        },
+        "AUTOREBOOT": {
+          "type": "string"
+        },
+        "CLEANUP": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "SERVERTYPE",
+        "ENABLEAUTOLOGON",
+        "NAMEMACHINE",
+        "UPDATEWINDOWS",
+        "AUTOREBOOT",
+        "CLEANUP"
+      ]
+    },
+    "SQL": {
+      "type": "object",
+      "properties": {
+        "INSTALLSQL": {
+          "type": "string"
+        },
+        "SQLLOCATION": {
+          "type": "string"
+        },
+        "BUILDTYPE": {
+          "type": "string"
+        },
+        "NEWDISKS": {
+          "type": "string"
+        },
+        "DISKNUMBER": {
+          "type": "string"
+        },
+        "SQLDRIVE": {
+          "type": "string"
+        },
+        "FILESTREAMDRIVE": {
+          "type": "string"
+        },
+        "DEFAULTINSTANCE": {
+          "type": "string"
+        },
+        "SQLINSTANCE": {
+          "type": "string"
+        },
+        "FILESTREAMINSTANCE": {
+          "type": "string"
+        },
+        "SAPASSWORD": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "INSTALLSQL",
+        "SQLLOCATION",
+        "BUILDTYPE",
+        "NEWDISKS",
+        "DEFAULTINSTANCE"
+      ]
+    },
+    "GPU": {
+      "type": "object",
+      "properties": {
+        "NVIDIADRIVERVER": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "NVIDIADRIVERVER"
+      ]
+    }
+  },
+  "required": [
+    "general"
+  ]
+}

@@ -1,0 +1,153 @@
+{
+    "GENERAL":  {
+                    "ENABLEAUTOLOGON":  "N",
+                    "MACHINENAME":  "",
+                    "TIMEZONE":  "est",
+                    "INSTALLADOBE":  "Y",
+                    "INSTALLJAVA":  "Y",
+                    "INSTALLDOTNET":  "Y",
+                    "LOCALGROUPS":  "N",
+                    "FORMATDRIVES":  "N",
+                    "INSTALLSQL":  "N",
+                    "INSTALLGPUDRIVER":  "Y",
+                    "INSTALLLMX":  "Y",
+                    "INSTALLCITRIX":  "Y",
+                    "INSTALLRAYSTATION":  "Y",
+                    "INSTALLDICOM":  "Y",
+                    "INSTALLLICENSEAGENT":  "Y",
+                    "BUILDRAYSTATIONGPUCONFIGS":  "Y",
+                    "UPDATEWINDOWS":  "N",
+                    "AUTOREBOOT":  "Y",
+                    "CLEANUP":  "Y",
+                    "REMOTELOGGINGLOCATION":  ""
+                },
+    "DESIGNATEDSQLSERVER":  [
+                                "TestMachine11"
+                            ],
+    "DRIVES":  [
+                   {
+                       "DriveNumber":  "1",
+                       "DriveLetter":  "F",
+                       "DriveLabel":  "Data"
+                   },
+                   {
+                       "DriveNumber":  "2",
+                       "DriveLetter":  "I",
+                       "DriveLabel":  "FileStream"
+                   },
+                   {
+                       "DriveNumber":  "3",
+                       "DriveLetter":  "J",
+                       "DriveLabel":  "Backup"
+                   },
+                   {
+                       "DriveNumber":  "4",
+                       "DriveLetter":  "L",
+                       "DriveLabel":  "Logs"
+                   },
+                   {
+                       "DriveNumber":  "5",
+                       "DriveLetter":  "T",
+                       "DriveLabel":  "Temp"
+                   }
+               ],
+    "SQL":  {
+                "ISOPATH":  "C:\\Setup\\Packages\\SQLServer2019-x64-ENU.iso",
+                "FEATURES":  "SQLEngine",
+                "INSTALLDIR":  "",
+                "DATADIR":  "F:\\SQLDATA",
+                "BACKUPDIR":  "J:\\BACKUP",
+                "TEMPDBDIR":  "T:\\Temp",
+                "TEMPLOGDIR":  "L:\\Logs",
+                "FILESTREAMDRIVE":  "I:",
+                "FILESTREAMSHARENAME":  "RAYSTATION",
+                "PORT":  "1433",
+                "INSTANCENAME":  "RAYSTATION",
+                "SAPASSWORD":  "",
+                "SERVICEACCOUNTNAME":  "",
+                "SERVICEACCOUNTPASSWORD":  "",
+                "PRODUCTKEY":  "",
+                "USETRANSFERBITS":  "",
+                "ENABLEPROTOCOLS":  "y"
+            },
+    "GPU":  {
+                "OMITTEDSERVERS":  [
+                                       ""
+                                   ],
+                "REMOVECURRENTDRIVER":  "N",
+                "DRIVERLOCATION":  "C:\\Setup\\Packages\\529.11_grid_win10_win11_server2019_server2022_dch_64bit_international.exe",
+                "CLEANINSTALL":  "",
+                "NVIDIALICENSETOKENLOCATION":  "C:\\Setup\\Packages\\client_configuration_token_08-17-2023-21-53-17.tok"
+            },
+    "LICENSING":  {
+                      "DESIGNATEDSERVER":  [
+                                               "TestMachine"
+                                           ],
+                      "LOCALLICENSE":  "N",
+                      "LICENSELOCATION":  "C:\\Setup\\Packages\\Internal_1772831988_Khai_20240806_Network_7_lic_including__14.0.0_13.0.0_13.1.0.lic",
+                      "CONFIGUREHAL": "",
+                      "HALSERVER1": "",
+                      "HALSERVER2": "",
+                      "HALSERVER3": ""                   
+                  },
+    "CITRIX":  {
+                   "OMITTEDSERVERS":  [
+                                          ""
+                                      ],
+                   "CITRIXISOLOCATION":  "C:\\Setup\\Packages\\Citrix_Virtual_Apps_and_Desktops_7_2106.iso",
+                   "DELIVERYCONTROLLERS":  "CTXCTRL1.domain.suffix CTXCTRL1.domain.suffix"
+               },
+    "RAYSTATION":  {
+                       "OMITTEDSERVERS":  [
+                                              ""
+                                          ],
+                       "RAYSTATIONLOCATION":  "C:\\Setup\\Packages\\RayStation-2023B_14.0.0.3338-Clinical\\RayStationSetup.exe",
+                       "FEATURES":  "RayStation,StorageTool",
+                       "DATABASEADDRESS":  "172.17.11.153",
+                       "DATABASEPORT":  "",
+                       "DATABASEINSTANCE":  "RAYSTATION",
+                       "DATABASESUFFIX":  "2023B_Test",
+                       "WAITFORSQLCONNECTION": "",
+                       "INDEXSERVICESERVER":  [
+                                                  "TestMachine"
+                                              ],
+                       "IndexServiceUser":  "User@domain.suffix",
+                       "IndexServicePwd":  "",
+                       "IndexServicePort":  "",
+                       "GenerateSelfSignedCert":  "y",
+                       "INDEXSERVICECERT":  "",
+                       "TRANSFERSERVICESERVER":  [
+                                                     "TestMachine"
+                                                 ],
+                       "TransferServiceUser":  "User@domain.suffix",
+                       "TransferServicePwd":  ""
+                   },
+    "SERVICES":  {
+                     "DICOMSERVICESERVER":  [
+                                                "TestMachine"
+                                            ],
+                     "DICOMSERVICELOCATION":  "C:\\Setup\\Packages\\DicomStorageServiceSetup.msi",
+                     "SCPTITLE":  "RAYSTATION_SSCP",
+                     "SCPPORT":  "105",
+                     "SCPFOLDER":  "C:\\temp",
+                     "SCPDAYS":  "10",
+                     "LICENSEAGENTSERVER":  [
+                                                "TestMachine"
+                                            ],
+                     "LICENSESETUPEXE":  "C:\\Setup\\Packages\\LicenseAgent-2023B_14.0.0.3338-Clinical\\LicenseAgentSetup.exe",
+                     "SERVICEUSER":  "User@domain.suffix",
+                     "SERVICEPWD":  "",
+                     "SERVICEPORT":  "",
+                     "SECUREHOSTING":  "Y",
+                     "OFFLINEMODE":  "",
+                     "LICENSESERVICEENDPOINT":  "https://rslicense.raysearchlabs.com",
+                     "GenerateSelfSignedCert":  "y",
+                     "CERTSUBJECT":  "",
+                     "CERTSTORE":  "",
+                     "CERTLOCATION":  "",
+                     "DATABASEADDRESS":  "172.17.11.153",
+                     "DATABASEINSTANCE":  "RAYSTATION",
+                     "DATABASEPORT":  "",
+                     "INSTALLDIR":  ""
+                 }
+}
