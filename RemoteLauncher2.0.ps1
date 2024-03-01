@@ -214,55 +214,49 @@ $Settings = Get-Content "$RunLocation\setup.json" | ConvertFrom-Json
 
 Write-host "Checking Packages" -ForegroundColor Green
 
-if(!([string]::IsNullOrEmpty($settings.SQL.ISOPATH))){
+if(($Settings.GENERAL.INSTALLSQL -match "Y") -and !([string]::IsNullOrEmpty($settings.SQL.ISOPATH))){
     if(!(Test-path $settings.SQL.ISOPATH)){
         write-host "SQL ISO Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.GPU.DRIVERLOCATION))){
+if(($Settings.GENERAL.INSTALLGPUDRIVER -match "Y") -and !([string]::IsNullOrEmpty($Settings.GPU.DRIVERLOCATION))){
     if(!(Test-path $Settings.GPU.DRIVERLOCATION)){
         write-host "GPU Driver Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.GPU.NVIDIALICENSETOKENLOCATION))){
+if(($Settings.GENERAL.INSTALLGPUDRIVER -match "Y") -and !([string]::IsNullOrEmpty($Settings.GPU.NVIDIALICENSETOKENLOCATION))){
     if(!(Test-path $Settings.GPU.NVIDIALICENSETOKENLOCATION)){
         write-host "Nvidia License Token Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.LICENSING.LICENSELOCATION))){
+if(($Settings.GENERAL.INSTALLLMX -match "Y") -and !([string]::IsNullOrEmpty($Settings.LICENSING.LICENSELOCATION))){
     if(!(Test-path $Settings.LICENSING.LICENSELOCATION)){
         write-host "RayStation License Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.CITRIX.CITRIXISOLOCATION))){
+if(($Settings.GENERAL.INSTALLCITRIX -match "Y") -and !([string]::IsNullOrEmpty($Settings.CITRIX.CITRIXISOLOCATION))){
     if(!(Test-path $Settings.CITRIX.CITRIXISOLOCATION)){
         write-host "Citrix ISO Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.RAYSTATION.RAYSTATIONLOCATION))){
+if(($Settings.GENERAL.INSTALLRAYSTATION -match "Y") -and !([string]::IsNullOrEmpty($Settings.RAYSTATION.RAYSTATIONLOCATION))){
     if(!(Test-path $Settings.RAYSTATION.RAYSTATIONLOCATION)){
         write-host "RayStation Installer Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.SERVICES.DICOMSERVICELOCATION))){
+if(($Settings.GENERAL.INSTALLDICOM -match "Y") -and !([string]::IsNullOrEmpty($Settings.SERVICES.DICOMSERVICELOCATION))){
     if(!(Test-path $Settings.SERVICES.DICOMSERVICELOCATION)){
         write-host "DICOM Installer Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.SERVICES.LICENSESETUPMSI))){
-    if(!(Test-path $Settings.SERVICES.LICENSESETUPMSI)){
-        write-host "RayStation License Agent Installer MSI Path Incorrect. Please correct and rerun"
-        Break
-    }
-}
-if(!([string]::IsNullOrEmpty($Settings.SERVICES.LICENSESETUPEXE))){
+if(($Settings.GENERAL.INSTALLLICENSEAGENT -match "Y") -and !([string]::IsNullOrEmpty($Settings.SERVICES.LICENSESETUPEXE))){
     if(!(Test-path $Settings.SERVICES.LICENSESETUPEXE)){
         write-host "RRayStation License Agent Installer EXE Path Incorrect. Please correct and rerun"
         Break
@@ -291,25 +285,25 @@ $IndexUser = $Settings.RAYSTATION.IndexServiceUser
 $TransferUser = $Settings.RAYSTATION.TransferServiceUser
 $LicenseUser = $Settings.SERVICES.SERVICEUSER
 
-if(!([string]::IsNullOrEmpty($SQLUser)) -and $SQLUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
+if(($Settings.GENERAL.INSTALLSQL -match "Y") -and !([string]::IsNullOrEmpty($SQLUser)) -and $SQLUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
 
 Write-Host "SQL Service User is in incorrect Format, please use Username@Domain.Suffix format" -ForegroundColor Red
 Break
 
 }
-if(!([string]::IsNullOrEmpty($IndexUser)) -and $IndexUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
+if(($Settings.GENERAL.INSTALLRAYSTATION -match "Y") -and !([string]::IsNullOrEmpty($IndexUser)) -and $IndexUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
 
 Write-Host "Index Service User is in incorrect Format, please use Username@Domain.Suffix format" -ForegroundColor Red
 Break
 
 }
-if(!([string]::IsNullOrEmpty($TransferUser)) -and $TransferUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
+if(($Settings.GENERAL.INSTALLRAYSTATION -match "Y") -and !([string]::IsNullOrEmpty($TransferUser)) -and $TransferUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
 
 Write-Host "Transfer Service User is in incorrect Format, please use Username@Domain.Suffix format" -ForegroundColor Red
 Break
 
 }
-if(!([string]::IsNullOrEmpty($LicenseUser)) -and $LicenseUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
+if(($Settings.GENERAL.INSTALLLICENSEAGENT -match "Y") -and !([string]::IsNullOrEmpty($LicenseUser)) -and $LicenseUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
 
 Write-Host "License Agent Service User is in incorrect Format, please use Username@Domain.Suffix format" -ForegroundColor Red
 Break

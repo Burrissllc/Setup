@@ -84,12 +84,22 @@ Else {
     $Existing = Get-PSRepository -Name $RepositoryName -ErrorAction Ignore
 
     if ($null -eq $Existing) {
-        Register-PSRepository -Name $RepositoryName -SourceLocation $Path -ScriptSourceLocation $Path -InstallationPolicy Trusted
+        try{
+        Register-PSRepository -Name $RepositoryName -SourceLocation $Path -ScriptSourceLocation $Path -InstallationPolicy Trusted -Confirm:$false
+        }
+        Catch{
+            Write-PSULog -Severity Warn -Message "Unable to register Repository: $RepositoryName from path: $Path"
+        }
 
     }
     
     $error.clear()
-    Install-PackageProvider -Name NuGet -ErrorAction SilentlyContinue -Force
+    Try{
+        Install-PackageProvider -Name NuGet -ErrorAction SilentlyContinue -Force -Confirm:$false
+    }
+    Catch{
+        Write-PSULog -Severity Warn -Message "Failed to Install NuGet"
+    }
 }
 
 
@@ -118,25 +128,25 @@ $IndexUser = $Settings.RAYSTATION.IndexServiceUser
 $TransferUser = $Settings.RAYSTATION.TransferServiceUser
 $LicenseUser = $Settings.SERVICES.SERVICEUSER
 
-if(!([string]::IsNullOrEmpty($SQLUser)) -and $SQLUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
+if(($Settings.GENERAL.INSTALLSQL -match "Y") -and !([string]::IsNullOrEmpty($SQLUser)) -and $SQLUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
 
 Write-PSULog -Severity Error -Message "SQL Service User is in incorrect Format, please use Username@Domain.Suffix format"
 Break
 
 }
-if(!([string]::IsNullOrEmpty($IndexUser)) -and $IndexUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
+if(($Settings.GENERAL.INSTALLRAYSTATION -match "Y") -and !([string]::IsNullOrEmpty($IndexUser)) -and $IndexUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
 
 Write-PSULog -Severity Error -Message "Index Service User is in incorrect Format, please use Username@Domain.Suffix format"
 Break
 
 }
-if(!([string]::IsNullOrEmpty($TransferUser)) -and $TransferUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
+if(($Settings.GENERAL.INSTALLRAYSTATION -match "Y") -and !([string]::IsNullOrEmpty($TransferUser)) -and $TransferUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
 
 Write-PSULog -Severity Error -Message "Transfer Service User is in incorrect Format, please use Username@Domain.Suffix format"
 Break
 
 }
-if(!([string]::IsNullOrEmpty($LicenseUser)) -and $LicenseUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
+if(($Settings.GENERAL.INSTALLLICENSEAGENT -match "Y") -and !([string]::IsNullOrEmpty($LicenseUser)) -and $LicenseUser -notmatch "[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+"){
 
 Write-PSULog -Severity Error -Message "License Agent Service User is in incorrect Format, please use Username@Domain.Suffix format"
 Break
@@ -188,57 +198,51 @@ if(!([string]::IsNullOrEmpty($LicenseAgentPWD)) -and $LicenseAgentPWD.Length -le
 
 Write-host "Checking Packages" -ForegroundColor Green
 
-if(!([string]::IsNullOrEmpty($settings.SQL.ISOPATH))){
+if(($Settings.GENERAL.INSTALLSQL -match "Y") -and !([string]::IsNullOrEmpty($settings.SQL.ISOPATH))){
     if(!(Test-path $settings.SQL.ISOPATH)){
-        Write-PSULog -Severity Error -Message "SQL ISO Path Incorrect. Please correct and rerun"
+        write-host "SQL ISO Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.GPU.DRIVERLOCATION))){
+if(($Settings.GENERAL.INSTALLGPUDRIVER -match "Y") -and !([string]::IsNullOrEmpty($Settings.GPU.DRIVERLOCATION))){
     if(!(Test-path $Settings.GPU.DRIVERLOCATION)){
-        Write-PSULog -Severity Error -Message "GPU Driver Path Incorrect. Please correct and rerun"
+        write-host "GPU Driver Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.GPU.NVIDIALICENSETOKENLOCATION))){
+if(($Settings.GENERAL.INSTALLGPUDRIVER -match "Y") -and !([string]::IsNullOrEmpty($Settings.GPU.NVIDIALICENSETOKENLOCATION))){
     if(!(Test-path $Settings.GPU.NVIDIALICENSETOKENLOCATION)){
-        Write-PSULog -Severity Error -Message "Nvidia License Token Path Incorrect. Please correct and rerun"
+        write-host "Nvidia License Token Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.LICENSING.LICENSELOCATION))){
+if(($Settings.GENERAL.INSTALLLMX -match "Y") -and !([string]::IsNullOrEmpty($Settings.LICENSING.LICENSELOCATION))){
     if(!(Test-path $Settings.LICENSING.LICENSELOCATION)){
-        Write-PSULog -Severity Error -Message "RayStation License Path Incorrect. Please correct and rerun"
+        write-host "RayStation License Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.CITRIX.CITRIXISOLOCATION))){
+if(($Settings.GENERAL.INSTALLCITRIX -match "Y") -and !([string]::IsNullOrEmpty($Settings.CITRIX.CITRIXISOLOCATION))){
     if(!(Test-path $Settings.CITRIX.CITRIXISOLOCATION)){
-        Write-PSULog -Severity Error -Message "Citrix ISO Path Incorrect. Please correct and rerun"
+        write-host "Citrix ISO Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.RAYSTATION.RAYSTATIONLOCATION))){
+if(($Settings.GENERAL.INSTALLRAYSTATION -match "Y") -and !([string]::IsNullOrEmpty($Settings.RAYSTATION.RAYSTATIONLOCATION))){
     if(!(Test-path $Settings.RAYSTATION.RAYSTATIONLOCATION)){
-        Write-PSULog -Severity Error -Message "RayStation Installer Path Incorrect. Please correct and rerun"
+        write-host "RayStation Installer Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.SERVICES.DICOMSERVICELOCATION))){
+if(($Settings.GENERAL.INSTALLDICOM -match "Y") -and !([string]::IsNullOrEmpty($Settings.SERVICES.DICOMSERVICELOCATION))){
     if(!(Test-path $Settings.SERVICES.DICOMSERVICELOCATION)){
-        Write-PSULog -Severity Error -Message "DICOM Installer Path Incorrect. Please correct and rerun"
+        write-host "DICOM Installer Path Incorrect. Please correct and rerun"
         Break
     }
 }
-if(!([string]::IsNullOrEmpty($Settings.SERVICES.LICENSESETUPMSI))){
-    if(!(Test-path $Settings.SERVICES.LICENSESETUPMSI)){
-        Write-PSULog -Severity Error -Message "RayStation License Agent Installer MSI Path Incorrect. Please correct and rerun"
-        Break
-    }
-}
-if(!([string]::IsNullOrEmpty($Settings.SERVICES.LICENSESETUPEXE))){
+if(($Settings.GENERAL.INSTALLLICENSEAGENT -match "Y") -and !([string]::IsNullOrEmpty($Settings.SERVICES.LICENSESETUPEXE))){
     if(!(Test-path $Settings.SERVICES.LICENSESETUPEXE)){
-        Write-PSULog -Severity Error -Message "RayStation License Agent Installer EXE Path Incorrect. Please correct and rerun"
+        write-host "RRayStation License Agent Installer EXE Path Incorrect. Please correct and rerun"
         Break
     }
 }
