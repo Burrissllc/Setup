@@ -257,7 +257,7 @@ $Dotnet = $false
 }
 
 
- if($Dotnet -eq $false){
+if($Dotnet -eq $false){
 
     #Enables Autologon for the machine
     $ENABLEAUTOLOGON = $settings.GENERAL.ENABLEAUTOLOGON
