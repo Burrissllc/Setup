@@ -27,7 +27,7 @@ $auth_response=''
 
 $url='https://apigtwb2c.us.dell.com/auth/oauth/v2/token'
 
-$postdata= @{client_id='l7d194d0a2037c4648a4d2b68b27f0597f';client_secret='149e2d0014544e8d86cb964ace4b0362';grant_type='client_credentials'}
+$postdata= @{client_id='XXXXXXXXXX';client_secret='XXXXXXXX';grant_type='client_credentials'}
 
 $content='application/x-www-form-urlencoded'
 [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
