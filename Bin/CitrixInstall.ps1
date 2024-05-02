@@ -71,28 +71,39 @@ $CitrixLocation = $Settings.CITRIX.CITRIXISOLOCATION
 
 if(Test-Path -Path $CitrixLocation){
 
-    # Extracts the Citrix ISO to the $RunLocation\Bin\Citrix Folder
-    #Write-Host "Mounting disk image file '$ImageFile'..."
-    Write-PSULog -Severity Info -Message "Mounting disk image file '$ImageFile'..."
-    $DiskImage = Mount-DiskImage $CitrixLocation -PassThru
-    $DriveLetter = (Get-Volume -DiskImage $DiskImage).DriveLetter
-    $DriveLetter = $DriveLetter + ":\"
-    #Write-Host "Copying contents of Citrix ISO to $RunLocation\bin\Citrix" -ForegroundColor Yellow
-    Write-PSULog -Severity Info -Message "Copying contents of Citrix ISO to $RunLocation\bin\Citrix"
-    robocopy $DriveLetter "$RunLocation\bin\Citrix\" /E /NFL /NDL /NJH /NJS /nc /ns /np
-    #Write-host "Copied contents of Citrix iso to $RunLocation\bin\Citrix" -ForegroundColor Green
-    Write-PSULog -Severity Info -Message "Copied contents of Citrix iso to $RunLocation\bin\Citrix"
-    Dismount-DiskImage -InputObject $DiskImage
-}
+    If($CitrixLocation -like "*.iso"){
 
-# Pauses Install if the ISO path is incorrect
-else{
-    Write-Host "Path to Citrix ISO incorrect. Please Unzip Citrix iso into $RunLocation\bin\Citrix" -ForegroundColor Red
-    Write-PSULog -Severity Error -Message "Path to Citrix ISO incorrect. Please Unzip Citrix iso into $RunLocation\bin\Citrix"
-    Write-PSULog -Severity Warning -Message 'Press any key to continue when the ISO is unzipped'
-    Write-Host -NoNewLine 'Press any key to continue when the ISO is unzipped';
-                $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
-}
+        #Write-Host "Citrix ISO Found" -ForegroundColor Green
+        Write-PSULog -Severity Info -Message "Citrix ISO Found"
+        # Extracts the Citrix ISO to the $RunLocation\Bin\Citrix Folder
+        #Write-Host "Mounting disk image file '$ImageFile'..."
+        Write-PSULog -Severity Info -Message "Mounting disk image file '$ImageFile'..."
+        $DiskImage = Mount-DiskImage $CitrixLocation -PassThru
+        $DriveLetter = (Get-Volume -DiskImage $DiskImage).DriveLetter
+        $DriveLetter = $DriveLetter + ":\"
+        #Write-Host "Copying contents of Citrix ISO to $RunLocation\bin\Citrix" -ForegroundColor Yellow
+        Write-PSULog -Severity Info -Message "Copying contents of Citrix ISO to $RunLocation\bin\Citrix"
+        robocopy $DriveLetter "$RunLocation\bin\Citrix\" /E /NFL /NDL /NJH /NJS /nc /ns /np
+        #Write-host "Copied contents of Citrix iso to $RunLocation\bin\Citrix" -ForegroundColor Green
+        Write-PSULog -Severity Info -Message "Copied contents of Citrix iso to $RunLocation\bin\Citrix"
+        Dismount-DiskImage -InputObject $DiskImage
+        $CitrixEXE = "$RunLocation\bin\Citrix\x64\XenDesktop Setup\XenDesktopVDASetup.exe"
+    }   
+    elseif($CitrixLocation -like "*.exe"){
+
+        #Write-Host "Citrix EXE Found" -ForegroundColor Green
+        Write-PSULog -Severity Info -Message "Citrix EXE Found"
+        # Extracts the Citrix EXE to the $RunLocation\Bin\Citrix Folder
+        #Write-Host "Extracting Citrix EXE to $RunLocation\bin\Citrix" -ForegroundColor Yellow
+        $CitrixEXE = $CitrixLocation
+
+    }
+    else{
+
+        #Write-Host "Citrix ISO/EXE Not Found" -ForegroundColor Red
+        Write-PSULog -Severity Error -Message "Citrix ISO/EXE Not Found"
+        break
+    }
 
 #Sets up the installer and runs the Installation
 $DeliveryControllers = $Settings.CITRIX.DELIVERYCONTROLLERS
@@ -100,7 +111,7 @@ $DeliveryControllers = $Settings.CITRIX.DELIVERYCONTROLLERS
 #Write-Host "Installing Citrix VDA" -ForegroundColor Yellow
 Write-PSULog -Severity Info -Message "Installing Citrix VDA"
 
-Start-process "$RunLocation\bin\Citrix\x64\XenDesktop Setup\XenDesktopVDASetup.exe" -ArgumentList "/components VDA /controllers `"$DeliveryControllers`" /disableexperiencemetrics /enable_framehawk_port /enable_hdx_ports /enable_hdx_udp_ports /enable_real_time_transport /enable_remote_assistance /exclude `"Personal vDisk, Citrix Personalization for App-V - VDA`" /optimize /logpath $RunLocation\VDAInstallLogs /noreboot /quiet" -wait
+Start-process $CitrixEXE -ArgumentList "/components VDA /controllers `"$DeliveryControllers`" /disableexperiencemetrics /enable_framehawk_port /enable_hdx_ports /enable_hdx_udp_ports /enable_real_time_transport /enable_remote_assistance /exclude `"Personal vDisk, Citrix Personalization for App-V - VDA`" /optimize /logpath $RunLocation\VDAInstallLogs /noreboot /quiet" -wait
 
     if((get-process | Where-Object {$_.ProcessName -match "XenDesktopVdaSetup"})){
 
@@ -120,6 +131,7 @@ Start-process "$RunLocation\bin\Citrix\x64\XenDesktop Setup\XenDesktopVDASetup.e
 Write-PSULog -Severity Info -Message "Finished Citrix VDA, A Reboot is required to complete the Install"
 
 #Stop-Transcript
+}
 }
 Else{
 

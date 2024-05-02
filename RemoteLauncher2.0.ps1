@@ -108,7 +108,7 @@ function Test-Cred {
 $DistributeAccount = Read-Host "Is the distributution account diffrent than installation account?(y/n)"
 
 Switch ($DistributeAccount) {
-    Y {$DistributeUsername = Read-Host "Enter the Distribution Account Username"
+    Y {$DistributeUsername = Read-Host "Enter the Distribution Account Username(domain\username)"
        $DistributionPassword = Read-Host "Enter the Distribution Account Password" -AsSecureString 
        $DistributionCreds = New-Object System.Management.Automation.PSCredential ($DistributeUsername, $DistributionPassword)
        $Domain = $DistributeUsername.split("\")[0]
@@ -126,7 +126,7 @@ Switch ($DistributeAccount) {
 }
 
 
-$Username = Read-Host "Enter the Remote Username"
+$Username = Read-Host "Enter the Remote Username(domain\username)"
 
 $Password = Read-Host "Enter the Remote Password" -AsSecureString
 
