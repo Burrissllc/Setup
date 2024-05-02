@@ -194,11 +194,7 @@ if($Settings.GENERAL.CLEANUP -match "y"){
         New-Item $TrayIcon -Force | New-ItemProperty -Name "StartOnLogin" -Value "00000000" -type dword
     }
 
-    $SeamlessFlags = "HKLM\System\CurrentControlSet\Control\Citrix\wfshell\TWI"
-    if($null -eq (Test-Path $SeamlessFlags)){
-        Write-PSULog -Severity Info -Message "Setting the Seamless Flag for Citrix"
-        New-Item $SeamlessFlags -Force | New-ItemProperty -Name "SeamlessFlags" -Value "0x20" -type dword
-    }
+
 
     #Runs Machine Info Script and updates the Machine Info with GPU Information
     & $RunLocation\bin\MachineInfo.ps1

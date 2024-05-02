@@ -130,6 +130,12 @@ Start-process $CitrixEXE -ArgumentList "/components VDA /controllers `"$Delivery
 #Write-Host "Finished Citrix VDA, A Reboot is required to complete the Install" -ForegroundColor Green
 Write-PSULog -Severity Info -Message "Finished Citrix VDA, A Reboot is required to complete the Install"
 
+$SeamlessFlags = "HKLM:\System\CurrentControlSet\Control\Citrix\wfshell\TWI"
+if (!(Test-Path $SeamlessFlags)) {
+    Write-PSULog -Severity Info -Message "Setting the Seamless Flag for Citrix"
+    New-Item $SeamlessFlags -Force -ErrorAction SilentlyContinue | Set-ItemProperty -Name "SeamlessFlags" -Value "0x20" -Type DWord
+}
+
 #Stop-Transcript
 }
 }
