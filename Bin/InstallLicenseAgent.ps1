@@ -11,7 +11,7 @@ set-ExecutionPolicy Unrestricted
 
 $RunLocation = split-path -parent $MyInvocation.MyCommand.Definition
 set-location $RunLocation
-cd ..
+Set-Location ..
 $RunLocation = get-location
 $RunLocation = $RunLocation.Path
 

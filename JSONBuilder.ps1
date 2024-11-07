@@ -49,14 +49,14 @@ Add-Type -AssemblyName System.Windows.Forms
                         <TextBox x:Name="textBoxMachineName" Grid.Row="1" Grid.Column="1" Margin="0,5,0,5"/>
 
                         <Label Content="Time Zone" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                             <ComboBox x:Name="comboBoxTimeZone" Grid.Row="2" Grid.Column="1" Margin="0,5,0,5">
-                             <ComboBoxItem Content=""/>
-                             <ComboBoxItem Content="EST"/>
-                             <ComboBoxItem Content="CST"/>
-                             <ComboBoxItem Content="MST"/>
-                             <ComboBoxItem Content="PST"/>
-                             <ComboBoxItem Content="AST"/>
-                             <ComboBoxItem Content="HST"/>
+                        <ComboBox x:Name="comboBoxTimeZone" Grid.Row="2" Grid.Column="1" Margin="0,5,0,5">
+                            <ComboBoxItem Content=""/>
+                            <ComboBoxItem Content="EST"/>
+                            <ComboBoxItem Content="CST"/>
+                            <ComboBoxItem Content="MST"/>
+                            <ComboBoxItem Content="PST"/>
+                            <ComboBoxItem Content="AST"/>
+                            <ComboBoxItem Content="HST"/>
                         </ComboBox>
 
                         <Label Content="Install Adobe" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
@@ -101,12 +101,12 @@ Add-Type -AssemblyName System.Windows.Forms
                         <Label Content="Cleanup" Grid.Row="16" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <CheckBox x:Name="checkboxCleanup" Grid.Row="16" Grid.Column="1" VerticalAlignment="Center"/>
 
-<Label Content="Remote Logging Location" Grid.Row="17" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-<TextBox x:Name="textBoxRemoteLoggingLocation" Grid.Row="17" Grid.Column="1" Margin="0,5,0,5">
-    <TextBox.ToolTip>
-        <ToolTip>This field should normally be empty.</ToolTip>
-    </TextBox.ToolTip>
-</TextBox>
+                        <Label Content="Remote Logging Location" Grid.Row="17" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <TextBox x:Name="textBoxRemoteLoggingLocation" Grid.Row="17" Grid.Column="1" Margin="0,5,0,5">
+                            <TextBox.ToolTip>
+                                <ToolTip>This field should normally be empty.</ToolTip>
+                            </TextBox.ToolTip>
+                        </TextBox>
                     </Grid>
                 </ScrollViewer>
             </TabItem>
@@ -297,7 +297,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         <Button x:Name="BrowseNvidiaLicenseTokenLocation" Content="Browse" Grid.Row="3" Grid.Column="2" Margin="5,5,0,5"/>
 
                         <Label Content="Omitted Servers" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxGpuOmittedServers" Grid.Row="4" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxGpuOmittedServers" Grid.Row="4" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="4" Grid.Column="2">
                             <TextBox x:Name="textBoxNewGpuOmittedServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddGpuOmittedServer" Content="Add" Margin="5,5,0,5"/>
@@ -340,7 +340,8 @@ Add-Type -AssemblyName System.Windows.Forms
                         <Button x:Name="BrowseLicenseLocation" Content="Browse" Grid.Row="2" Grid.Column="2" Margin="5,5,0,5"/>
 
                         <Label Content="Designated Servers" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxDesignatedServer" Grid.Row="3" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxDesignatedServer" Grid.Row="3" Grid.Column="1" Height="80
+                                 " Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="3" Grid.Column="2">
                             <TextBox x:Name="textBoxNewDesignatedServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddDesignatedServer" Content="Add" Margin="5,5,0,5"/>
@@ -374,19 +375,19 @@ Add-Type -AssemblyName System.Windows.Forms
                         </Grid.RowDefinitions>
 
                         <Label Content="Omitted Servers" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxOmittedServers" Grid.Row="0" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxOmittedServers" Grid.Row="0" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="0" Grid.Column="2">
                             <TextBox x:Name="textBoxNewOmittedServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddOmittedServer" Content="Add" Margin="5,5,0,5"/>
                             <Button x:Name="RemoveOmittedServer" Content="Remove" Margin="5,0,0,0"/>
                         </StackPanel>
 
-<Label Content="Delivery Controllers" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-<TextBox x:Name="textBoxDeliveryControllers" Grid.Row="1" Grid.Column="1" Margin="0,5,0,5">
-    <TextBox.ToolTip>
-        <ToolTip>Separate entries by a space.</ToolTip>
-    </TextBox.ToolTip>
-</TextBox>
+                        <Label Content="Delivery Controllers" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <TextBox x:Name="textBoxDeliveryControllers" Grid.Row="1" Grid.Column="1" Margin="0,5,0,5">
+                            <TextBox.ToolTip>
+                                <ToolTip>Separate entries by a space.</ToolTip>
+                            </TextBox.ToolTip>
+                        </TextBox>
 
                         <Label Content="Citrix ISO Location" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <TextBox x:Name="textBoxCitrixIsoLocation" Grid.Row="2" Grid.Column="1" Margin="0,5,0,5"/>
@@ -424,7 +425,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         </Grid.RowDefinitions>
 
                         <Label Content="Omitted Servers" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxRaystationOmittedServers" Grid.Row="0" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxRaystationOmittedServers" Grid.Row="0" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="0" Grid.Column="2">
                             <TextBox x:Name="textBoxNewRaystationOmittedServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddRaystationOmittedServer" Content="Add" Margin="5,5,0,5"/>
@@ -454,7 +455,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         <CheckBox x:Name="checkboxWaitForSqlConnection" Grid.Row="7" Grid.Column="1" VerticalAlignment="Center"/>
 
                         <Label Content="Index Service Server" Grid.Row="8" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxIndexServiceServer" Grid.Row="8" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxIndexServiceServer" Grid.Row="8" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="8" Grid.Column="2">
                             <TextBox x:Name="textBoxNewIndexServiceServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddIndexServiceServer" Content="Add" Margin="5,5,0,5"/>
@@ -478,7 +479,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         <Button x:Name="BrowseIndexServiceCert" Content="Browse" Grid.Row="13" Grid.Column="2" Margin="5,5,0,5"/>
 
                         <Label Content="Transfer Service Server" Grid.Row="14" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxTransferServiceServer" Grid.Row="14" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxTransferServiceServer" Grid.Row="14" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="14" Grid.Column="2">
                             <TextBox x:Name="textBoxNewTransferServiceServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddTransferServiceServer" Content="Add" Margin="5,5,0,5"/>
@@ -528,7 +529,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         </Grid.RowDefinitions>
 
                         <Label Content="DICOM Service Server" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxDicomServiceServer" Grid.Row="0" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxDicomServiceServer" Grid.Row="0" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="0" Grid.Column="2">
                             <TextBox x:Name="textBoxNewDicomServiceServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddDicomServiceServer" Content="Add" Margin="5,5,0,5"/>
@@ -553,7 +554,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         <TextBox x:Name="textBoxScpDays" Grid.Row="5" Grid.Column="1" Margin="0,5,0,5"/>
 
                         <Label Content="License Service Server" Grid.Row="6" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxLicenseAgentServer" Grid.Row="6" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxLicenseAgentServer" Grid.Row="6" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="6" Grid.Column="2">
                             <TextBox x:Name="textBoxNewLicenseAgentServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddLicenseAgentServer" Content="Add" Margin="5,5,0,5"/>
@@ -630,12 +631,13 @@ function Load-ExistingJSON {
         # GENERAL tab
         $window.FindName("checkboxEnableAutoLogon").IsChecked = $jsonContent.GENERAL.ENABLEAUTOLOGON -eq "Y"
         $window.FindName("textBoxMachineName").Text = $jsonContent.GENERAL.MACHINENAME
-                # Set Time Zone
+        # Set Time Zone
         $comboBoxTimeZone = $window.FindName("comboBoxTimeZone")
         $timezone = $jsonContent.GENERAL.TIMEZONE
         if ($timezone) {
             $comboBoxTimeZone.SelectedItem = $comboBoxTimeZone.Items | Where-Object { $_.Content -eq $timezone }
-        } else {
+        }
+        else {
             $comboBoxTimeZone.SelectedIndex = 0  # Select the empty option if no timezone is set
         }
         $window.FindName("checkboxInstallAdobe").IsChecked = $jsonContent.GENERAL.INSTALLADOBE -eq "Y"
@@ -659,10 +661,10 @@ function Load-ExistingJSON {
         $listBoxDrives.Items.Clear()
         foreach ($drive in $jsonContent.DRIVES) {
             $listBoxDrives.Items.Add([PSCustomObject]@{
-                DriveLetter = $drive.DriveLetter
-                DriveNumber = $drive.DriveNumber
-                DriveLabel = $drive.DriveLabel
-            })
+                    DriveLetter = $drive.DriveLetter
+                    DriveNumber = $drive.DriveNumber
+                    DriveLabel  = $drive.DriveLabel
+                })
         }
 
         # DESIGNATED SQL SERVER tab
@@ -796,118 +798,118 @@ function Save-JSON {
     $jsonPath = Join-Path $PSScriptRoot "setup.json"
 
     $jsonObject = @{
-        GENERAL = @{
-            ENABLEAUTOLOGON = if ($window.FindName("checkboxEnableAutoLogon").IsChecked) { "Y" } else { "N" }
-            MACHINENAME = $window.FindName("textBoxMachineName").Text
-            TIMEZONE = $window.FindName("comboBoxTimeZone").SelectedItem.Content
-            INSTALLADOBE = if ($window.FindName("checkboxInstallAdobe").IsChecked) { "Y" } else { "N" }
-            AUTOREBOOT = if ($window.FindName("checkboxAutoReboot").IsChecked) { "Y" } else { "N" }
-            LOCALGROUPS = if ($window.FindName("checkboxLocalGroups").IsChecked) { "Y" } else { "N" }
-            INSTALLLMX = if ($window.FindName("checkboxInstallLmx").IsChecked) { "Y" } else { "N" }
-            INSTALLCITRIX = if ($window.FindName("checkboxInstallCitrix").IsChecked) { "Y" } else { "N" }
-            INSTALLJAVA = if ($window.FindName("checkboxInstallJava").IsChecked) { "Y" } else { "N" }
-            INSTALLGPUDRIVER = if ($window.FindName("checkboxInstallGpuDriver").IsChecked) { "Y" } else { "N" }
-            INSTALLDOTNET = if ($window.FindName("checkboxInstallDotNet").IsChecked) { "Y" } else { "N" }
-            CLEANUP = if ($window.FindName("checkboxCleanup").IsChecked) { "Y" } else { "N" }
+        GENERAL             = @{
+            ENABLEAUTOLOGON           = if ($window.FindName("checkboxEnableAutoLogon").IsChecked) { "Y" } else { "N" }
+            MACHINENAME               = $window.FindName("textBoxMachineName").Text
+            TIMEZONE                  = $window.FindName("comboBoxTimeZone").SelectedItem.Content
+            INSTALLADOBE              = if ($window.FindName("checkboxInstallAdobe").IsChecked) { "Y" } else { "N" }
+            AUTOREBOOT                = if ($window.FindName("checkboxAutoReboot").IsChecked) { "Y" } else { "N" }
+            LOCALGROUPS               = if ($window.FindName("checkboxLocalGroups").IsChecked) { "Y" } else { "N" }
+            INSTALLLMX                = if ($window.FindName("checkboxInstallLmx").IsChecked) { "Y" } else { "N" }
+            INSTALLCITRIX             = if ($window.FindName("checkboxInstallCitrix").IsChecked) { "Y" } else { "N" }
+            INSTALLJAVA               = if ($window.FindName("checkboxInstallJava").IsChecked) { "Y" } else { "N" }
+            INSTALLGPUDRIVER          = if ($window.FindName("checkboxInstallGpuDriver").IsChecked) { "Y" } else { "N" }
+            INSTALLDOTNET             = if ($window.FindName("checkboxInstallDotNet").IsChecked) { "Y" } else { "N" }
+            CLEANUP                   = if ($window.FindName("checkboxCleanup").IsChecked) { "Y" } else { "N" }
             BUILDRAYSTATIONGPUCONFIGS = if ($window.FindName("checkboxBuildRaystationGpuConfigs").IsChecked) { "Y" } else { "N" }
-            INSTALLSQL = if ($window.FindName("checkboxInstallSql").IsChecked) { "Y" } else { "N" }
-            UPDATEWINDOWS = if ($window.FindName("checkboxUpdateWindows").IsChecked) { "Y" } else { "N" }
-            INSTALLRAYSTATION = if ($window.FindName("checkboxInstallRaystation").IsChecked) { "Y" } else { "N" }
-            FORMATDRIVES = if ($window.FindName("checkboxFormatDrives").IsChecked) { "Y" } else { "N" }
+            INSTALLSQL                = if ($window.FindName("checkboxInstallSql").IsChecked) { "Y" } else { "N" }
+            UPDATEWINDOWS             = if ($window.FindName("checkboxUpdateWindows").IsChecked) { "Y" } else { "N" }
+            INSTALLRAYSTATION         = if ($window.FindName("checkboxInstallRaystation").IsChecked) { "Y" } else { "N" }
+            FORMATDRIVES              = if ($window.FindName("checkboxFormatDrives").IsChecked) { "Y" } else { "N" }
         }
         DESIGNATEDSQLSERVER = @{
             DESIGNATEDSQLSERVER = @($window.FindName("listBoxDesignatedSqlServer").Items)
         }
-        DRIVES = @(
+        DRIVES              = @(
             $window.FindName("listBoxDrives").Items | ForEach-Object {
                 @{
                     DriveLetter = $_.DriveLetter
                     DriveNumber = $_.DriveNumber
-                    DriveLabel = $_.DriveLabel
+                    DriveLabel  = $_.DriveLabel
                 }
             }
         )
-        SQL = @{
-            ENABLEPROTOCOLS = if ($window.FindName("checkboxEnableProtocols").IsChecked) { "Y" } else { "N" }
-            PORT = $window.FindName("textBoxSqlPort").Text
-            INSTALLDIR = $window.FindName("textBoxSqlInstallDir").Text
-            TEMPDBDIR = $window.FindName("textBoxSqlTempDbDir").Text
-            SERVICEACCOUNTNAME = $window.FindName("textBoxSqlServiceAccountName").Text
-            SAPASSWORD = $window.FindName("passwordBoxSqlSaPassword").Password
-            BACKUPDIR = $window.FindName("textBoxSqlBackupDir").Text
-            FILESTREAMDRIVE = $window.FindName("textBoxSqlFileStreamDrive").Text
-            DATADIR = $window.FindName("textBoxSqlDataDir").Text
-            USETRANSFERBITS = if ($window.FindName("checkboxUseTransferBits").IsChecked) { "Y" } else { "N" }
-            TEMPLOGDIR = $window.FindName("textBoxSqlTempLogDir").Text
-            PRODUCTKEY = $window.FindName("textBoxSqlProductKey").Text
+        SQL                 = @{
+            ENABLEPROTOCOLS        = if ($window.FindName("checkboxEnableProtocols").IsChecked) { "Y" } else { "N" }
+            PORT                   = $window.FindName("textBoxSqlPort").Text
+            INSTALLDIR             = $window.FindName("textBoxSqlInstallDir").Text
+            TEMPDBDIR              = $window.FindName("textBoxSqlTempDbDir").Text
+            SERVICEACCOUNTNAME     = $window.FindName("textBoxSqlServiceAccountName").Text
+            SAPASSWORD             = $window.FindName("passwordBoxSqlSaPassword").Password
+            BACKUPDIR              = $window.FindName("textBoxSqlBackupDir").Text
+            FILESTREAMDRIVE        = $window.FindName("textBoxSqlFileStreamDrive").Text
+            DATADIR                = $window.FindName("textBoxSqlDataDir").Text
+            USETRANSFERBITS        = if ($window.FindName("checkboxUseTransferBits").IsChecked) { "Y" } else { "N" }
+            TEMPLOGDIR             = $window.FindName("textBoxSqlTempLogDir").Text
+            PRODUCTKEY             = $window.FindName("textBoxSqlProductKey").Text
             SERVICEACCOUNTPASSWORD = $window.FindName("passwordBoxSqlServiceAccountPassword").Password
-            FILESTREAMSHARENAME = $window.FindName("textBoxSqlFileStreamShareName").Text
-            ISOPATH = $window.FindName("textBoxSqlIsoPath").Text
-            FEATURES = $window.FindName("textBoxSqlFeatures").Text
-            INSTANCENAME = $window.FindName("textBoxSqlInstanceName").Text
+            FILESTREAMSHARENAME    = $window.FindName("textBoxSqlFileStreamShareName").Text
+            ISOPATH                = $window.FindName("textBoxSqlIsoPath").Text
+            FEATURES               = $window.FindName("textBoxSqlFeatures").Text
+            INSTANCENAME           = $window.FindName("textBoxSqlInstanceName").Text
         }
-        LICENSING = @{
-            CONFIGUREHAL = if ($window.FindName("checkboxConfigureHal").IsChecked) { "Y" } else { "N" }
-            LOCALLICENSE = if ($window.FindName("checkboxLocalLicense").IsChecked) { "Y" } else { "N" }
-            HALSERVER1 = $window.FindName("textBoxHalServer1").Text
-            HALSERVER2 = $window.FindName("textBoxHalServer2").Text
-            LICENSELOCATION = $window.FindName("textBoxLicenseLocation").Text
+        LICENSING           = @{
+            CONFIGUREHAL     = if ($window.FindName("checkboxConfigureHal").IsChecked) { "Y" } else { "N" }
+            LOCALLICENSE     = if ($window.FindName("checkboxLocalLicense").IsChecked) { "Y" } else { "N" }
+            HALSERVER1       = $window.FindName("textBoxHalServer1").Text
+            HALSERVER2       = $window.FindName("textBoxHalServer2").Text
+            LICENSELOCATION  = $window.FindName("textBoxLicenseLocation").Text
             DESIGNATEDSERVER = @($window.FindName("listBoxDesignatedServer").Items)
-            HALSERVER3 = $window.FindName("textBoxHalServer3").Text
+            HALSERVER3       = $window.FindName("textBoxHalServer3").Text
         }
-        CITRIX = @{
+        CITRIX              = @{
             DELIVERYCONTROLLERS = $window.FindName("textBoxDeliveryControllers").Text
-            OMITTEDSERVERS = @($window.FindName("listBoxOmittedServers").Items)
-            CITRIXISOLOCATION = $window.FindName("textBoxCitrixIsoLocation").Text
+            OMITTEDSERVERS      = @($window.FindName("listBoxOmittedServers").Items)
+            CITRIXISOLOCATION   = $window.FindName("textBoxCitrixIsoLocation").Text
         }
-        GPU = @{
-            DRIVERLOCATION = $window.FindName("textBoxDriverLocation").Text
-            CLEANINSTALL = if ($window.FindName("checkboxCleanInstall").IsChecked) { "Y" } else { "N" }
-            REMOVECURRENTDRIVER = if ($window.FindName("checkboxRemoveCurrentDriver").IsChecked) { "Y" } else { "N" }
+        GPU                 = @{
+            DRIVERLOCATION             = $window.FindName("textBoxDriverLocation").Text
+            CLEANINSTALL               = if ($window.FindName("checkboxCleanInstall").IsChecked) { "Y" } else { "N" }
+            REMOVECURRENTDRIVER        = if ($window.FindName("checkboxRemoveCurrentDriver").IsChecked) { "Y" } else { "N" }
             NVIDIALICENSETOKENLOCATION = $window.FindName("textBoxNvidiaLicenseTokenLocation").Text
         }
-        RAYSTATION = @{
-            DATABASEPORT = $window.FindName("textBoxDatabasePort").Text
-            TransferServiceUser = $window.FindName("textBoxTransferServiceUser").Text
-            TransferServicePwd = $window.FindName("passwordBoxTransferServicePwd").Password
-            OMITTEDSERVERS = @($window.FindName("listBoxRaystationOmittedServers").Items)
-            RAYSTATIONLOCATION = $window.FindName("textBoxRaystationLocation").Text
-            IndexServicePwd = $window.FindName("passwordBoxIndexServicePwd").Password
-            TRANSFERSERVICESERVER = @($window.FindName("listBoxTransferServiceServer").Items)
-            DATABASEADDRESS = $window.FindName("textBoxDatabaseAddress").Text
-            DATABASESUFFIX = $window.FindName("textBoxDatabaseSuffix").Text
-            WAITFORSQLCONNECTION = if ($window.FindName("checkboxWaitForSqlConnection").IsChecked) { "Y" } else { "N" }
-            DATABASEINSTANCE = $window.FindName("textBoxDatabaseInstance").Text
-            IndexServiceUser = $window.FindName("textBoxIndexServiceUser").Text
+        RAYSTATION          = @{
+            DATABASEPORT           = $window.FindName("textBoxDatabasePort").Text
+            TransferServiceUser    = $window.FindName("textBoxTransferServiceUser").Text
+            TransferServicePwd     = $window.FindName("passwordBoxTransferServicePwd").Password
+            OMITTEDSERVERS         = @($window.FindName("listBoxRaystationOmittedServers").Items)
+            RAYSTATIONLOCATION     = $window.FindName("textBoxRaystationLocation").Text
+            IndexServicePwd        = $window.FindName("passwordBoxIndexServicePwd").Password
+            TRANSFERSERVICESERVER  = @($window.FindName("listBoxTransferServiceServer").Items)
+            DATABASEADDRESS        = $window.FindName("textBoxDatabaseAddress").Text
+            DATABASESUFFIX         = $window.FindName("textBoxDatabaseSuffix").Text
+            WAITFORSQLCONNECTION   = if ($window.FindName("checkboxWaitForSqlConnection").IsChecked) { "Y" } else { "N" }
+            DATABASEINSTANCE       = $window.FindName("textBoxDatabaseInstance").Text
+            IndexServiceUser       = $window.FindName("textBoxIndexServiceUser").Text
             GenerateSelfSignedCert = if ($window.FindName("checkboxGenerateSelfSignedCert").IsChecked) { "Y" } else { "N" }
-            FEATURES = $window.FindName("textBoxRaystationFeatures").Text
-            INDEXSERVICECERT = $window.FindName("textBoxIndexServiceCert").Text
-            IndexServicePort = $window.FindName("textBoxIndexServicePort").Text
-            INDEXSERVICESERVER = @($window.FindName("listBoxIndexServiceServer").Items)
+            FEATURES               = $window.FindName("textBoxRaystationFeatures").Text
+            INDEXSERVICECERT       = $window.FindName("textBoxIndexServiceCert").Text
+            IndexServicePort       = $window.FindName("textBoxIndexServicePort").Text
+            INDEXSERVICESERVER     = @($window.FindName("listBoxIndexServiceServer").Items)
         }
-        SERVICES = @{
-            DATABASEPORT = $window.FindName("textBoxServicesDatabasePort").Text
-            SCPPORT = $window.FindName("textBoxScpPort").Text
-            CERTLOCATION = $window.FindName("textBoxCertLocation").Text
-            SECUREHOSTING = if ($window.FindName("checkboxSecureHosting").IsChecked) { "Y" } else { "N" }
-            SCPFOLDER = $window.FindName("textBoxScpFolder").Text
-            SERVICEPWD = $window.FindName("passwordBoxServicePwd").Password
-            LICENSEAGENTSERVER = @($window.FindName("listBoxLicenseAgentServer").Items)
-            DICOMSERVICESERVER = @($window.FindName("listBoxDicomServiceServer").Items)
-            DATABASEINSTANCE = $window.FindName("textBoxServicesDatabaseInstance").Text
-            SCPDAYS = $window.FindName("textBoxScpDays").Text
-            CERTSTORE = $window.FindName("textBoxCertStore").Text
-            SERVICEUSER = $window.FindName("textBoxServiceUser").Text
-            DATABASEADDRESS = $window.FindName("textBoxServicesDatabaseAddress").Text
+        SERVICES            = @{
+            DATABASEPORT           = $window.FindName("textBoxServicesDatabasePort").Text
+            SCPPORT                = $window.FindName("textBoxScpPort").Text
+            CERTLOCATION           = $window.FindName("textBoxCertLocation").Text
+            SECUREHOSTING          = if ($window.FindName("checkboxSecureHosting").IsChecked) { "Y" } else { "N" }
+            SCPFOLDER              = $window.FindName("textBoxScpFolder").Text
+            SERVICEPWD             = $window.FindName("passwordBoxServicePwd").Password
+            LICENSEAGENTSERVER     = @($window.FindName("listBoxLicenseAgentServer").Items)
+            DICOMSERVICESERVER     = @($window.FindName("listBoxDicomServiceServer").Items)
+            DATABASEINSTANCE       = $window.FindName("textBoxServicesDatabaseInstance").Text
+            SCPDAYS                = $window.FindName("textBoxScpDays").Text
+            CERTSTORE              = $window.FindName("textBoxCertStore").Text
+            SERVICEUSER            = $window.FindName("textBoxServiceUser").Text
+            DATABASEADDRESS        = $window.FindName("textBoxServicesDatabaseAddress").Text
             LICENSESERVICEENDPOINT = $window.FindName("textBoxLicenseServiceEndpoint").Text
-            DICOMSERVICELOCATION = $window.FindName("textBoxDicomServiceLocation").Text
-            SCPTITLE = $window.FindName("textBoxScpTitle").Text
-            SERVICEPORT = $window.FindName("textBoxServicePort").Text
-            INSTALLDIR = $window.FindName("textBoxServicesInstallDir").Text
+            DICOMSERVICELOCATION   = $window.FindName("textBoxDicomServiceLocation").Text
+            SCPTITLE               = $window.FindName("textBoxScpTitle").Text
+            SERVICEPORT            = $window.FindName("textBoxServicePort").Text
+            INSTALLDIR             = $window.FindName("textBoxServicesInstallDir").Text
             GenerateSelfSignedCert = if ($window.FindName("checkboxServicesGenerateSelfSignedCert").IsChecked) { "Y" } else { "N" }
-            CERTSUBJECT = $window.FindName("textBoxCertSubject").Text
-            OFFLINEMODE = if ($window.FindName("checkboxOfflineMode").IsChecked) { "Y" } else { "N" }
-            LICENSESETUPEXE = $window.FindName("textBoxLicenseSetupExe").Text
+            CERTSUBJECT            = $window.FindName("textBoxCertSubject").Text
+            OFFLINEMODE            = if ($window.FindName("checkboxOfflineMode").IsChecked) { "Y" } else { "N" }
+            LICENSESETUPEXE        = $window.FindName("textBoxLicenseSetupExe").Text
         }
     }
 
@@ -973,23 +975,23 @@ function Validate-InputData {
 
     # File path validations
     $pathFields = @(
-        @{Name="SQL ISO Path"; Control="textBoxSqlIsoPath"; Extension=".iso"},
-        @{Name="SQL Install Directory"; Control="textBoxSqlInstallDir"; IsDirectory=$true},
-        @{Name="SQL Data Directory"; Control="textBoxSqlDataDir"; IsDirectory=$true},
-        @{Name="SQL Backup Directory"; Control="textBoxSqlBackupDir"; IsDirectory=$true},
-        @{Name="SQL TempDB Directory"; Control="textBoxSqlTempDbDir"; IsDirectory=$true},
-        @{Name="SQL Temp Log Directory"; Control="textBoxSqlTempLogDir"; IsDirectory=$true},
-        @{Name="License Location"; Control="textBoxLicenseLocation"; Extension=".lic"},
-        @{Name="Citrix ISO Location"; Control="textBoxCitrixIsoLocation"; Extension=".iso"},
-        @{Name="RayStation Location"; Control="textBoxRaystationLocation"; Extension=".exe"},
-        @{Name="Index Service Cert"; Control="textBoxIndexServiceCert"; Extension=".pfx,.cer"},
-        @{Name="Driver Location"; Control="textBoxDriverLocation"; Extension=".exe"},
-        @{Name="NVIDIA License Token Location"; Control="textBoxNvidiaLicenseTokenLocation"; Extension=".tok"},
-        @{Name="Cert Location"; Control="textBoxCertLocation"; Extension=".pfx,.cer"},
-        @{Name="SCP Folder"; Control="textBoxScpFolder"; IsDirectory=$true},
-        @{Name="DICOM Service Location"; Control="textBoxDicomServiceLocation"; Extension=".msi"},
-        @{Name="Services Install Directory"; Control="textBoxServicesInstallDir"; IsDirectory=$true},
-        @{Name="License Setup Exe"; Control="textBoxLicenseSetupExe"; Extension=".exe"}
+        @{Name = "SQL ISO Path"; Control = "textBoxSqlIsoPath"; Extension = ".iso" },
+        @{Name = "SQL Install Directory"; Control = "textBoxSqlInstallDir"; IsDirectory = $true },
+        @{Name = "SQL Data Directory"; Control = "textBoxSqlDataDir"; IsDirectory = $true },
+        @{Name = "SQL Backup Directory"; Control = "textBoxSqlBackupDir"; IsDirectory = $true },
+        @{Name = "SQL TempDB Directory"; Control = "textBoxSqlTempDbDir"; IsDirectory = $true },
+        @{Name = "SQL Temp Log Directory"; Control = "textBoxSqlTempLogDir"; IsDirectory = $true },
+        @{Name = "License Location"; Control = "textBoxLicenseLocation"; Extension = ".lic" },
+        @{Name = "Citrix ISO Location"; Control = "textBoxCitrixIsoLocation"; Extension = ".iso" },
+        @{Name = "RayStation Location"; Control = "textBoxRaystationLocation"; Extension = ".exe" },
+        @{Name = "Index Service Cert"; Control = "textBoxIndexServiceCert"; Extension = ".pfx,.cer" },
+        @{Name = "Driver Location"; Control = "textBoxDriverLocation"; Extension = ".exe" },
+        @{Name = "NVIDIA License Token Location"; Control = "textBoxNvidiaLicenseTokenLocation"; Extension = ".tok" },
+        @{Name = "Cert Location"; Control = "textBoxCertLocation"; Extension = ".pfx,.cer" },
+        @{Name = "SCP Folder"; Control = "textBoxScpFolder"; IsDirectory = $true },
+        @{Name = "DICOM Service Location"; Control = "textBoxDicomServiceLocation"; Extension = ".msi" },
+        @{Name = "Services Install Directory"; Control = "textBoxServicesInstallDir"; IsDirectory = $true },
+        @{Name = "License Setup Exe"; Control = "textBoxLicenseSetupExe"; Extension = ".exe" }
     )
 
     foreach ($field in $pathFields) {
@@ -999,10 +1001,12 @@ function Validate-InputData {
                 if ($path -notmatch '^[a-zA-Z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*$') {
                     $errors += "$($field.Name) is not a valid directory path format."
                 }
-            } else {
+            }
+            else {
                 if ($path -notmatch '^[a-zA-Z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*\.[^\\/:*?"<>|\r\n]+$') {
                     $errors += "$($field.Name) is not a valid file path format."
-                } elseif ($field.Extension -and ($path -notmatch "($($field.Extension.Replace(',','|')))$")) {
+                }
+                elseif ($field.Extension -and ($path -notmatch "($($field.Extension.Replace(',','|')))$")) {
                     $errors += "$($field.Name) should have extension $($field.Extension)."
                 }
             }
@@ -1017,10 +1021,10 @@ function Validate-InputData {
 
     # Username validations
     $usernameFields = @(
-        @{Name="SQL Service Account Name"; Control="textBoxSqlServiceAccountName"},
-        @{Name="Index Service User"; Control="textBoxIndexServiceUser"},
-        @{Name="Transfer Service User"; Control="textBoxTransferServiceUser"},
-        @{Name="Service User"; Control="textBoxServiceUser"}
+        @{Name = "SQL Service Account Name"; Control = "textBoxSqlServiceAccountName" },
+        @{Name = "Index Service User"; Control = "textBoxIndexServiceUser" },
+        @{Name = "Transfer Service User"; Control = "textBoxTransferServiceUser" },
+        @{Name = "Service User"; Control = "textBoxServiceUser" }
     )
 
     foreach ($field in $usernameFields) {
@@ -1032,12 +1036,12 @@ function Validate-InputData {
 
     # Port validations
     $portFields = @(
-        @{Name="SQL Port"; Control="textBoxSqlPort"},
-        @{Name="Database Port"; Control="textBoxDatabasePort"},
-        @{Name="Index Service Port"; Control="textBoxIndexServicePort"},
-        @{Name="SCP Port"; Control="textBoxScpPort"},
-        @{Name="Service Port"; Control="textBoxServicePort"},
-        @{Name="Services Database Port"; Control="textBoxServicesDatabasePort"}
+        @{Name = "SQL Port"; Control = "textBoxSqlPort" },
+        @{Name = "Database Port"; Control = "textBoxDatabasePort" },
+        @{Name = "Index Service Port"; Control = "textBoxIndexServicePort" },
+        @{Name = "SCP Port"; Control = "textBoxScpPort" },
+        @{Name = "Service Port"; Control = "textBoxServicePort" },
+        @{Name = "Services Database Port"; Control = "textBoxServicesDatabasePort" }
     )
 
     foreach ($field in $portFields) {
@@ -1094,7 +1098,8 @@ function Browse-Folder {
         $textBox = $window.FindName($textBoxName)
         if ($textBox -and $textBox.GetType().GetProperty("Text")) {
             $textBox.Text = $folder.SelectedPath
-        } else {
+        }
+        else {
             Write-Warning "TextBox '$textBoxName' not found or doesn't have a Text property."
         }
     }
@@ -1110,7 +1115,8 @@ function Browse-File {
         $textBox = $window.FindName($textBoxName)
         if ($textBox -and $textBox.GetType().GetProperty("Text")) {
             $textBox.Text = $openFileDialog.FileName
-        } else {
+        }
+        else {
             Write-Warning "TextBox '$textBoxName' not found or doesn't have a Text property."
         }
     }
@@ -1124,7 +1130,8 @@ function Add-ListItem {
     if ($listBox -and $textBox -and $textBox.Text -ne "") {
         $listBox.Items.Add($textBox.Text)
         $textBox.Clear()
-    } else {
+    }
+    else {
         Write-Warning "ListBox '$listBoxName' or TextBox '$textBoxName' not found or TextBox is empty."
     }
 }
@@ -1134,7 +1141,8 @@ function Remove-ListItem {
     $listBox = $window.FindName($listBoxName)
     if ($listBox -and $listBox.SelectedItem) {
         $listBox.Items.Remove($listBox.SelectedItem)
-    } else {
+    }
+    else {
         Write-Warning "ListBox '$listBoxName' not found or no item selected."
     }
 }
@@ -1149,13 +1157,14 @@ function Add-Drive {
         $drive = [PSCustomObject]@{
             DriveLetter = $driveLetter
             DriveNumber = $driveNumber
-            DriveLabel = $driveLabel
+            DriveLabel  = $driveLabel
         }
         $listBoxDrives.Items.Add($drive)
         $window.FindName("textBoxDriveLetter").Clear()
         $window.FindName("textBoxDriveNumber").Clear()
         $window.FindName("textBoxDriveLabel").Clear()
-    } else {
+    }
+    else {
         Write-Warning "One or more Drive fields are empty or ListBox not found."
     }
 }
@@ -1165,50 +1174,51 @@ function Remove-Drive {
     $listBoxDrives = $window.FindName("listBoxDrives")
     if ($listBoxDrives -and $listBoxDrives.SelectedItem) {
         $listBoxDrives.Items.Remove($listBoxDrives.SelectedItem)
-    } else {
+    }
+    else {
         Write-Warning "ListBox 'listBoxDrives' not found or no item selected."
     }
 }
 
 # Add event handlers
 $elements = @(
-    @{Name="BrowseSqlInstallDir"; Type="Browse"; TargetType="Folder"; TextBox="textBoxSqlInstallDir"},
-    @{Name="BrowseSqlTempDbDir"; Type="Browse"; TargetType="Folder"; TextBox="textBoxSqlTempDbDir"},
-    @{Name="BrowseSqlBackupDir"; Type="Browse"; TargetType="Folder"; TextBox="textBoxSqlBackupDir"},
-    @{Name="BrowseSqlDataDir"; Type="Browse"; TargetType="Folder"; TextBox="textBoxSqlDataDir"},
-    @{Name="BrowseSqlTempLogDir"; Type="Browse"; TargetType="Folder"; TextBox="textBoxSqlTempLogDir"},
-    @{Name="BrowseSqlIsoPath"; Type="Browse"; TargetType="File"; TextBox="textBoxSqlIsoPath"; Filter="ISO files (*.iso)|*.iso"},
-    @{Name="BrowseLicenseLocation"; Type="Browse"; TargetType="File"; TextBox="textBoxLicenseLocation"; Filter="License files (*.lic)|*.lic"},
-    @{Name="BrowseCitrixIsoLocation"; Type="Browse"; TargetType="File"; TextBox="textBoxCitrixIsoLocation"; Filter="ISO files (*.iso)|*.iso"},
-    @{Name="BrowseRaystationLocation"; Type="Browse"; TargetType="File"; TextBox="textBoxRaystationLocation"; Filter="Executable files (*.exe)|*.exe"},
-    @{Name="BrowseIndexServiceCert"; Type="Browse"; TargetType="File"; TextBox="textBoxIndexServiceCert"; Filter="Certificate files (*.pfx;*.cer)|*.pfx;*.cer"},
-    @{Name="BrowseDriverLocation"; Type="Browse"; TargetType="File"; TextBox="textBoxDriverLocation"; Filter="Executable files (*.exe)|*.exe"},
-    @{Name="BrowseNvidiaLicenseTokenLocation"; Type="Browse"; TargetType="File"; TextBox="textBoxNvidiaLicenseTokenLocation"; Filter="Token files (*.tok)|*.tok"},
-    @{Name="BrowseCertLocation"; Type="Browse"; TargetType="File"; TextBox="textBoxCertLocation"; Filter="Certificate files (*.pfx;*.cer)|*.pfx;*.cer"},
-    @{Name="BrowseScpFolder"; Type="Browse"; TargetType="Folder"; TextBox="textBoxScpFolder"},
-    @{Name="BrowseDicomServiceLocation"; Type="Browse"; TargetType="File"; TextBox="textBoxDicomServiceLocation"; Filter="MSI files (*.msi)|*.msi"},
-    @{Name="BrowseServicesInstallDir"; Type="Browse"; TargetType="Folder"; TextBox="textBoxServicesInstallDir"},
-    @{Name="BrowseLicenseSetupExe"; Type="Browse"; TargetType="File"; TextBox="textBoxLicenseSetupExe"; Filter="Executable files (*.exe)|*.exe"},
-    @{Name="AddDesignatedSqlServer"; Type="Add"; ListBox="listBoxDesignatedSqlServer"; TextBox="textBoxNewDesignatedSqlServer"},
-    @{Name="RemoveDesignatedSqlServer"; Type="Remove"; ListBox="listBoxDesignatedSqlServer"},
-    @{Name="AddDrive"; Type="Custom"; Function={Add-Drive}},
-    @{Name="RemoveDrive"; Type="Custom"; Function={Remove-Drive}},
-    @{Name="AddDesignatedServer"; Type="Add"; ListBox="listBoxDesignatedServer"; TextBox="textBoxNewDesignatedServer"},
-    @{Name="RemoveDesignatedServer"; Type="Remove"; ListBox="listBoxDesignatedServer"},
-    @{Name="AddOmittedServer"; Type="Add"; ListBox="listBoxOmittedServers"; TextBox="textBoxNewOmittedServer"},
-    @{Name="RemoveOmittedServer"; Type="Remove"; ListBox="listBoxOmittedServers"},
-    @{Name="AddRaystationOmittedServer"; Type="Add"; ListBox="listBoxRaystationOmittedServers"; TextBox="textBoxNewRaystationOmittedServer"},
-    @{Name="RemoveRaystationOmittedServer"; Type="Remove"; ListBox="listBoxRaystationOmittedServers"},
-    @{Name="AddTransferServiceServer"; Type="Add"; ListBox="listBoxTransferServiceServer"; TextBox="textBoxNewTransferServiceServer"},
-    @{Name="RemoveTransferServiceServer"; Type="Remove"; ListBox="listBoxTransferServiceServer"},
-    @{Name="AddIndexServiceServer"; Type="Add"; ListBox="listBoxIndexServiceServer"; TextBox="textBoxNewIndexServiceServer"},
-    @{Name="RemoveIndexServiceServer"; Type="Remove"; ListBox="listBoxIndexServiceServer"},
-    @{Name="AddLicenseAgentServer"; Type="Add"; ListBox="listBoxLicenseAgentServer"; TextBox="textBoxNewLicenseAgentServer"},
-    @{Name="RemoveLicenseAgentServer"; Type="Remove"; ListBox="listBoxLicenseAgentServer"},
-    @{Name="AddDicomServiceServer"; Type="Add"; ListBox="listBoxDicomServiceServer"; TextBox="textBoxNewDicomServiceServer"},
-    @{Name="RemoveDicomServiceServer"; Type="Remove"; ListBox="listBoxDicomServiceServer"}
-    @{Name="AddGpuOmittedServer"; Type="Add"; ListBox="listBoxGpuOmittedServers"; TextBox="textBoxNewGpuOmittedServer"},
-    @{Name="RemoveGpuOmittedServer"; Type="Remove"; ListBox="listBoxGpuOmittedServers"}
+    @{Name = "BrowseSqlInstallDir"; Type = "Browse"; TargetType = "Folder"; TextBox = "textBoxSqlInstallDir" },
+    @{Name = "BrowseSqlTempDbDir"; Type = "Browse"; TargetType = "Folder"; TextBox = "textBoxSqlTempDbDir" },
+    @{Name = "BrowseSqlBackupDir"; Type = "Browse"; TargetType = "Folder"; TextBox = "textBoxSqlBackupDir" },
+    @{Name = "BrowseSqlDataDir"; Type = "Browse"; TargetType = "Folder"; TextBox = "textBoxSqlDataDir" },
+    @{Name = "BrowseSqlTempLogDir"; Type = "Browse"; TargetType = "Folder"; TextBox = "textBoxSqlTempLogDir" },
+    @{Name = "BrowseSqlIsoPath"; Type = "Browse"; TargetType = "File"; TextBox = "textBoxSqlIsoPath"; Filter = "ISO files (*.iso)|*.iso" },
+    @{Name = "BrowseLicenseLocation"; Type = "Browse"; TargetType = "File"; TextBox = "textBoxLicenseLocation"; Filter = "License files (*.lic)|*.lic" },
+    @{Name = "BrowseCitrixIsoLocation"; Type = "Browse"; TargetType = "File"; TextBox = "textBoxCitrixIsoLocation"; Filter = "ISO files (*.iso)|*.iso" },
+    @{Name = "BrowseRaystationLocation"; Type = "Browse"; TargetType = "File"; TextBox = "textBoxRaystationLocation"; Filter = "Executable files (*.exe)|*.exe" },
+    @{Name = "BrowseIndexServiceCert"; Type = "Browse"; TargetType = "File"; TextBox = "textBoxIndexServiceCert"; Filter = "Certificate files (*.pfx;*.cer)|*.pfx;*.cer" },
+    @{Name = "BrowseDriverLocation"; Type = "Browse"; TargetType = "File"; TextBox = "textBoxDriverLocation"; Filter = "Executable files (*.exe)|*.exe" },
+    @{Name = "BrowseNvidiaLicenseTokenLocation"; Type = "Browse"; TargetType = "File"; TextBox = "textBoxNvidiaLicenseTokenLocation"; Filter = "Token files (*.tok)|*.tok" },
+    @{Name = "BrowseCertLocation"; Type = "Browse"; TargetType = "File"; TextBox = "textBoxCertLocation"; Filter = "Certificate files (*.pfx;*.cer)|*.pfx;*.cer" },
+    @{Name = "BrowseScpFolder"; Type = "Browse"; TargetType = "Folder"; TextBox = "textBoxScpFolder" },
+    @{Name = "BrowseDicomServiceLocation"; Type = "Browse"; TargetType = "File"; TextBox = "textBoxDicomServiceLocation"; Filter = "MSI files (*.msi)|*.msi" },
+    @{Name = "BrowseServicesInstallDir"; Type = "Browse"; TargetType = "Folder"; TextBox = "textBoxServicesInstallDir" },
+    @{Name = "BrowseLicenseSetupExe"; Type = "Browse"; TargetType = "File"; TextBox = "textBoxLicenseSetupExe"; Filter = "Executable files (*.exe)|*.exe" },
+    @{Name = "AddDesignatedSqlServer"; Type = "Add"; ListBox = "listBoxDesignatedSqlServer"; TextBox = "textBoxNewDesignatedSqlServer" },
+    @{Name = "RemoveDesignatedSqlServer"; Type = "Remove"; ListBox = "listBoxDesignatedSqlServer" },
+    @{Name = "AddDrive"; Type = "Custom"; Function = { Add-Drive } },
+    @{Name = "RemoveDrive"; Type = "Custom"; Function = { Remove-Drive } },
+    @{Name = "AddDesignatedServer"; Type = "Add"; ListBox = "listBoxDesignatedServer"; TextBox = "textBoxNewDesignatedServer" },
+    @{Name = "RemoveDesignatedServer"; Type = "Remove"; ListBox = "listBoxDesignatedServer" },
+    @{Name = "AddOmittedServer"; Type = "Add"; ListBox = "listBoxOmittedServers"; TextBox = "textBoxNewOmittedServer" },
+    @{Name = "RemoveOmittedServer"; Type = "Remove"; ListBox = "listBoxOmittedServers" },
+    @{Name = "AddRaystationOmittedServer"; Type = "Add"; ListBox = "listBoxRaystationOmittedServers"; TextBox = "textBoxNewRaystationOmittedServer" },
+    @{Name = "RemoveRaystationOmittedServer"; Type = "Remove"; ListBox = "listBoxRaystationOmittedServers" },
+    @{Name = "AddTransferServiceServer"; Type = "Add"; ListBox = "listBoxTransferServiceServer"; TextBox = "textBoxNewTransferServiceServer" },
+    @{Name = "RemoveTransferServiceServer"; Type = "Remove"; ListBox = "listBoxTransferServiceServer" },
+    @{Name = "AddIndexServiceServer"; Type = "Add"; ListBox = "listBoxIndexServiceServer"; TextBox = "textBoxNewIndexServiceServer" },
+    @{Name = "RemoveIndexServiceServer"; Type = "Remove"; ListBox = "listBoxIndexServiceServer" },
+    @{Name = "AddLicenseAgentServer"; Type = "Add"; ListBox = "listBoxLicenseAgentServer"; TextBox = "textBoxNewLicenseAgentServer" },
+    @{Name = "RemoveLicenseAgentServer"; Type = "Remove"; ListBox = "listBoxLicenseAgentServer" },
+    @{Name = "AddDicomServiceServer"; Type = "Add"; ListBox = "listBoxDicomServiceServer"; TextBox = "textBoxNewDicomServiceServer" },
+    @{Name = "RemoveDicomServiceServer"; Type = "Remove"; ListBox = "listBoxDicomServiceServer" }
+    @{Name = "AddGpuOmittedServer"; Type = "Add"; ListBox = "listBoxGpuOmittedServers"; TextBox = "textBoxNewGpuOmittedServer" },
+    @{Name = "RemoveGpuOmittedServer"; Type = "Remove"; ListBox = "listBoxGpuOmittedServers" }
 )
 
 foreach ($element in $elements) {
@@ -1218,33 +1228,35 @@ foreach ($element in $elements) {
             "Browse" {
                 if ($element.TargetType -eq "Folder") {
                     $control.Add_Click({ 
-                        param($sender, $e)
-                        Browse-Folder $element.TextBox 
-                    }.GetNewClosure())
-                } elseif ($element.TargetType -eq "File") {
+                            param($sender, $e)
+                            Browse-Folder $element.TextBox 
+                        }.GetNewClosure())
+                }
+                elseif ($element.TargetType -eq "File") {
                     $control.Add_Click({ 
-                        param($sender, $e)
-                        Browse-File $element.TextBox $element.Filter 
-                    }.GetNewClosure())
+                            param($sender, $e)
+                            Browse-File $element.TextBox $element.Filter 
+                        }.GetNewClosure())
                 }
             }
             "Add" {
                 $control.Add_Click({ 
-                    param($sender, $e)
-                    Add-ListItem $element.ListBox $element.TextBox 
-                }.GetNewClosure())
+                        param($sender, $e)
+                        Add-ListItem $element.ListBox $element.TextBox 
+                    }.GetNewClosure())
             }
             "Remove" {
                 $control.Add_Click({ 
-                    param($sender, $e)
-                    Remove-ListItem $element.ListBox 
-                }.GetNewClosure())
+                        param($sender, $e)
+                        Remove-ListItem $element.ListBox 
+                    }.GetNewClosure())
             }
             "Custom" {
                 $control.Add_Click($element.Function)
             }
         }
-    } else {
+    }
+    else {
         Write-Warning "Control '$($element.Name)' not found."
     }
 }
@@ -1267,9 +1279,10 @@ Update-LabelText
 $saveButton = $window.FindName("SaveButton")
 if ($saveButton) {
     $saveButton.Add_Click({
-        Save-JSON
-    })
-} else {
+            Save-JSON
+        })
+}
+else {
     Write-Warning "SaveButton not found in the XAML."
 }
 

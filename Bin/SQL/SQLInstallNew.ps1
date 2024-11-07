@@ -70,7 +70,7 @@ $scriptName = (Split-Path -Leaf $PSCommandPath).Replace('.ps1', '')
 
 $RunLocation = split-path -parent $MyInvocation.MyCommand.Definition
 set-location $RunLocation
-cd ..\..
+Set-Location ..\..
 $RunLocation = get-location
 $RunLocation = $RunLocation.Path
 

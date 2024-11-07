@@ -1,35 +1,42 @@
 ﻿$RunLocation = split-path -parent $MyInvocation.MyCommand.Definition
 set-location $RunLocation
-cd ..
+Set-Location ..
 $RunLocation = get-location
 $RunLocation = $RunLocation.Path
 
-try{
-$key = Get-Content "$RunLocation\Bin\Key\key.key"
-$path = "HKLM:\SOFTWARE\MachineSetup"
-$Password = (Get-ItemProperty -Path $path).Password
-$Username = (Get-ItemProperty -Path $path).Username
-$Domain = (Get-ItemProperty -Path $path).Domain
+try {
+    $key = Get-Content "$RunLocation\Bin\Key\key.key"
+    $path = "HKLM:\SOFTWARE\MachineSetup"
+    $Password = (Get-ItemProperty -Path $path).Password
+    $Username = (Get-ItemProperty -Path $path).Username
+    $Domain = (Get-ItemProperty -Path $path).Domain
 }
-Catch{
-$output = $_
-$exitCode = $LASTEXITCODE
-$error = New-Object -TypeName PSCustomObject -Property @{Host=$env:computername; Output=$output; ExitCode=$exitCode}
-$error | out-file "$Runlocation\logs\Autologon.log"
+Catch {
+    $e = $_.Exception
+    $msg = $e.Message
+    while ($e.InnerException) {
+        $e = $e.InnerException
+        $msg += "`n" + $e.Message
+    }
+    $msg | out-file "$Runlocation\logs\Autologon.log"
 
 }
 
-try{
-$Password = ConvertTo-SecureString -String $Password -Key $Key
+try {
+    $Password = ConvertTo-SecureString -String $Password -Key $Key
     
-$decryptedPass = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
-$decryptedPass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($decryptedPass)
+    $decryptedPass = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
+    $decryptedPass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($decryptedPass)
 }
-Catch{
-$output = $_
-$exitCode = $LASTEXITCODE
-$error = New-Object -TypeName PSCustomObject -Property @{Host=$env:computername; Output=$output; ExitCode=$exitCode}
-$error | out-file "$Runlocation\logs\Autologon.log"
+Catch {
+    $e = $_.Exception
+    $msg = $e.Message
+    while ($e.InnerException) {
+        $e = $e.InnerException
+        $msg += "`n" + $e.Message
+    }
+    $msg | out-file "$Runlocation\logs\Autologon.log"
+
 }
 
 $Code = @'
@@ -191,9 +198,9 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlo
 [PInvoke.LSAUtil.LSAutil]::new("DefaultPassword").SetSecret('%PASSWORD%')
 '@
 
-if($decryptedPass -contains '$'){
+if ($decryptedPass -contains '$') {
 
-$decryptedPass = $decryptedPass -replace '$', '`$'
+    $decryptedPass = $decryptedPass -replace '$', '`$'
 
 }
 
@@ -204,12 +211,16 @@ $Code = $Code.Replace("%PASSWORD%", $decryptedPass)
 $bytes = [System.Text.Encoding]::Unicode.GetBytes($Code)
 $b64 = [System.Convert]::ToBase64String($bytes)
 
-try{
-& powershell.exe -EncodedCommand $b64
+try {
+    & powershell.exe -EncodedCommand $b64
 }
-Catch{
-$output = $_
-$exitCode = $LASTEXITCODE
-$error = New-Object -TypeName PSCustomObject -Property @{Host=$env:computername; Output=$output; ExitCode=$exitCode}
-$error | out-file "$Runlocation\logs\Autologon.log"
+Catch {
+    $e = $_.Exception
+    $msg = $e.Message
+    while ($e.InnerException) {
+        $e = $e.InnerException
+        $msg += "`n" + $e.Message
+    }
+    $msg | out-file "$Runlocation\logs\Autologon.log"
+
 }
