@@ -8,11 +8,6 @@
 #------------------------------------------------------
 #Requires -RunAsAdministrator
 
-param(
-    [Parameter(Mandatory = $false)]
-    [switch]$verbose
-)
-
 set-ExecutionPolicy Unrestricted
 
 $RunLocation = split-path -parent $MyInvocation.MyCommand.Definition

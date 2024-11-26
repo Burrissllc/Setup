@@ -10,35 +10,37 @@
 
 set-ExecutionPolicy Unrestricted
 
+Clear-Host
+
 $RunLocation = split-path -parent $MyInvocation.MyCommand.Definition
 set-location $RunLocation
 Set-Location ..
 $RunLocation = get-location
 $RunLocation = $RunLocation.Path
-$remoteRunLocation = $RunLocation -replace":","$"
+$remoteRunLocation = $RunLocation -replace ":", "$"
 $remoteRunLocation = Join-Path "\\$env:computername" "$remoteRunLocation"
 $Settings = Get-Content "$RunLocation\setup.json" | ConvertFrom-Json -ErrorAction Stop
 Write-Host "Error Log Read Out" -ForegroundColor Green
-if("" -eq $Settings.GENERAL.REMOTELOGGINGLOCATION){
+if ("" -eq $Settings.GENERAL.REMOTELOGGINGLOCATION) {
 
-    $Settings.GENERAL.REMOTELOGGINGLOCATION = "$remoteRunLocation\Logs"
-    $settings | ConvertTo-Json | out-file "$RunLocation\Setup.json"
-  }
+  $Settings.GENERAL.REMOTELOGGINGLOCATION = "$remoteRunLocation\Logs"
+  $settings | ConvertTo-Json | out-file "$RunLocation\Setup.json"
+}
 
-  $ErrorLogPath = $Settings.GENERAL.REMOTELOGGINGLOCATION
-  $ErrorLogFile= "ErrorLog.json"
-  #$Path = Join-Path -Path $ErrorLogPath -ChildPath $ErrorLogFile
-  #New-Item -ItemType File -Path $Path
+$ErrorLogPath = $Settings.GENERAL.REMOTELOGGINGLOCATION
+$ErrorLogFile = "ErrorLog.json"
+#$Path = Join-Path -Path $ErrorLogPath -ChildPath $ErrorLogFile
+#New-Item -ItemType File -Path $Path
 
 Function Register-Watcher {
   param ($folder,
-         $FileName
-         )
+    $FileName
+  )
 
   $filter = "$FileName" #all files
   $watcher = New-Object IO.FileSystemWatcher $folder, $filter -Property @{ 
-      IncludeSubdirectories = $false
-      EnableRaisingEvents = $true
+    IncludeSubdirectories = $false
+    EnableRaisingEvents   = $true
   }
 
   $changeAction = [scriptblock]::Create('
@@ -76,11 +78,11 @@ Function Register-Watcher {
   Register-ObjectEvent $Watcher -EventName "Changed" -Action $changeAction
 }
 
-try{
-    Register-Watcher -folder $ErrorLogPath -filename $ErrorLogFile | out-null
-    while($true){}
+try {
+  Register-Watcher -folder $ErrorLogPath -filename $ErrorLogFile | out-null
+  while ($true) {}
 }
-finally{
-    Get-EventSubscriber | Unregister-Event
-    Write-Warning 'FileSystemWatcher removed.'
+finally {
+  Get-EventSubscriber | Unregister-Event
+  Write-Warning 'FileSystemWatcher removed.'
 }

@@ -7,7 +7,7 @@ Add-Type -AssemblyName System.Windows.Forms
 <Window 
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Setup JSON Builder" Height="600" Width="650">
+    Title="JSON Editor" Height="600" Width="800">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -40,6 +40,8 @@ Add-Type -AssemblyName System.Windows.Forms
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <Label Content="Enable Auto Logon" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
@@ -49,14 +51,14 @@ Add-Type -AssemblyName System.Windows.Forms
                         <TextBox x:Name="textBoxMachineName" Grid.Row="1" Grid.Column="1" Margin="0,5,0,5"/>
 
                         <Label Content="Time Zone" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ComboBox x:Name="comboBoxTimeZone" Grid.Row="2" Grid.Column="1" Margin="0,5,0,5">
-                            <ComboBoxItem Content=""/>
-                            <ComboBoxItem Content="EST"/>
-                            <ComboBoxItem Content="CST"/>
-                            <ComboBoxItem Content="MST"/>
-                            <ComboBoxItem Content="PST"/>
-                            <ComboBoxItem Content="AST"/>
-                            <ComboBoxItem Content="HST"/>
+                             <ComboBox x:Name="comboBoxTimeZone" Grid.Row="2" Grid.Column="1" Margin="0,5,0,5">
+                             <ComboBoxItem Content=""/>
+                             <ComboBoxItem Content="EST"/>
+                             <ComboBoxItem Content="CST"/>
+                             <ComboBoxItem Content="MST"/>
+                             <ComboBoxItem Content="PST"/>
+                             <ComboBoxItem Content="AST"/>
+                             <ComboBoxItem Content="HST"/>
                         </ComboBox>
 
                         <Label Content="Install Adobe" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
@@ -89,24 +91,26 @@ Add-Type -AssemblyName System.Windows.Forms
                         <Label Content="Install RayStation" Grid.Row="12" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <CheckBox x:Name="checkboxInstallRaystation" Grid.Row="12" Grid.Column="1" VerticalAlignment="Center"/>
 
-                        <Label Content="Build RayStation GPU Configs" Grid.Row="13" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <CheckBox x:Name="checkboxBuildRaystationGpuConfigs" Grid.Row="13" Grid.Column="1" VerticalAlignment="Center"/>
+                        <Label Content="Install DICOM Service" Grid.Row="13" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <CheckBox x:Name="checkboxInstallDICOM" Grid.Row="13" Grid.Column="1" VerticalAlignment="Center"/>
 
-                        <Label Content="Update Windows" Grid.Row="14" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <CheckBox x:Name="checkboxUpdateWindows" Grid.Row="14" Grid.Column="1" VerticalAlignment="Center"/>
+                        <Label Content="Install License Agent" Grid.Row="14" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <CheckBox x:Name="checkboxInstallLicenseAgent" Grid.Row="14" Grid.Column="1" VerticalAlignment="Center"/>
 
-                        <Label Content="Auto Reboot" Grid.Row="15" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <CheckBox x:Name="checkboxAutoReboot" Grid.Row="15" Grid.Column="1" VerticalAlignment="Center"/>
+                        <Label Content="Build RayStation GPU Configs" Grid.Row="15" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <CheckBox x:Name="checkboxBuildRaystationGpuConfigs" Grid.Row="15" Grid.Column="1" VerticalAlignment="Center"/>
 
-                        <Label Content="Cleanup" Grid.Row="16" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <CheckBox x:Name="checkboxCleanup" Grid.Row="16" Grid.Column="1" VerticalAlignment="Center"/>
+                        <Label Content="Update Windows" Grid.Row="16" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <CheckBox x:Name="checkboxUpdateWindows" Grid.Row="16" Grid.Column="1" VerticalAlignment="Center"/>
 
-                        <Label Content="Remote Logging Location" Grid.Row="17" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <TextBox x:Name="textBoxRemoteLoggingLocation" Grid.Row="17" Grid.Column="1" Margin="0,5,0,5">
-                            <TextBox.ToolTip>
-                                <ToolTip>This field should normally be empty.</ToolTip>
-                            </TextBox.ToolTip>
-                        </TextBox>
+                        <Label Content="Auto Reboot" Grid.Row="17" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <CheckBox x:Name="checkboxAutoReboot" Grid.Row="17" Grid.Column="1" VerticalAlignment="Center"/>
+
+                        <Label Content="Cleanup" Grid.Row="18" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <CheckBox x:Name="checkboxCleanup" Grid.Row="18" Grid.Column="1" VerticalAlignment="Center"/>
+
+                        <Label Content="Remote Logging Location" Grid.Row="19" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <TextBox x:Name="textBoxRemoteLoggingLocation" Grid.Row="19" Grid.Column="1" Margin="0,5,0,5"/>
                     </Grid>
                 </ScrollViewer>
             </TabItem>
@@ -297,7 +301,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         <Button x:Name="BrowseNvidiaLicenseTokenLocation" Content="Browse" Grid.Row="3" Grid.Column="2" Margin="5,5,0,5"/>
 
                         <Label Content="Omitted Servers" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxGpuOmittedServers" Grid.Row="4" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxGpuOmittedServers" Grid.Row="4" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="4" Grid.Column="2">
                             <TextBox x:Name="textBoxNewGpuOmittedServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddGpuOmittedServer" Content="Add" Margin="5,5,0,5"/>
@@ -340,8 +344,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         <Button x:Name="BrowseLicenseLocation" Content="Browse" Grid.Row="2" Grid.Column="2" Margin="5,5,0,5"/>
 
                         <Label Content="Designated Servers" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxDesignatedServer" Grid.Row="3" Grid.Column="1" Height="80
-                                 " Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxDesignatedServer" Grid.Row="3" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="3" Grid.Column="2">
                             <TextBox x:Name="textBoxNewDesignatedServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddDesignatedServer" Content="Add" Margin="5,5,0,5"/>
@@ -375,7 +378,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         </Grid.RowDefinitions>
 
                         <Label Content="Omitted Servers" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxOmittedServers" Grid.Row="0" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxOmittedServers" Grid.Row="0" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="0" Grid.Column="2">
                             <TextBox x:Name="textBoxNewOmittedServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddOmittedServer" Content="Add" Margin="5,5,0,5"/>
@@ -383,11 +386,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         </StackPanel>
 
                         <Label Content="Delivery Controllers" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <TextBox x:Name="textBoxDeliveryControllers" Grid.Row="1" Grid.Column="1" Margin="0,5,0,5">
-                            <TextBox.ToolTip>
-                                <ToolTip>Separate entries by a space.</ToolTip>
-                            </TextBox.ToolTip>
-                        </TextBox>
+                        <TextBox x:Name="textBoxDeliveryControllers" Grid.Row="1" Grid.Column="1" Margin="0,5,0,5"/>
 
                         <Label Content="Citrix ISO Location" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <TextBox x:Name="textBoxCitrixIsoLocation" Grid.Row="2" Grid.Column="1" Margin="0,5,0,5"/>
@@ -425,7 +424,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         </Grid.RowDefinitions>
 
                         <Label Content="Omitted Servers" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxRaystationOmittedServers" Grid.Row="0" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxRaystationOmittedServers" Grid.Row="0" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="0" Grid.Column="2">
                             <TextBox x:Name="textBoxNewRaystationOmittedServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddRaystationOmittedServer" Content="Add" Margin="5,5,0,5"/>
@@ -455,7 +454,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         <CheckBox x:Name="checkboxWaitForSqlConnection" Grid.Row="7" Grid.Column="1" VerticalAlignment="Center"/>
 
                         <Label Content="Index Service Server" Grid.Row="8" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxIndexServiceServer" Grid.Row="8" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxIndexServiceServer" Grid.Row="8" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="8" Grid.Column="2">
                             <TextBox x:Name="textBoxNewIndexServiceServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddIndexServiceServer" Content="Add" Margin="5,5,0,5"/>
@@ -476,10 +475,10 @@ Add-Type -AssemblyName System.Windows.Forms
 
                         <Label Content="Index Service Cert" Grid.Row="13" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <TextBox x:Name="textBoxIndexServiceCert" Grid.Row="13" Grid.Column="1" Margin="0,5,0,5"/>
-                        <Button x:Name="BrowseIndexServiceCert" Content="Browse" Grid.Row="13" Grid.Column="2" Margin="5,5,0,5"/>
+                        <Button x:Name="BrowseIndexServiceCert" Content="Browse" Grid.Row="13" Grid.Column="2" Margin="5,0,0,0"/>
 
                         <Label Content="Transfer Service Server" Grid.Row="14" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxTransferServiceServer" Grid.Row="14" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxTransferServiceServer" Grid.Row="14" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="14" Grid.Column="2">
                             <TextBox x:Name="textBoxNewTransferServiceServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddTransferServiceServer" Content="Add" Margin="5,5,0,5"/>
@@ -529,7 +528,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         </Grid.RowDefinitions>
 
                         <Label Content="DICOM Service Server" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxDicomServiceServer" Grid.Row="0" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxDicomServiceServer" Grid.Row="0" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="0" Grid.Column="2">
                             <TextBox x:Name="textBoxNewDicomServiceServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddDicomServiceServer" Content="Add" Margin="5,5,0,5"/>
@@ -554,7 +553,7 @@ Add-Type -AssemblyName System.Windows.Forms
                         <TextBox x:Name="textBoxScpDays" Grid.Row="5" Grid.Column="1" Margin="0,5,0,5"/>
 
                         <Label Content="License Service Server" Grid.Row="6" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <ListBox x:Name="listBoxLicenseAgentServer" Grid.Row="6" Grid.Column="1" Height="80" Margin="0,5,0,5"/>
+                        <ListBox x:Name="listBoxLicenseAgentServer" Grid.Row="6" Grid.Column="1" Height="100" Margin="0,5,0,5"/>
                         <StackPanel Grid.Row="6" Grid.Column="2">
                             <TextBox x:Name="textBoxNewLicenseAgentServer" Width="100" Margin="5,5,0,5" Height="25"/>
                             <Button x:Name="AddLicenseAgentServer" Content="Add" Margin="5,5,0,5"/>
@@ -653,6 +652,8 @@ function Load-ExistingJSON {
         $window.FindName("checkboxInstallSql").IsChecked = $jsonContent.GENERAL.INSTALLSQL -eq "Y"
         $window.FindName("checkboxUpdateWindows").IsChecked = $jsonContent.GENERAL.UPDATEWINDOWS -eq "Y"
         $window.FindName("checkboxInstallRaystation").IsChecked = $jsonContent.GENERAL.INSTALLRAYSTATION -eq "Y"
+        $window.FindName("checkboxInstallDICOM").IsChecked = $jsonContent.GENERAL.INSTALLDICOM -eq "Y"
+        $window.FindName("checkboxInstallLicenseAgent").IsChecked = $jsonContent.GENERAL.INSTALLLICENSEAGENT -eq "Y"
         $window.FindName("checkboxFormatDrives").IsChecked = $jsonContent.GENERAL.FORMATDRIVES -eq "Y"
         $window.FindName("textBoxRemoteLoggingLocation").Text = $jsonContent.GENERAL.REMOTELOGGINGLOCATION
 
@@ -815,7 +816,10 @@ function Save-JSON {
             INSTALLSQL                = if ($window.FindName("checkboxInstallSql").IsChecked) { "Y" } else { "N" }
             UPDATEWINDOWS             = if ($window.FindName("checkboxUpdateWindows").IsChecked) { "Y" } else { "N" }
             INSTALLRAYSTATION         = if ($window.FindName("checkboxInstallRaystation").IsChecked) { "Y" } else { "N" }
+            INSTALLDICOM              = if ($window.FindName("checkboxInstallDICOM").IsChecked) { "Y" } else { "N" }
+            INSTALLLICENSEAGENT       = if ($window.FindName("checkboxInstallLicenseAgent").IsChecked) { "Y" } else { "N" }
             FORMATDRIVES              = if ($window.FindName("checkboxFormatDrives").IsChecked) { "Y" } else { "N" }
+            REMOTELOGGINGLOCATION     = $window.FindName("textBoxRemoteLoggingLocation").Text
         }
         DESIGNATEDSQLSERVER = @{
             DESIGNATEDSQLSERVER = @($window.FindName("listBoxDesignatedSqlServer").Items)
@@ -940,6 +944,11 @@ function Validate-InputData {
     $validTimeZones = @("", "EST", "CST", "MST", "PST", "AST", "HST")
     if ($selectedTimeZone -notin $validTimeZones) {
         $errors += "Invalid Time Zone selected."
+    }
+
+    $textBoxRemoteLogging = $window.FindName("textBoxRemoteLoggingLocation").Text
+    if ($textBoxRemoteLogging -and $textBoxRemoteLogging -notmatch '^[a-zA-Z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*$') {
+        $errors += "Remote Logging Location is not a valid directory path format."
     }
 
     # Drive validation

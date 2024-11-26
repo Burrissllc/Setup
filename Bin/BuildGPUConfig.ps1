@@ -24,11 +24,12 @@ $RunLocation = $RunLocation.Path
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 
 #----------------------------------------------------------------------------------------------
-if([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True){
+if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
 
     $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
-}else{
-$null = $RemoteLogLocation
+}
+else {
+    $null = $RemoteLogLocation
 }
 
 function Write-PSULog {
@@ -37,8 +38,8 @@ function Write-PSULog {
         [string]$Severity = "Info",
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        [string]$logDirectory="$RunLocation\Logs\",
-        $RemotelogDirectory="$RemoteLogLocation"
+        [string]$logDirectory = "$RunLocation\Logs\",
+        $RemotelogDirectory = "$RemoteLogLocation"
         #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
@@ -48,14 +49,14 @@ function Write-PSULog {
         Message   = $Message
     }
 
-    if(!(Test-Path -Path $logDirectory)) {
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-        }
+    if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+    }
 
     $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
     $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if($RemotelogDirectory -ne $null){
-        if(!(Test-Path -Path $RemotelogDirectory)) {
+    if ($RemotelogDirectory -ne $null) {
+        if (!(Test-Path -Path $RemotelogDirectory)) {
             New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
         }
         $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
@@ -70,7 +71,7 @@ function Write-PSULog {
 
 Function Format-XMLText {
     Param(
-        [Parameter(ValueFromPipeline=$true,Mandatory=$true)]
+        [Parameter(ValueFromPipeline = $true, Mandatory = $true)]
         [xml[]]
         $xmlText
     )
@@ -86,7 +87,7 @@ Function Format-XMLText {
         #$stringWriterSettings.OmitXmlDeclaration = $true
  
         # Create the XMLWriter from the StringWriter
-        $xmlWriter = [System.Xml.XmlWriter]::Create($stringWriter,$stringWriterSettings)
+        $xmlWriter = [System.Xml.XmlWriter]::Create($stringWriter, $stringWriterSettings)
  
         # Write the XML using the XMLWriter
         $xmlText.WriteContentTo($xmlWriter)
@@ -98,27 +99,27 @@ Function Format-XMLText {
         # Output the text
         $stringWriter.ToString()
         # This works in a remote session, when [Console]::Out doesn't
-        }
     }
+}
 
 
 function AddmaxConcurrentDevices {
     param(
-        [Parameter(Mandatory=$true)] $xml,
-        [Parameter(Mandatory=$true)] $value
+        [Parameter(Mandatory = $true)] $xml,
+        [Parameter(Mandatory = $true)] $value
     )
 
     
-   $xml.configuration.gpuConfiguration.SetAttribute('maxConcurrentDevices', $value)
+    $xml.configuration.gpuConfiguration.SetAttribute('maxConcurrentDevices', $value)
 
-   #return $xml
+    #return $xml
 
 }
 
 function AddpostReleaseApprovedSelfTestOutputs {
     param(
-        [Parameter(Mandatory=$true)] $xml,
-        [Parameter(Mandatory=$true)] $value
+        [Parameter(Mandatory = $true)] $xml,
+        [Parameter(Mandatory = $true)] $value
     )
 
     $xml.configuration.gpuConfiguration.SetAttribute('postReleaseApprovedSelfTestOutputs', $value)
@@ -126,132 +127,142 @@ function AddpostReleaseApprovedSelfTestOutputs {
     #return $xml
 }
 
-$GPUInstalled = ((Get-WmiObject Win32_VideoController) | where-object {$_.Name -match "NVIDIA"}).Name
+$GPUInstalled = ((Get-WmiObject Win32_VideoController) | where-object { $_.Name -match "NVIDIA" }).Name
     
-if($Null -ne $GPUInstalled){
-Write-PSULog -Severity Info -Message "GPU: $GPUInstalled is installed. Building Config files."
+if ($Null -ne $GPUInstalled) {
+    Write-PSULog -Severity Info -Message "GPU: $GPUInstalled is installed. Building Config files."
 
-if(!(Test-Path "C:\ProgramData\RaySearch\GpuSettings\")){
+    if (!(Test-Path "C:\ProgramData\RaySearch\GpuSettings\")) {
 
-New-Item -ItemType Directory -Path "C:\ProgramData\RaySearch\GpuSettings\"
-
-}
-
-$RSversions = Get-WmiObject -Class Win32_Product | where vendor -eq 'RaySearch Laboratories' | select Name, Version
-$cleanRSVersions = @()
-foreach($RSVersion in $RSVersions){
-
-if($RSVersion.name -match "RayStation \d+"){
-
-    $RSVersion = $RSVersion.Version
-
-    if($RSVersion.Split('.',4)[3] -ne $null){
-
-    $RSVersion = $RSVersion.Substring(0, $RSVersion.lastIndexOf('.'))
+        New-Item -ItemType Directory -Path "C:\ProgramData\RaySearch\GpuSettings\"
 
     }
+
+    $RSversions = Get-WmiObject -Class Win32_Product | where vendor -eq 'RaySearch Laboratories' | select Name, Version
+    $cleanRSVersions = @()
+    foreach ($RSVersion in $RSVersions) {
+
+        if ($RSVersion.name -match "RayStation \d+" -or $RSVersion.name -match "RayStation \w+-R" -or $RSVersion.name -match "MicroRayStation .+") {
+
+            $RSVersion = $RSVersion.Version
+
+            if ($RSVersion.Split('.', 4)[3] -ne $null) {
+
+                $RSVersion = $RSVersion.Substring(0, $RSVersion.lastIndexOf('.'))
+
+            }
         
-        if($cleanRSVersions -notcontains $RSVersion){
+            if ($cleanRSVersions -notcontains $RSVersion) {
 
-        [version]$RSVersionUpdate = [String]$RSVersion
+                [version]$RSVersionUpdate = [String]$RSVersion
 
-        $CleanRSVersions += $RSVersionUpdate
+                $CleanRSVersions += $RSVersionUpdate
+
+            }
 
         }
 
     }
 
-}
+    $OSBuild = [System.Environment]::OSVersion.Version | select-object Major, Build
 
-$OSBuild = [System.Environment]::OSVersion.Version | select-object Major, Build
+    [string]$formattedOSBuild = $OSBuild.major, $OSBuild.Build -join "."
 
-[string]$formattedOSBuild = $OSBuild.major,$OSBuild.Build -join "."
+    if (((Get-CimInstance Win32_OperatingSystem).caption) -match "Server") {
 
-$formattedOSBuild = $formattedOSBuild + "s"
+        $formattedOSBuild = $formattedOSBuild + "s"
+    }
+    else {
 
+        $formattedOSBuild = $formattedOSBuild + "w"
 
-if(Test-Path -Path "C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe"){
-    $NVSMILocation = "C:\Program Files\NVIDIA Corporation\NVSMI"
-}
-elseif (Test-Path -Path "C:\Windows\System32\nvidia-smi.exe") {
-    $NVSMILocation = "C:\Windows\System32"
-}
-
-
-[xml]$NvidiaQuery = & "$NVSMILocation\nvidia-smi.exe" -q -x
-
-$GPUs = $NvidiaQuery.SelectNodes("/nvidia_smi_log/gpu")
-$Driver_Version = $NvidiaQuery.nvidia_smi_log.driver_version
-$AttachedGPUs = $NvidiaQuery.nvidia_smi_log.attached_gpus
-$GPUCount = 0
-
-$FinalIndex = $GPUs.Count - 1
-$Rotated_GPUs = foreach ($Index in 0..$FinalIndex)
-    {
-    $NewIndex = $Index + 1
-    if ($NewIndex -gt $FinalIndex)
-        {
-        $NewIndex = 0
-        }
-    $GPUs[$NewIndex]
     }
 
-$GPUs = $Rotated_GPUs
 
-$GPUObjects = foreach($GPU in $GPUs){
-
-$GPUName = $GPU.product_name
-$GPUNameShort = $GPUName.Split(' ')[-1]
-$DriverModel = $GPU.driver_model.current_dm
-$uuid_machine = $GPU.uuid
-$pci_machine = $GPU.pci.pci_bus_id
-$pci_machine = $pci_machine -replace '\s',''
-$pci_machine = $pci_machine -replace '0+', '0'
-if($pci_machine.Substring(4) -match 0){$pci_machine =  -join $pci_machine[0..3 + 5..($pci_machine.Length)]}
-$memory_machine = $GPU.fb_memory_usage.total -replace "\D",""
-$memory_machine = [math]::ceiling($memory_machine/1024)
-$ECCCheck = $GPU.ecc_mode.current_ecc
-if($ECCCheck -match "N/A"){$ECCCheck = " (no ECC)"} else{$ECCCheck = $null}
-
-[PSCustomObject]@{
-GPU = "GPU$GPUCount"
-GPUName = $GPUName
-GPUNameShort = $GPUNameShort
-DriverModel = $DriverModel
-UUID = $uuid_machine
-PCI = $pci_machine
-Memory = $memory_machine
-ECC = $ECCCheck
-}
-
-$GPUCount++
-}
+    if (Test-Path -Path "C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe") {
+        $NVSMILocation = "C:\Program Files\NVIDIA Corporation\NVSMI"
+    }
+    elseif (Test-Path -Path "C:\Windows\System32\nvidia-smi.exe") {
+        $NVSMILocation = "C:\Windows\System32"
+    }
+    elseif (Test-Path ((gwmi Win32_SystemDriver | select DisplayName, @{n = "Path"; e = { (gi $_.pathname) } } | Where-Object { $_.DisplayName -match "nvlddmkm" }).path | split-path -Parent)) {
+        $NVSMILocation = (gwmi Win32_SystemDriver | select DisplayName, @{n = "Path"; e = { (gi $_.pathname) } } | Where-Object { $_.DisplayName -match "nvlddmkm" }).path | split-path -Parent
+    }
 
 
-$ComputeCards = $GPUObjects | where-object {$_.ECC -EQ $null}
+    [xml]$NvidiaQuery = & "$NVSMILocation\nvidia-smi.exe" -q -x
 
-$maxConcurrentDevices = 0
-if($ComputeCards.count -eq 1){
+    $GPUs = $NvidiaQuery.SelectNodes("/nvidia_smi_log/gpu")
+    $Driver_Version = $NvidiaQuery.nvidia_smi_log.driver_version
+    $AttachedGPUs = $NvidiaQuery.nvidia_smi_log.attached_gpus
+    $GPUCount = 0
 
-$maxConcurrentDevices = 1
+    $FinalIndex = $GPUs.Count - 1
+    $Rotated_GPUs = foreach ($Index in 0..$FinalIndex) {
+        $NewIndex = $Index + 1
+        if ($NewIndex -gt $FinalIndex) {
+            $NewIndex = 0
+        }
+        $GPUs[$NewIndex]
+    }
 
-}
+    $GPUs = $Rotated_GPUs
 
-if ($ComputeCards.count -gt 1 -and ($ComputeCards.GPUName | Get-Unique).Count -eq 1) {
+    $GPUObjects = foreach ($GPU in $GPUs) {
 
-$maxConcurrentDevices = $ComputeCards - 1
+        $GPUName = $GPU.product_name
+        if ($GPUName.Split(' ').count -le 2) { $GPUNameShort = $GPUName.Split(' ')[-1] }
+        if ($GPUName.Split(' ').count -eq 3) { $GPUNameShort = [string]::Join('', $GPUName.Split(' ')[1], $GPUName.Split(' ')[2]) }
+        $DriverModel = $GPU.driver_model.current_dm
+        $uuid_machine = $GPU.uuid
+        $pci_machine = $GPU.pci.pci_bus_id
+        $pci_machine = $pci_machine -replace '\s', ''
+        $pci_machine = $pci_machine -replace '0+', '0'
+        if ($pci_machine.Substring(4) -match 0) { $pci_machine = -join $pci_machine[0..3 + 5..($pci_machine.Length)] }
+        $memory_machine = $GPU.fb_memory_usage.total -replace "\D", ""
+        $memory_machine = [math]::ceiling($memory_machine / 1024)
+        $ECCCheck = $GPU.ecc_mode.current_ecc
+        if ($ECCCheck -match "N/A") { $ECCCheck = " (no ECC)" } else { $ECCCheck = $null }
 
-}
-else{
+        [PSCustomObject]@{
+            GPU          = "GPU$GPUCount"
+            GPUName      = $GPUName
+            GPUNameShort = $GPUNameShort
+            DriverModel  = $DriverModel
+            UUID         = $uuid_machine
+            PCI          = $pci_machine
+            Memory       = $memory_machine
+            ECC          = $ECCCheck
+        }
 
-$maxConcurrentDevices = ($ComputeCards.Memory | Measure-Object -Maximum).count
+        $GPUCount++
+    }
 
-}
 
-$postReleaseApprovedSelfTestOutputs=""
+    $ComputeCards = $GPUObjects | where-object { $_.ECC -EQ $null }
 
-# Given XML content
-$BaseConfig = @"
+    $maxConcurrentDevices = 0
+    if ($ComputeCards.count -eq 1) {
+
+        $maxConcurrentDevices = 1
+
+    }
+
+    if ($ComputeCards.count -gt 1 -and ($ComputeCards.GPUName | Get-Unique).Count -eq 1) {
+
+        $maxConcurrentDevices = $ComputeCards - 1
+
+    }
+    else {
+
+        $maxConcurrentDevices = ($ComputeCards.Memory | Measure-Object -Maximum).count
+
+    }
+
+    $postReleaseApprovedSelfTestOutputs = ""
+
+    # Given XML content
+    $BaseConfig = @"
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
     <configSections>
@@ -261,182 +272,267 @@ $BaseConfig = @"
 </configuration>
 "@
 
-$delimiter = "`n"
+    $delimiter = "`n"
 
 
-foreach($version in $cleanRSVersions){
+    foreach ($version in $cleanRSVersions) {
 
-Write-PSULog -Severity Info -Message "Building Config for RayStation Version: $version"
+        Write-PSULog -Severity Info -Message "Building Config for RayStation Version: $version"
 
-if($Version -lt [System.Version]"8.99.10"){
+        if ($Version -lt [System.Version]"8.99.10") {
 
-Write-host "Version $version is too old" -ForegroundColor Red
+            Write-host "Version $version is too old" -ForegroundColor Red
 
-}#--------------------------------------------------------------------------------------------------------
+        }#--------------------------------------------------------------------------------------------------------
 
-if($Version -ge [System.Version]"8.99.10" -and $Version -le [System.Version]"10.0.0"){
-$xml = [xml]$BaseConfig
-$xml.PreserveWhitespace = $true
-$GPUStringCombined = @()
-foreach ($GPUObject in $GPUObjects){
+        if ($Version -ge [System.Version]"8.99.10" -and $Version -le [System.Version]"10.0.0") {
+            $xml = [xml]$BaseConfig
+            $xml.PreserveWhitespace = $true
+            $GPUStringCombined = @()
+            foreach ($GPUObject in $GPUObjects) {
 
-$GPU = $GPUObject.gpu
-$GPUName = $GPUObject.GPUName
-$GPUMemory = $GPUObject.Memory
-$GPUEcc = $GPUObject.ECC
-$GPUDriverModel = $GPUObject.DriverModel
-$GPUPci = $GPUObject.PCI
+                $GPU = $GPUObject.gpu
+                $GPUName = $GPUObject.GPUName
+                $GPUMemory = $GPUObject.Memory
+                $GPUEcc = $GPUObject.ECC
+                $GPUDriverModel = $GPUObject.DriverModel
+                $GPUPci = $GPUObject.PCI
 
-$GPUString = $delimiter +"$GPU"+": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUPci"
+                $GPUString = $delimiter + "$GPU" + ": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUPci"
 
-$GPUStringCombined += $GPUString
+                $GPUStringCombined += $GPUString
+            }
+            if ($GPUStringCombined.count -gt 1) {
+                $GPUStringFinal = $GPUStringCombined -join ""
+            }
+            else {
+                $GPUStringFinal = $GPUStringCombined
+            }
+            $newSystemInfo = "$Windows formattedOSBuild, GPU driver $Driver_Version$GPUStringFinal"
+            # Update the systemInfo attribute value
+            $xml.configuration.gpuConfiguration.systemInfo = $newSystemInfo
+            # Convert the modified XML back to a string
+            $updatedXmlContent = $xml.OuterXml
+            # Display the updated XML content
+            $updatedXmlContent = $updatedXmlContent | Format-XMLText
+            $MyPath = "C:\ProgramData\RaySearch\GpuSettings\GpuSettings-v$Version.config"
+            $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
+            [System.IO.File]::WriteAllLines($MyPath, $updatedXmlContent, $Utf8NoBomEncoding)
+
+        }#----------------------------------------------------------------------------------------------------------------------------
+
+        if ($Version -ge [System.Version]"10.1.0" -and $Version -lt [System.Version]"11.0.0") {
+            $xml = [xml]$BaseConfig
+            $xml.PreserveWhitespace = $true
+            $GPUStringCombined = @()
+            foreach ($GPUObject in $GPUObjects) {
+
+                $GPU = $GPUObject.gpu
+                $GPUName = $GPUObject.GPUName
+                $GPUMemory = $GPUObject.Memory
+                $GPUEcc = $GPUObject.ECC
+                $GPUDriverModel = $GPUObject.DriverModel
+                $GPUPci = $GPUObject.PCI
+
+                $GPUString = $delimiter + "$GPU" + ": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUPci" 
+
+                $GPUStringCombined += $GPUString
+            }
+            if ($GPUStringCombined.count -gt 1) {
+                $GPUStringFinal = $GPUStringCombined -join ""
+            }
+            else {
+                $GPUStringFinal = $GPUStringCombined
+            }
+
+            $newSystemInfo = "Windows $formattedOSBuild, GPU driver $Driver_Version$GPUStringFinal"
+            # Update the systemInfo attribute value
+            $xml.configuration.gpuConfiguration.systemInfo = $newSystemInfo
+            AddmaxConcurrentDevices -xml $xml -value $maxConcurrentDevices 
+            # Convert the modified XML back to a string
+            $updatedXmlContent = $xml.OuterXml
+            # Display the updated XML content
+            $updatedXmlContent = $updatedXmlContent | Format-XMLText
+            $MyPath = "C:\ProgramData\RaySearch\GpuSettings\GpuSettings-v$Version.config"
+            $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
+            [System.IO.File]::WriteAllLines($MyPath, $updatedXmlContent, $Utf8NoBomEncoding)
+
+        }#----------------------------------------------------------------------------------------------------------------------------
+
+        if ($Version -ge [System.Version]"11.0.0" -and $Version -le [System.Version]"12.0.0") {
+            $xml = [xml]$BaseConfig
+            $xml.PreserveWhitespace = $true
+            $GPUStringCombined = @()
+            foreach ($GPUObject in $GPUObjects) {
+
+                $GPU = $GPUObject.gpu
+                $GPUName = $GPUObject.GPUName
+                $GPUMemory = $GPUObject.Memory
+                $GPUEcc = $GPUObject.ECC
+                $GPUDriverModel = $GPUObject.DriverModel
+                $GPUPci = $GPUObject.PCI
+                $GPUuuid = $GPUObject.uuid
+
+                $GPUString = $delimiter + "$GPU" + ": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUuuid, $GPUPci"
+
+                $GPUStringCombined += $GPUString
+            }
+            if ($GPUStringCombined.count -gt 1) {
+                $GPUStringFinal = $GPUStringCombined -join ""
+            }
+            else {
+                $GPUStringFinal = $GPUStringCombined
+            }
+
+            $newSystemInfo = "Windows $formattedOSBuild, GPU driver $Driver_Version$GPUStringFinal"
+            # Update the systemInfo attribute value
+            $xml.configuration.gpuConfiguration.systemInfo = $newSystemInfo
+            AddmaxConcurrentDevices -xml $xml -value $maxConcurrentDevices
+            AddpostReleaseApprovedSelfTestOutputs -xml $xml -value $postReleaseApprovedSelfTestOutputs 
+
+            # Convert the modified XML back to a string
+
+
+            $updatedXmlContent = $xml.OuterXml
+            # Display the updated XML content
+            $updatedXmlContent = $updatedXmlContent | Format-XMLText
+            $MyPath = "C:\ProgramData\RaySearch\GpuSettings\GpuSettings-v$Version.config"
+            $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
+            [System.IO.File]::WriteAllLines($MyPath, $updatedXmlContent, $Utf8NoBomEncoding)
+
+        }#----------------------------------------------------------------------------------------------------------------------------
+
+        if ($Version -ge [System.Version]"13.0.0") {
+            $xml = [xml]$BaseConfig
+            $xml.PreserveWhitespace = $true
+            $GPUStringCombined = @()
+            foreach ($GPUObject in $GPUObjects) {
+
+                $GPU = $GPUObject.gpu
+                $GPUName = $GPUObject.GPUNameshort
+                $GPUMemory = $GPUObject.Memory
+                $GPUEcc = $GPUObject.ECC
+                $GPUDriverModel = $GPUObject.DriverModel
+                $GPUPci = $GPUObject.PCI
+                $GPUuuid = $GPUObject.uuid
+
+                $GPUString = $delimiter + "$GPU" + ": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUuuid"
+
+                $GPUStringCombined += $GPUString
+            }
+            if ($GPUStringCombined.count -gt 1) {
+                $GPUStringFinal = $GPUStringCombined -join ""
+            }
+            else {
+                $GPUStringFinal = $GPUStringCombined
+            }
+
+            $newSystemInfo = "Windows $formattedOSBuild, GPU driver $Driver_Version$GPUStringFinal"
+            # Update the systemInfo attribute value
+            $xml.configuration.gpuConfiguration.systemInfo = $newSystemInfo
+            AddmaxConcurrentDevices -xml $xml -value $maxConcurrentDevices
+            AddpostReleaseApprovedSelfTestOutputs -xml $xml -value $postReleaseApprovedSelfTestOutputs 
+
+            # Convert the modified XML back to a string
+
+
+            $updatedXmlContent = $xml.OuterXml
+            # Display the updated XML content
+            $updatedXmlContent = $updatedXmlContent | Format-XMLText
+            $MyPath = "C:\ProgramData\RaySearch\GpuSettings\GpuSettings-v$Version.config"
+            $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
+            [System.IO.File]::WriteAllLines($MyPath, $updatedXmlContent, $Utf8NoBomEncoding)
+
+        }#----------------------------------------------------------------------------------------------------------------------------
+
+        if ($Version -ge [System.Version]"14.0.0" -and $Version -lt [System.Version]"15.0.0") {
+            $xml = [xml]$BaseConfig
+            $xml.PreserveWhitespace = $true
+            $GPUStringCombined = @()
+            foreach ($GPUObject in $GPUObjects) {
+
+                $GPU = $GPUObject.gpu
+                $GPUName = $GPUObject.GPUNameDash
+                $GPUMemory = $GPUObject.Memory
+                $GPUEcc = $GPUObject.ECC
+                $GPUDriverModel = $GPUObject.DriverModel
+                $GPUPci = $GPUObject.PCI
+                $GPUuuid = $GPUObject.uuid
+
+                $GPUString = $delimiter + "$GPU" + ": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUuuid"
+
+                $GPUStringCombined += $GPUString
+            }
+            if ($GPUStringCombined.count -gt 1) {
+                $GPUStringFinal = $GPUStringCombined -join ""
+            }
+            else {
+                $GPUStringFinal = $GPUStringCombined
+            }
+
+            $newSystemInfo = "Windows $formattedOSBuild, GPU driver $Driver_Version$GPUStringFinal"
+            # Update the systemInfo attribute value
+            $xml.configuration.gpuConfiguration.systemInfo = $newSystemInfo
+            AddmaxConcurrentDevices -xml $xml -value $maxConcurrentDevices
+            AddpostReleaseApprovedSelfTestOutputs -xml $xml -value $postReleaseApprovedSelfTestOutputs 
+
+            # Convert the modified XML back to a string
+
+
+            $updatedXmlContent = $xml.OuterXml
+            # Display the updated XML content
+            $updatedXmlContent = $updatedXmlContent | Format-XMLText
+            $MyPath = "C:\ProgramData\RaySearch\GpuSettings\GpuSettings-v$Version.config"
+            $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
+            [System.IO.File]::WriteAllLines($MyPath, $updatedXmlContent, $Utf8NoBomEncoding)
+
+        }#----------------------------------------------------------------------------------------------------------------------------
+
+        if ($Version -ge [System.Version]"15.0.0") {
+            $xml = [xml]$BaseConfig
+            $xml.PreserveWhitespace = $true
+            $GPUStringCombined = @()
+            foreach ($GPUObject in $GPUObjects) {
+
+                $GPU = $GPUObject.gpu
+                $GPUName = $GPUObject.GPUNameShort
+                $GPUMemory = $GPUObject.Memory
+                $GPUEcc = $GPUObject.ECC
+                $GPUDriverModel = $GPUObject.DriverModel
+                $GPUPci = $GPUObject.PCI
+                $GPUuuid = $GPUObject.uuid
+
+                $GPUString = $delimiter + "$GPU" + ": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUuuid"
+
+                $GPUStringCombined += $GPUString
+            }
+            if ($GPUStringCombined.count -gt 1) {
+                $GPUStringFinal = $GPUStringCombined -join ""
+            }
+            else {
+                $GPUStringFinal = $GPUStringCombined
+            }
+
+            $newSystemInfo = "Windows $formattedOSBuild, GPU driver $Driver_Version$GPUStringFinal"
+            # Update the systemInfo attribute value
+            $xml.configuration.gpuConfiguration.systemInfo = $newSystemInfo
+            AddmaxConcurrentDevices -xml $xml -value $maxConcurrentDevices
+            AddpostReleaseApprovedSelfTestOutputs -xml $xml -value $postReleaseApprovedSelfTestOutputs 
+
+            # Convert the modified XML back to a string
+
+
+            $updatedXmlContent = $xml.OuterXml
+            # Display the updated XML content
+            $updatedXmlContent = $updatedXmlContent | Format-XMLText
+            $MyPath = "C:\ProgramData\RaySearch\GpuSettings\GpuSettings-v$Version.config"
+            $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
+            [System.IO.File]::WriteAllLines($MyPath, $updatedXmlContent, $Utf8NoBomEncoding)
+
+        }#----------------------------------------------------------------------------------------------------------------------------
+    }
+
 }
-if($GPUStringCombined.count -gt 1){
-$GPUStringFinal = $GPUStringCombined -join ""
-}
-else{
-$GPUStringFinal = $GPUStringCombined
-}
-$newSystemInfo = "$Windows formattedOSBuild, GPU driver $Driver_Version$GPUStringFinal"
-# Update the systemInfo attribute value
-$xml.configuration.gpuConfiguration.systemInfo = $newSystemInfo
-# Convert the modified XML back to a string
-$updatedXmlContent = $xml.OuterXml
-# Display the updated XML content
-$updatedXmlContent = $updatedXmlContent | Format-XMLText
-$MyPath = "C:\ProgramData\RaySearch\GpuSettings\GpuSettings-v$Version.config"
-$Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
-[System.IO.File]::WriteAllLines($MyPath, $updatedXmlContent, $Utf8NoBomEncoding)
-
-    }#----------------------------------------------------------------------------------------------------------------------------
-
-if($Version -ge [System.Version]"10.1.0" -and $Version -lt [System.Version]"11.0.0"){
-$xml = [xml]$BaseConfig
-$xml.PreserveWhitespace = $true
-$GPUStringCombined = @()
-foreach ($GPUObject in $GPUObjects){
-
-$GPU = $GPUObject.gpu
-$GPUName = $GPUObject.GPUName
-$GPUMemory = $GPUObject.Memory
-$GPUEcc = $GPUObject.ECC
-$GPUDriverModel = $GPUObject.DriverModel
-$GPUPci = $GPUObject.PCI
-
-$GPUString = $delimiter +"$GPU"+": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUPci" 
-
-$GPUStringCombined += $GPUString
-}
-if($GPUStringCombined.count -gt 1){
-$GPUStringFinal = $GPUStringCombined -join ""
-}
-else{
-$GPUStringFinal = $GPUStringCombined
-}
-
-$newSystemInfo = "Windows $formattedOSBuild, GPU driver $Driver_Version$GPUStringFinal"
-# Update the systemInfo attribute value
-$xml.configuration.gpuConfiguration.systemInfo = $newSystemInfo
-AddmaxConcurrentDevices -xml $xml -value $maxConcurrentDevices 
-# Convert the modified XML back to a string
-$updatedXmlContent = $xml.OuterXml
-# Display the updated XML content
-$updatedXmlContent = $updatedXmlContent | Format-XMLText
-$MyPath = "C:\ProgramData\RaySearch\GpuSettings\GpuSettings-v$Version.config"
-$Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
-[System.IO.File]::WriteAllLines($MyPath, $updatedXmlContent, $Utf8NoBomEncoding)
-
-    }#----------------------------------------------------------------------------------------------------------------------------
-
-if($Version -ge [System.Version]"11.0.0" -and $Version -le [System.Version]"12.0.0"){
-$xml = [xml]$BaseConfig
-$xml.PreserveWhitespace = $true
-$GPUStringCombined = @()
-foreach ($GPUObject in $GPUObjects){
-
-$GPU = $GPUObject.gpu
-$GPUName = $GPUObject.GPUName
-$GPUMemory = $GPUObject.Memory
-$GPUEcc = $GPUObject.ECC
-$GPUDriverModel = $GPUObject.DriverModel
-$GPUPci = $GPUObject.PCI
-$GPUuuid = $GPUObject.uuid
-
-$GPUString = $delimiter +"$GPU"+": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUuuid, $GPUPci"
-
-$GPUStringCombined += $GPUString
-}
-if($GPUStringCombined.count -gt 1){
-$GPUStringFinal = $GPUStringCombined -join ""
-}
-else{
-$GPUStringFinal = $GPUStringCombined
-}
-
-$newSystemInfo = "Windows $formattedOSBuild, GPU driver $Driver_Version$GPUStringFinal"
-# Update the systemInfo attribute value
-$xml.configuration.gpuConfiguration.systemInfo = $newSystemInfo
-AddmaxConcurrentDevices -xml $xml -value $maxConcurrentDevices
-AddpostReleaseApprovedSelfTestOutputs -xml $xml -value $postReleaseApprovedSelfTestOutputs 
-
-# Convert the modified XML back to a string
-
-
-$updatedXmlContent = $xml.OuterXml
-# Display the updated XML content
-$updatedXmlContent = $updatedXmlContent | Format-XMLText
-$MyPath = "C:\ProgramData\RaySearch\GpuSettings\GpuSettings-v$Version.config"
-$Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
-[System.IO.File]::WriteAllLines($MyPath, $updatedXmlContent, $Utf8NoBomEncoding)
-
-    }#----------------------------------------------------------------------------------------------------------------------------
-
-    if($Version -ge [System.Version]"13.0.0"){
-$xml = [xml]$BaseConfig
-$xml.PreserveWhitespace = $true
-$GPUStringCombined = @()
-foreach ($GPUObject in $GPUObjects){
-
-$GPU = $GPUObject.gpu
-$GPUName = $GPUObject.GPUNameshort
-$GPUMemory = $GPUObject.Memory
-$GPUEcc = $GPUObject.ECC
-$GPUDriverModel = $GPUObject.DriverModel
-$GPUPci = $GPUObject.PCI
-$GPUuuid = $GPUObject.uuid
-
-$GPUString = $delimiter +"$GPU"+": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUuuid"
-
-$GPUStringCombined += $GPUString
-}
-if($GPUStringCombined.count -gt 1){
-$GPUStringFinal = $GPUStringCombined -join ""
-}
-else{
-$GPUStringFinal = $GPUStringCombined
-}
-
-$newSystemInfo = "Windows $formattedOSBuild, GPU driver $Driver_Version$GPUStringFinal"
-# Update the systemInfo attribute value
-$xml.configuration.gpuConfiguration.systemInfo = $newSystemInfo
-AddmaxConcurrentDevices -xml $xml -value $maxConcurrentDevices
-AddpostReleaseApprovedSelfTestOutputs -xml $xml -value $postReleaseApprovedSelfTestOutputs 
-
-# Convert the modified XML back to a string
-
-
-$updatedXmlContent = $xml.OuterXml
-# Display the updated XML content
-$updatedXmlContent = $updatedXmlContent | Format-XMLText
-$MyPath = "C:\ProgramData\RaySearch\GpuSettings\GpuSettings-v$Version.config"
-$Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
-[System.IO.File]::WriteAllLines($MyPath, $updatedXmlContent, $Utf8NoBomEncoding)
-
-    }#----------------------------------------------------------------------------------------------------------------------------
-
-}
-
-}
-else{
-Write-PSULog -Severity Warn -Message "Nvidia GPU not detected. Skipping writing RayStation GPU Config Files."
+else {
+    Write-PSULog -Severity Warn -Message "Nvidia GPU not detected. Skipping writing RayStation GPU Config Files."
 }
