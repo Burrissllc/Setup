@@ -235,7 +235,7 @@ if (($Settings.GENERAL.INSTALLLICENSEAGENT -match "Y") -and !([string]::IsNullOr
 }
 
 
-$DistributeAccount = Read-Host "Is the distributution account diffrent than installation account?(y/n)"
+$DistributeAccount = Read-Host "Is the distributution account different than installation account?(y/n)"
 
 Switch ($DistributeAccount) {
   Y {
@@ -355,27 +355,26 @@ function WriteJobProgress {
   param($Job,
     $Completed = $false)
  
-  #Make sure the first child job exists
   if ($null -ne $Job.ChildJobs[0].Progress) {
-    #Extracts the latest progress of the job and writes the progress
-    $jobProgressHistory = $Job.ChildJobs[0].Progress;
-    $latestProgress = $jobProgressHistory[$jobProgressHistory.Count - 1];
-    $latestPercentComplete = $latestProgress | Select-object -expand PercentComplete;
-    $latestActivity = $latestProgress | Select-object -expand Activity;
-    $latestStatus = $latestProgress | Select-object -expand StatusDescription;
-    $CurrentOperation = $latestProgress | Select-object -expand CurrentOperation
-    
-    #When adding multiple progress bars, a unique ID must be provided. Here I am providing the JobID as this
-    if ($Completed -eq $false) {
-      try {
-        Write-Progress -Id $Job.id -Activity $latestActivity -Status $latestStatus -PercentComplete $latestPercentComplete -CurrentOperation $CurrentOperation;
+    $jobProgressHistory = $Job.ChildJobs[0].Progress
+    if ($jobProgressHistory.Count -gt 0) {
+      $latestProgress = $jobProgressHistory[$jobProgressHistory.Count - 1]
+      if ($null -ne $latestProgress) {
+        $latestPercentComplete = $latestProgress.PercentComplete
+        $latestActivity = $latestProgress.Activity
+        $latestStatus = $latestProgress.StatusDescription
+        $CurrentOperation = $latestProgress.CurrentOperation
+        
+        if ($Completed -eq $false -and $null -ne $latestActivity) {
+          Write-Progress -Id $Job.id -Activity $latestActivity -Status $latestStatus -PercentComplete $latestPercentComplete -CurrentOperation $CurrentOperation -ErrorAction SilentlyContinue
+        }
+        elseif ($Completed -eq $true -and $null -ne $latestActivity) {
+          Write-Progress -Id $Job.id -Activity $latestActivity -Completed -ErrorAction SilentlyContinue
+        }
+        else {
+          Write-Progress -Id $Job.id -Completed -ErrorAction SilentlyContinue
+        }
       }
-      catch {
-        $_
-      }
-    }
-    elseif ($Completed -eq $true) {
-      Write-Progress -Id $Job.id -Activity $latestActivity -Completed
     }
   }
 }
@@ -415,7 +414,7 @@ ForEach ($machine in $MachineList) {
     $source_path = $source
     $destination_path = $Dest
 
-    $job = Start-Job -ScriptBlock { param($source_path, $destination_path, $machine) Robocopy.exe $source_path $destination_path\setup /MIR /NDL /NJH /NJS | % { $data = $_.Split([char]9); if ("$($data[4])" -ne "") { $file = "$($data[4])" }; $Percent = ($($data[0]).Replace('%', "").Replace(' ', "")); Write-Progress "Percentage $($data[0])" -PercentComplete $Percent -Activity "$machine Robocopy" -CurrentOperation "$($file)"  -ErrorAction SilentlyContinue; } }  -name "Start $machine Transfer" -ArgumentList $source_path, $destination_path, $machine
+    $job = Start-Job -ScriptBlock { param($source_path, $destination_path, $machine) Robocopy.exe $source_path $destination_path\setup /MIR /NDL /NJH /NJS /XD $source_path\bin\VSCode-win32-x64-1.82.3 $source_path\.git | % { $data = $_.Split([char]9); if ("$($data[4])" -ne "") { $file = "$($data[4])" }; $Percent = ($($data[0]).Replace('%', "").Replace(' ', "")); Write-Progress "Percentage $($data[0])" -PercentComplete $Percent -Activity "$machine Robocopy" -CurrentOperation "$($file)"  -ErrorAction SilentlyContinue; } }  -name "Start $machine Transfer" -ArgumentList $source_path, $destination_path, $machine
     #WriteJobProgress($job);
   }
   Catch {
@@ -617,97 +616,94 @@ foreach ($Machine in $MachineList) {
 
 #New Multi-Threaded Code
 $JobResults = @()
-$ScriptBlocks = @{}
-
-# Define reusable script blocks
-$ScriptBlocks['CredsToReg'] = {
-  param($Domain, $Machine, $Encrypted, $Username)
-  $path = "HKLM:\SOFTWARE\MachineSetup"
-  $CleanDomain = $Domain
-  if ($CleanDomain -match '\.' -or $CleanDomain -match 'localhost') {
-    $CleanDomain = $Machine
-  }
-  if (!(Test-Path $path)) { mkdir $path | Out-Null }
-  Set-ItemProperty $path "Password" -Value $Encrypted -Force
-  Set-ItemProperty $path "UserName" -Value $Username -Force
-  Set-ItemProperty $path "Domain" -Value $CleanDomain -Force
-}
-
-$ScriptBlocks['AdjustConfigFile'] = {
-  param($DestinationDirOriginal, $RunLocation)
-  Write-Host "Copy to Machine $Using:Machine Completed" -ForegroundColor Green
-  Write-Host "Adjusting Configuration Files on $Using:Machine" -ForegroundColor Green
-  @("Set-Location `"$DestinationDirOriginal\setup`"") + (Get-Content "$RunLocation\Launcher.ps1") | Set-Content "$RunLocation\Launcher.ps1"
-  @("Set-Location `"$DestinationDirOriginal\setup`"") + (Get-Content "$RunLocation\Setup.ps1") | Set-Content "$RunLocation\Setup.ps1"
-  @("Set-Location `"$DestinationDirOriginal\setup`"") + (Get-Content "$RunLocation\bin\cleanup.ps1") | Set-Content "$RunLocation\bin\cleanup.ps1"
-  @("Set-Location `"$DestinationDirOriginal\setup`"") + (Get-Content "$RunLocation\bin\NvidiaPerformance.ps1") | Set-Content "$RunLocation\bin\NvidiaPerformance.ps1"
-}
-
-$ScriptBlocks['AddInstallAccountToAdmin'] = {
-  param($Username, $UsernameFQDN)
-  $AdminGroupMembership = Get-LocalGroupMember -Group "Administrators" | Where-Object { $_.Name -Match $Username }
-  if ($Null -eq $AdminGroupMembership) {
-    Add-LocalGroupMember -Group "Administrators" -Member $UsernameFQDN
-  }
-}
-
-$ScriptBlocks['EnableAutoLogon'] = {
-  param($DestinationDirOriginal)
-  & powershell.exe -file "$DestinationDirOriginal\setup\bin\AutologinReg.ps1"
-}
-
-$ScriptBlocks['EncryptedLogin'] = {
-  param($Machine, $DestinationDirOriginal)
-  $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-  Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $DestinationDirOriginal\setup\Setup.ps1"
-  Write-Host "Finished setting Remote Machine: $Machine for Install." -ForegroundColor Green
-}
-
-$ScriptBlocks['ClearLogin'] = {
-  param($Machine, $Domain, $Username, $TempPassword, $DestinationDirOriginal)
-  $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-  Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $DestinationDirOriginal\setup\Setup.ps1"
-  $RegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
-  Set-ItemProperty $RegPath "AutoAdminLogon" -Value "1" -type String
-  Set-ItemProperty $RegPath "DefaultUsername" -Value $Username -type String
-  Set-ItemProperty $RegPath "DefaultPassword" -Value $TempPassword -type String
-  Set-ItemProperty $RegPath "DefaultDomainName" -Value $Domain -type String
-  Set-ItemProperty $RegPath "AutoLogonCount" -Value "1" -type String
-  Invoke-WmiMethod -Class win32_process -ComputerName $Machine -Name create -ArgumentList "c:\windows\system32\msg.exe * This Machine is going to restart!" | Out-Null
-}
 
 # Launch parallel jobs
 foreach ($Machine in $MachineList) {
   $JobResults += Start-Job -Name "Setup_$Machine" -ScriptBlock {
-    param($Machine, $ScriptBlocks, $Domain, $Username, $Encrypted, $DestinationDirOriginal, $RunLocation, $UsernameFQDN, $DistributionCreds)
+    param($Machine, $Domain, $Username, $Encrypted, $DestinationDirOriginal, $RunLocation, $UsernameFQDN, $DistributionCreds, $Password)
 
-    # Reuse script blocks inside the job
+    # Define all script blocks within the job
+    $configBlock = {
+      param($DestinationDirOriginal, $RunLocation)
+      Write-Host "Copy to Machine Completed" -ForegroundColor Green
+      Write-Host "Adjusting Configuration Files" -ForegroundColor Green
+      @("Set-Location `"$DestinationDirOriginal\setup`"") + (Get-Content "$RunLocation\Launcher.ps1") | Set-Content "$RunLocation\Launcher.ps1"
+      @("Set-Location `"$DestinationDirOriginal\setup`"") + (Get-Content "$RunLocation\Setup.ps1") | Set-Content "$RunLocation\Setup.ps1"
+      @("Set-Location `"$DestinationDirOriginal\setup`"") + (Get-Content "$RunLocation\bin\cleanup.ps1") | Set-Content "$RunLocation\bin\cleanup.ps1"
+      @("Set-Location `"$DestinationDirOriginal\setup`"") + (Get-Content "$RunLocation\bin\NvidiaPerformance.ps1") | Set-Content "$RunLocation\bin\NvidiaPerformance.ps1"
+    }
+
+    $adminBlock = {
+      param($Username, $UsernameFQDN)
+      $AdminGroupMembership = Get-LocalGroupMember -Group "Administrators" | Where-Object { $_.Name -Match $Username }
+      if ($Null -eq $AdminGroupMembership) {
+        Add-LocalGroupMember -Group "Administrators" -Member $UsernameFQDN
+      }
+    }
+
+    $credsBlock = {
+      param($Domain, $Machine, $Encrypted, $Username)
+      $path = "HKLM:\SOFTWARE\MachineSetup"
+      $CleanDomain = $Domain
+      if ($CleanDomain -match '\.' -or $CleanDomain -match 'localhost') {
+        $CleanDomain = $Machine
+      }
+      if (!(Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+      Set-ItemProperty $path "Password" -Value $Encrypted -Force
+      Set-ItemProperty $path "UserName" -Value $Username -Force
+      Set-ItemProperty $path "Domain" -Value $CleanDomain -Force
+    }
+
+    $logonBlock = {
+      param($DestinationDirOriginal)
+      & powershell.exe -file "$DestinationDirOriginal\setup\bin\AutologinReg.ps1"
+    }
+
+    $encryptedLoginBlock = {
+      param($Machine, $DestinationDirOriginal)
+      $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+      Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $DestinationDirOriginal\setup\Setup.ps1"
+      Write-Host "Finished setting Remote Machine: $Machine for Install." -ForegroundColor Green
+    }
+
+    $clearLoginBlock = {
+      param($Machine, $Domain, $Username, $TempPassword, $DestinationDirOriginal)
+      $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+      Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $DestinationDirOriginal\setup\Setup.ps1"
+      $RegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
+      Set-ItemProperty $RegPath "AutoAdminLogon" -Value "1" -type String
+      Set-ItemProperty $RegPath "DefaultUsername" -Value $Username -type String
+      Set-ItemProperty $RegPath "DefaultPassword" -Value $TempPassword -type String
+      Set-ItemProperty $RegPath "DefaultDomainName" -Value $Domain -type String
+      Set-ItemProperty $RegPath "AutoLogonCount" -Value "1" -type String
+      Invoke-WmiMethod -Class win32_process -ComputerName $Machine -Name create -ArgumentList "c:\windows\system32\msg.exe * This Machine is going to restart!" | Out-Null
+      Write-Host "Finished setting Remote Machine: $Machine for Install." -ForegroundColor Green
+    }
+
+    # Execute initial setup
     if ($null -ne $DistributionCreds) {
-      Invoke-Command -ComputerName $Machine -ScriptBlock $ScriptBlocks['AdjustConfigFile'] -Credential $DistributionCreds -ArgumentList $DestinationDirOriginal, $RunLocation
-      Invoke-Command -ComputerName $Machine -ScriptBlock $ScriptBlocks['AddInstallAccountToAdmin'] -Credential $DistributionCreds -ArgumentList $Username, $UsernameFQDN
+      Invoke-Command -ComputerName $Machine -ScriptBlock $configBlock -Credential $DistributionCreds -ArgumentList $DestinationDirOriginal, $RunLocation
+      Invoke-Command -ComputerName $Machine -ScriptBlock $adminBlock -Credential $DistributionCreds -ArgumentList $Username, $UsernameFQDN
     }
     else {
-      Invoke-Command -ComputerName $Machine -ScriptBlock $ScriptBlocks['AdjustConfigFile'] -ArgumentList $DestinationDirOriginal, $RunLocation
+      Invoke-Command -ComputerName $Machine -ScriptBlock $configBlock -ArgumentList $DestinationDirOriginal, $RunLocation
     }
 
+    # Check for PSRemoting
     $PSRemoting = Test-WSMan -ComputerName $Machine -ErrorAction SilentlyContinue
+
     if ($PSRemoting -ne $null) {
       Write-Host "Securely enabling Auto Logon Remotely" -ForegroundColor Green
+
+      # Set credentials
       if ($null -ne $DistributionCreds) {
-        Invoke-Command -ComputerName $Machine -ScriptBlock $ScriptBlocks['CredsToReg'] -Credential $DistributionCreds -ArgumentList $Domain, $Machine, $Encrypted, $Username
+        Invoke-Command -ComputerName $Machine -ScriptBlock $credsBlock -Credential $DistributionCreds -ArgumentList $Domain, $Machine, $Encrypted, $Username
       }
       else {
-        Invoke-Command -ComputerName $Machine -ScriptBlock $ScriptBlocks['CredsToReg'] -ArgumentList $Domain, $Machine, $Encrypted, $Username
-      }
-      Write-Host "Securely enabling Auto Logon Remotely" -ForegroundColor Green
-
-      if ($null -ne $DistributionCreds) {
-        Invoke-command -ComputerName $Machine -ScriptBlock $ScriptBlocks['CredsToReg'] -Credential $DistributionCreds -ArgumentList $Domain, $Machine, $Encrypted, $Username
-      }
-      else {
-        Invoke-command -ComputerName $Machine -ScriptBlock $ScriptBlocks['CredsToReg'] -ArgumentList $Domain, $Machine, $Encrypted, $Username
+        Invoke-Command -ComputerName $Machine -ScriptBlock $credsBlock -ArgumentList $Domain, $Machine, $Encrypted, $Username
       }
 
+      # Create remote session
       if ($null -ne $DistributionCreds) {
         $RemoteSession = New-PSSession -ComputerName $Machine -Credential $DistributionCreds
       }
@@ -715,56 +711,69 @@ foreach ($Machine in $MachineList) {
         $RemoteSession = New-PSSession -ComputerName $Machine
       }
 
-      if ($null -ne $DistributionCreds) {
-        Invoke-command -session $RemoteSession -ScriptBlock $ScriptBlocks['EnableAutoLogon'] -ArgumentList $DestinationDirOriginal  #-credential $DistributionCreds
-        #start-sleep -Seconds 3
-        $checkLogin = Invoke-Command -ComputerName $machine { Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon | select-object AutoAdminLogon }
-        if ($checkLogin.AutoAdminLogon -eq "0") {
-          write-host "Failed to enable Auto Logon on $machine, trying again" -ForegroundColor Yellow
-          Invoke-command -session $RemoteSession -ScriptBlock $ScriptBlocks['EnableAutoLogon'] -ArgumentList $DestinationDirOriginal # -Credential $DistributionCreds
-          #start-sleep -Seconds 2
-          $checkLogin = Invoke-Command -ComputerName $machine { Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon | select-object AutoAdminLogon }
-          if ($checkLogin.AutoAdminLogon -eq "0") {
-            Write-Host "Failed to enable Auto Logon on $machine. Please Login Manually to start script" -ForegroundColor Red  
+      try {
+        # Enable auto logon
+        Invoke-Command -Session $RemoteSession -ScriptBlock $logonBlock -ArgumentList $DestinationDirOriginal
+        Start-Sleep -Seconds 1
+
+        # Check login status
+        $checkLogin = Invoke-Command -ComputerName $Machine {
+          try {
+            Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon -ErrorAction Stop | 
+            Select-Object AutoAdminLogon
+          }
+          catch {
+            return @{AutoAdminLogon = "0" }
           }
         }
-        Invoke-Command -session $RemoteSession -ScriptBlock $ScriptBlocks['EncryptedLogin'] -ArgumentList $Machine, $DestinationDirOriginal # -Credential $DistributionCreds
-      }
-      else {
-        Invoke-command -session $RemoteSession -ScriptBlock $ScriptBlocks['EnableAutoLogon'] -ArgumentList $DestinationDirOriginal
-        start-sleep -Seconds 1
-        $checkLogin = Invoke-Command -ComputerName $machine { Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon | select-object AutoAdminLogon }
+
         if ($checkLogin.AutoAdminLogon -eq "0") {
-          write-host "Failed to enable Auto Logon on $machine, trying again" -ForegroundColor Yellow
-          Invoke-command -session $RemoteSession -ScriptBlock $ScriptBlocks['EnableAutoLogon'] -ArgumentList $DestinationDirOriginal
-          #start-sleep -Seconds 1
-          $checkLogin = Invoke-Command -ComputerName $machine { Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon | select-object AutoAdminLogon }
+          Write-Host "Failed to enable Auto Logon on $Machine, trying again" -ForegroundColor Yellow
+          Invoke-Command -Session $RemoteSession -ScriptBlock $logonBlock -ArgumentList $DestinationDirOriginal
+          
+          $checkLogin = Invoke-Command -ComputerName $Machine {
+            try {
+              Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon -ErrorAction Stop |
+              Select-Object AutoAdminLogon
+            }
+            catch {
+              return @{AutoAdminLogon = "0" }
+            }
+          }
+
           if ($checkLogin.AutoAdminLogon -eq "0") {
-            Write-Host "Failed to enable Auto Logon on $machine. Please Login Manually to start script" -ForegroundColor Red  
+            Write-Host "Failed to enable Auto Logon on $Machine. Please Login Manually to start script" -ForegroundColor Red
           }
         }
-        Invoke-Command -session $RemoteSession -ScriptBlock $ScriptBlocks['EncryptedLogin'] -ArgumentList $Machine, $DestinationDirOriginal
+
+        # Set encrypted login
+        Invoke-Command -Session $RemoteSession -ScriptBlock $encryptedLoginBlock -ArgumentList $Machine, $DestinationDirOriginal
       }
-      Remove-PSSession $RemoteSession
-            
+      finally {
+        if ($RemoteSession) {
+          Remove-PSSession $RemoteSession
+        }
+      }
     }
     else {
       Write-Host "Falling back on Clear Text Login and restarting" -ForegroundColor Yellow
-      # Call ClearLogin with necessary parameters
+      
+      # Convert SecureString to plain text for clear login
       $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
       $TempPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 
-      if ($Domain -match '`.' -or $Domain -match 'localhost') {
+      if ($Domain -match '\.' -or $Domain -match 'localhost') {
         $Domain = $Machine
       }
+
       if ($null -ne $DistributionCreds) {
-        Invoke-Command -ComputerName $Machine -ScriptBlock $ScriptBlocks['ClearLogin'] -Credential $DistributionCreds -ArgumentList $Machine, $Domain, $Username, $TempPassword, $DestinationDirOriginal
+        Invoke-Command -ComputerName $Machine -ScriptBlock $clearLoginBlock -Credential $DistributionCreds -ArgumentList $Machine, $Domain, $Username, $TempPassword, $DestinationDirOriginal
       }
       else {
-        Invoke-Command -ComputerName $Machine -ScriptBlock $ScriptBlocks['ClearLogin'] -ArgumentList $Machine, $Domain, $Username, $TempPassword, $DestinationDirOriginal
+        Invoke-Command -ComputerName $Machine -ScriptBlock $clearLoginBlock -ArgumentList $Machine, $Domain, $Username, $TempPassword, $DestinationDirOriginal
       }
     }
-  } -ArgumentList $Machine, $ScriptBlocks, $Domain, $Username, $Encrypted, $DestinationDirOriginal, $RunLocation, $UsernameFQDN, $DistributionCreds
+  } -ArgumentList $Machine, $Domain, $Username, $Encrypted, $DestinationDirOriginal, $RunLocation, $UsernameFQDN, $DistributionCreds, $Password
 }
 
 # Monitor jobs
@@ -853,136 +862,98 @@ Function Register-Watcher {
 }
 #>
 function Register-Watcher {
-  param ($folder,
-    $FileName
+  param(
+    [string]$folder,
+    [string]$FileName
   )
-  try {
-    # Create log directory if it doesn't exist
-    $logDir = $folder
-    if (-not (Test-Path $logDir)) {
-      New-Item -Path $logDir -ItemType Directory -Force | Out-Null
-    }
+    
+  $logFile = Join-Path -Path $folder -ChildPath $FileName
+  $processedLines = @{}
 
-    $logFile = Join-Path -Path $logDir -ChildPath $FileName
-    # Initialize the last position to the current file size if the file exists
+  while ($true) {
     if (Test-Path $logFile) {
-      $lastLogPosition = (Get-Item $logFile).Length
-    }
-    else {
-      $lastLogPosition = 0
-    }
-
-    # Create a dispatcher timer
-    $logCheckTimer = New-Object System.Windows.Threading.DispatcherTimer
-    $logCheckTimer.Interval = [TimeSpan]::FromMilliseconds(500)
-        
-    $logCheckTimer.Add_Tick({
-        try {
-          if (Test-Path $logFile) {
-            $currentFileSize = (Get-Item $logFile).Length
+      try {
+        $content = Get-Content $logFile -Raw
+        if ($content) {
+          $lines = $content -split '\r?\n' | Where-Object { $_ -and ($_ -match '\{.*\}') }
                     
-            # Only read if there's new content
-            if ($currentFileSize -gt $lastLogPosition) {
-              $fileStream = [System.IO.File]::Open($logFile, 'Open', 'Read', 'ReadWrite')
-              $streamReader = New-Object System.IO.StreamReader($fileStream)
+          foreach ($line in $lines) {
+            $hash = [System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($line))
+            $hashString = [System.Convert]::ToBase64String($hash)
                         
-              # Skip to last position
-              if ($lastLogPosition -gt 0) {
-                $streamReader.BaseStream.Position = $lastLogPosition
+            if (-not $processedLines.ContainsKey($hashString)) {
+              try {
+                $logEntry = $line | ConvertFrom-Json
+                $color = switch ($logEntry.Severity) {
+                  "Info" { "White" }
+                  "Warn" { "Yellow" }
+                  "Error" { "Red" }
+                  "Start" { "Green" }
+                  "End" { "Blue" }
+                  default { "White" }
+                }
+                                
+                Write-Host "$($logEntry.Timestamp) $($logEntry.Hostname) Severity=$($logEntry.Severity) Message=$($logEntry.Message)" -ForegroundColor $color
+                                
+                if ($logEntry.Severity -in @("Error", "Warning")) {
+                  $line | Out-File -FilePath (Join-Path $folder "ErrorLog.json") -Append
+                }
+                                
+                $processedLines[$hashString] = $true
               }
-                        
-              # Read only new content
-              $newContent = $streamReader.ReadToEnd()
-                        
-              # Update position
-              $lastLogPosition = $fileStream.Position
-                        
-              # Close readers
-              $streamReader.Close()
-              $fileStream.Close()
-                        
-              # Update UI if we have new content
-              if ($newContent) {
-                $LogObject = [PSCustomObject]@{
-                  Timestamp = $newContent.Timestamp
-                  Hostname  = $newContent.Hostname
-                  Severity  = $newContent.Severity
-                  Message   = $newContent.message
-                }
-                if ($LogObject.Severity -match "Info") {
-                  $Color = "White"
-                }
-                elseif ($LogObject.Severity -match "Warn") {
-                  $Color = "Yellow"
-                }
-                elseif ($LogObject.Severity -match "Error") {
-                  $Color = "Red"
-                }
-                elseif ($LogObject.Severity -match "Start") {
-                  $Color = "Green"
-                }
-                elseif ($LogObject.Severity -match "End") {
-                  $Color = "Blue"
-                }
-                $WarningsErrors = $logObject | Where-Object { $_.Severity -like "Error" -or $_.Severity -like "Warning" } | ConvertTo-Json -Compress | Out-File -FilePath $ParentPath\ErrorLog.json -Append -ErrorAction SilentlyContinue
-                Write-Host "$($LogObject.Timestamp) $($LogObject.Hostname) Severity=$($LogObject.Severity) Message=$($LogObject.Message)" -ForegroundColor $Color
+              catch {
+                Write-Error "Error parsing log entry: $_"
               }
             }
           }
         }
-        catch {
-          $errorMsg = "Error reading log file: $_"
-          Write-Host $errorMsg
-          Add-Content -Path "$logDir\error.log" -Value "$(Get-Date): $errorMsg"
-        }
-      })
-        
-    # Start the timer
-    $logCheckTimer.Start()
-    Write-Host "Log monitoring initialized for: $logFile"
-  }
-  catch {
-    $errorMsg = "Error initializing log monitoring: $_"
-    Write-Host $errorMsg
-    Add-Content -Path "$logDir\error.log" -Value "$(Get-Date): $errorMsg"
+      }
+      catch {
+        Write-Error "Error reading log file: $_"
+      }
+    }
+    Start-Sleep -Milliseconds 500
   }
 }
 
-$logDirectory = "$remoteRunLocation\Logs"
+$logDirectory = Join-Path $remoteRunLocation "Logs"
 $LogArray = @()
 $CheckIn = @()
 
 Start-Process powershell -ArgumentList "-noexit", "-noprofile", "-file $RunLocation\bin\ErrorLogReader.ps1"
 
 try {
-  $timeout = new-timespan -Minutes 3
+  $timeout = New-TimeSpan -Minutes 3
   $CheckInPeriod = [diagnostics.stopwatch]::StartNew()
-  While ($True) {
-
+    
+  while ($true) {
     $Logfiles = Get-ChildItem -Path $logDirectory -Filter "*MachineSetup.json"
-
-    ForEach ($LogFile in $Logfiles) {
-
+        
+    foreach ($LogFile in $Logfiles) {
       $FileName = $LogFile.Name
-      $ShortName = $FileName -split "-"
-      if ($checkin -notcontains $ShortName[0]) {
-        $CheckIn += $ShortName[0]
-      }
-
-      $LogName = Join-Path "$logDirectory" "$FileName"
-
-      if ($LogArray -notcontains $Logname) {
-
-        Register-Watcher -folder $logDirectory -filename "$FileName" | out-null
-
-        $logArray += $LogName
-
+      $ShortName = ($FileName -split "-")[0]
+            
+      if ($CheckIn -notcontains $ShortName) {
+        $CheckIn += $ShortName
+        Write-Host "New machine check-in detected: $ShortName" -ForegroundColor Green
+                
+        # Start watcher job for this machine
+        Start-Job -ScriptBlock ${function:Register-Watcher} -ArgumentList $logDirectory, $FileName | 
+        Receive-Job -Wait -AutoRemoveJob
+                
+        $LogArray += $LogFile.FullName
       }
     }
 
-    if ($CheckInPeriod.elapsed -ge $timeout) {
-      $NotCheckedInMachines = Compare-Object -ReferenceObject ($NewMachineList) -DifferenceObject ($CheckIn) -PassThru
-      forEach ($NotCheckedInMachine in $NotCheckedInMachines) {
+    if ($CheckInPeriod.Elapsed -ge $timeout) {
+
+      if ($Null -eq $NewMachineList) {
+        $NotCheckedInMachines = Compare-Object -ReferenceObject $MachineList -DifferenceObject $CheckIn -PassThru
+      }
+      Else {
+        $NotCheckedInMachines = Compare-Object -ReferenceObject $NewMachineList -DifferenceObject $CheckIn -PassThru
+      }   
+      foreach ($NotCheckedInMachine in $NotCheckedInMachines) {
         if ($NotCheckedInMachine -ne "") {
           $ErrorObject = [PSCustomObject]@{
             Timestamp = Get-Date -Format "dd-MM-yyyy HH:mm:ss"
@@ -991,40 +962,63 @@ try {
             Message   = "Host: $NotCheckedInMachine has not checked in"
           }
 
-          $Color = "Yellow"
-
-          $ErrorObject | ConvertTo-Json -Compress | Out-File -FilePath "$logDirectory\ErrorLog.json" -Append
-          Write-Host "$($ErrorObject.Timestamp) $($ErrorObject.Hostname) Severity=$($ErrorObject.Severity) Message=$($ErrorObject.Message)" -ForegroundColor $Color
+          $ErrorObject | ConvertTo-Json -Compress | 
+          Out-File -FilePath "$logDirectory\ErrorLog.json" -Append
+                    
+          Write-Host "$($ErrorObject.Timestamp) $($ErrorObject.Hostname) Severity=$($ErrorObject.Severity) Message=$($ErrorObject.Message)" -ForegroundColor Yellow
         }
       }
-      $FinishedMachinesFile = "$RunLocation\Logs\CompletedMachines.txt"
-      if (Test-path $FinishedMachinesFile) {
-        
+
+      # Inside the main loop:
+      $FinishedMachinesFile = Join-Path $RunLocation "Logs\CompletedMachines.txt"
+      if (Test-Path $FinishedMachinesFile) {
         $FinishedMachines = Get-Content $FinishedMachinesFile
-        $CompletedMachines = Compare-Object -ReferenceObject ($NewMachineList) -DifferenceObject ($FinishedMachines) -PassThru
-        if ($Null -eq $CompletedMachines) {
+        Write-Host "Finished Machines: $($FinishedMachines -join ', ')" -ForegroundColor Cyan
+    
+        $ReferenceList = if ($null -eq $NewMachineList) { $MachineList } else { $NewMachineList }
+        Write-Host "Reference List: $($ReferenceList -join ', ')" -ForegroundColor Cyan
+    
+        $CompletedMachines = Compare-Object -ReferenceObject $ReferenceList -DifferenceObject $FinishedMachines -PassThru
+        Write-Host "Remaining Machines: $($CompletedMachines -join ', ')" -ForegroundColor Yellow
+    
+        if ($null -eq $CompletedMachines) {
           Write-Host "All Machines have checked in" -ForegroundColor Green
           Write-Host "Starting Inventory Collection" -ForegroundColor Green
           & $RunLocation\bin\RemoteInventory.ps1 -wait
+        
           $DeploymentTimeMin = $DeploymentTime.Elapsed.Minutes
           $DeploymentTimeSec = $DeploymentTime.Elapsed.Seconds
           $message = "Setup Has Completed on All Machines. Time to complete: $DeploymentTimeMin Minutes $DeploymentTimeSec Seconds."
-          Invoke-WmiMethod -Class win32_process -Name create -ArgumentList  "c:\windows\system32\msg.exe * $message" | Out-Null
+        
+          Write-Host $message -ForegroundColor Green
+          Invoke-WmiMethod -Class win32_process -Name create -ArgumentList "c:\windows\system32\msg.exe * $message" | Out-Null
+        
+          # Stop all monitoring jobs
+          Get-Job | Stop-Job
+          Get-Job | Remove-Job
           Break
         }
-
-        
-      } 
-      $CheckInPeriod.Restart() 
+      }
+            
+      $CheckInPeriod.Restart()
     }
+        
+    # Display job output
+    Get-Job | Where-Object { $_.HasMoreData } | ForEach-Object {
+      Receive-Job -Job $_ 
+    }
+        
+    Start-Sleep -Seconds 1
   }
 }
+catch {
+  Write-Error "Error in main monitoring loop: $_"
+}
 finally {
-  # release the watcher and free its memory:
+  Get-Job | Stop-Job
+  Get-Job | Remove-Job
   $DeploymentTime.Stop()
   $DeploymentTimeMin = $DeploymentTime.Elapsed.Minutes
   $DeploymentTimeSec = $DeploymentTime.Elapsed.Seconds
   Write-Host "Deployment ran for: $DeploymentTimeMin Minutes $DeploymentTimeSec Seconds" -ForegroundColor Yellow
-  Get-EventSubscriber | Unregister-Event
-  Write-Warning 'FileSystemWatcher for log file removed.'
 }
