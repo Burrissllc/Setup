@@ -46,6 +46,7 @@ Add-Type -AssemblyName System.Windows.Forms
 
                         <Label Content="Enable Auto Logon" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <CheckBox x:Name="checkboxEnableAutoLogon" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"/>
+                        <Label Content="Leave Unchecked for Remote Deployment" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Margin="0,5,10,5"/>
 
                         <Label Content="Machine Name" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <TextBox x:Name="textBoxMachineName" Grid.Row="1" Grid.Column="1" Margin="0,5,0,5"/>
@@ -621,6 +622,23 @@ Add-Type -AssemblyName System.Windows.Forms
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
+#Function to browse for folder
+function Browse-Folder {
+    param($textBoxName)
+    $folder = New-Object System.Windows.Forms.FolderBrowserDialog
+    $result = $folder.ShowDialog()
+    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
+        $textBox = $window.FindName($textBoxName)
+        if ($textBox -and $textBox.GetType().GetProperty("Text")) {
+            $textBox.Text = $folder.SelectedPath
+        }
+        else {
+            Write-Warning "TextBox '$textBoxName' not found or doesn't have a Text property."
+        }
+    }
+}
+
+
 # Function to load existing JSON
 function Load-ExistingJSON {
     $jsonPath = Join-Path $PSScriptRoot "setup.json"
@@ -1098,22 +1116,6 @@ function Validate-InputData {
     return $errors
 }
 
-# Function to browse for folder
-function Browse-Folder {
-    param($textBoxName)
-    $folder = New-Object System.Windows.Forms.FolderBrowserDialog
-    $result = $folder.ShowDialog()
-    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
-        $textBox = $window.FindName($textBoxName)
-        if ($textBox -and $textBox.GetType().GetProperty("Text")) {
-            $textBox.Text = $folder.SelectedPath
-        }
-        else {
-            Write-Warning "TextBox '$textBoxName' not found or doesn't have a Text property."
-        }
-    }
-}
-
 # Function to browse for file
 function Browse-File {
     param($textBoxName, $filter)
@@ -1236,37 +1238,53 @@ foreach ($element in $elements) {
         switch ($element.Type) {
             "Browse" {
                 if ($element.TargetType -eq "Folder") {
-                    $control.Add_Click({ 
-                            param($sender, $e)
-                            Browse-Folder $element.TextBox 
+                    $textBoxName = $element.TextBox
+                    $control.Add_Click({
+                            $folder = New-Object System.Windows.Forms.FolderBrowserDialog
+                            if ($folder.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+                                $textBox = $window.FindName($textBoxName)
+                                if ($textBox) { $textBox.Text = $folder.SelectedPath }
+                            }
                         }.GetNewClosure())
                 }
                 elseif ($element.TargetType -eq "File") {
-                    $control.Add_Click({ 
-                            param($sender, $e)
-                            Browse-File $element.TextBox $element.Filter 
+                    $textBoxName = $element.TextBox
+                    $filter = $element.Filter
+                    $control.Add_Click({
+                            $dialog = New-Object System.Windows.Forms.OpenFileDialog
+                            $dialog.Filter = $filter
+                            if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+                                $textBox = $window.FindName($textBoxName)
+                                if ($textBox) { $textBox.Text = $dialog.FileName }
+                            }
                         }.GetNewClosure())
                 }
             }
             "Add" {
-                $control.Add_Click({ 
-                        param($sender, $e)
-                        Add-ListItem $element.ListBox $element.TextBox 
+                $listBoxName = $element.ListBox
+                $textBoxName = $element.TextBox
+                $control.Add_Click({
+                        $listBox = $window.FindName($listBoxName)
+                        $textBox = $window.FindName($textBoxName)
+                        if ($listBox -and $textBox -and $textBox.Text -ne "") {
+                            $listBox.Items.Add($textBox.Text)
+                            $textBox.Clear()
+                        }
                     }.GetNewClosure())
             }
             "Remove" {
-                $control.Add_Click({ 
-                        param($sender, $e)
-                        Remove-ListItem $element.ListBox 
+                $listBoxName = $element.ListBox
+                $control.Add_Click({
+                        $listBox = $window.FindName($listBoxName)
+                        if ($listBox -and $listBox.SelectedItem) {
+                            $listBox.Items.Remove($listBox.SelectedItem)
+                        }
                     }.GetNewClosure())
             }
             "Custom" {
                 $control.Add_Click($element.Function)
             }
         }
-    }
-    else {
-        Write-Warning "Control '$($element.Name)' not found."
     }
 }
 
