@@ -181,7 +181,7 @@ Copy-Item "$RunLocation\Logs\*.log" "C:\Temp" -ErrorAction SilentlyContinue
 Copy-Item "$RunLocation\VDAInstallLogs\" "C:\Temp\" -Recurse -ErrorAction SilentlyContinue
 Copy-Item "$RunLocation\bin\FinalCleanup.ps1" "C:\Temp\"
 
-$Run = "C:\Temp\FinalCleanup.ps1 -RunLocation $RunLocation -remoteloglocation $RemoteLogLocation"
+$Run = "C:\Temp\FinalCleanup.ps1"
 
-start-process powershell  -argument "-noexit -nologo -noprofile -file $Run"
+start-process powershell -argument "-noexit -nologo -noprofile -file $Run -RunLocation $RunLocation -remoteloglocation $RemoteLogLocation"
 Exit

@@ -203,20 +203,44 @@ if ($null -eq (Test-Path $Trayicon)) {
 & $RunLocation\bin\MachineInfo.ps1
 
 
+# Monitor VDA install logs and processes
+$logPath = "$RunLocation\VDAInstallLogs"
+$timeout = 90
+$sleepInterval = 30
 
-if ((get-process | Where-Object { $_.ProcessName -match "XenDesktopVdaSetup" })) {
-
-    #Write-host "Waiting for Citrix  Setup to Complete" -ForegroundColor Green
-    Write-PSULog -Severity Info -Message "Waiting for Citrix  Setup to Complete"
-
+function Get-RecentlyModifiedFiles {
+    Get-ChildItem -Path $logPath -Recurse -File | 
+    Where-Object { (New-TimeSpan -Start $_.LastWriteTime -End (Get-Date)).TotalSeconds -le $timeout }
 }
 
-
-while ((get-process | Where-Object { $_.ProcessName -match "XenDesktopVdaSetup" })) {
-
-    start-sleep -Seconds 5
-
+function Get-InstallerProcesses {
+    Get-Process | Where-Object { 
+        $_.Name -match "msiexec|install|setup|XenDesktopVdaSetup" 
+    }
 }
+
+# Monitor file modifications
+do {
+    $recentFiles = Get-RecentlyModifiedFiles
+    if ($recentFiles) {
+        Write-PSULog -Severity Info -Message "Files still being modified. Waiting $sleepInterval seconds..."
+        Start-Sleep -Seconds $sleepInterval
+    }
+} while ($recentFiles)
+
+Write-PSULog -Severity Info -Message "No recent file modifications detected in Citrix Logs."
+
+# Monitor installer processes
+do {
+    $installers = Get-InstallerProcesses
+    if ($installers) {
+        Write-PSULog -Severity Info -Message "Installer processes still running. Waiting $sleepInterval seconds..."
+        Write-PSULog -Severity Info -Message "Running processes: $($installers.Name -join ', ')"
+        Start-Sleep -Seconds $sleepInterval
+    }
+} while ($installers)
+
+Write-PSULog -Severity Info -Message "All installer processes completed."
 
 Write-PSULog -Severity Info -Message "Configuring Nvidia Control Panel Settings"
 & $RunLocation\bin\GPUSetup.ps1 -wait

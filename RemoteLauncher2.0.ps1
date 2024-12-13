@@ -256,7 +256,22 @@ Switch ($DistributeAccount) {
   Default {  }
 }
 
-$Username = Read-Host "Enter the Remote Username(domain\username)"
+$validUsername = $false
+while (-not $validUsername) {
+  try {
+    $Username = Read-Host "Enter the Remote Username(domain\username)"
+    if ($Username -match '^[^\\]+\\[^\\]+$') {
+      $domain, $user = $Username -split '\\'
+      $validUsername = $true
+    }
+    else {
+      Write-Host "Invalid format. Please use domain\username format" -ForegroundColor Red
+    }
+  }
+  catch {
+    Write-Host "Error validating username: $_" -ForegroundColor Red
+  }
+}
 
 $Password = Read-Host "Enter the Remote Password" -AsSecureString
 
@@ -414,7 +429,7 @@ ForEach ($machine in $MachineList) {
     $source_path = $source
     $destination_path = $Dest
 
-    $job = Start-Job -ScriptBlock { param($source_path, $destination_path, $machine) Robocopy.exe $source_path $destination_path\setup /MIR /NDL /NJH /NJS /XD $source_path\bin\VSCode-win32-x64-1.82.3 $source_path\.git | % { $data = $_.Split([char]9); if ("$($data[4])" -ne "") { $file = "$($data[4])" }; $Percent = ($($data[0]).Replace('%', "").Replace(' ', "")); Write-Progress "Percentage $($data[0])" -PercentComplete $Percent -Activity "$machine Robocopy" -CurrentOperation "$($file)"  -ErrorAction SilentlyContinue; } }  -name "Start $machine Transfer" -ArgumentList $source_path, $destination_path, $machine
+    $job = Start-Job -ScriptBlock { param($source_path, $destination_path, $machine) Robocopy.exe $source_path $destination_path\setup /MIR /NDL /NJH /NJS /XD $source_path\bin\VSCode-win32-x64-1.82.3 $source_path\.git $source_path\.vscode | % { $data = $_.Split([char]9); if ("$($data[4])" -ne "") { $file = "$($data[4])" }; $Percent = ($($data[0]).Replace('%', "").Replace(' ', "")); Write-Progress "Percentage $($data[0])" -PercentComplete $Percent -Activity "$machine Robocopy" -CurrentOperation "$($file)"  -ErrorAction SilentlyContinue; } }  -name "Start $machine Transfer" -ArgumentList $source_path, $destination_path, $machine
     #WriteJobProgress($job);
   }
   Catch {
@@ -465,6 +480,16 @@ $completedJobs = (Get-Job | Where-Object { $_.State -eq "Completed" })
 foreach ($CompletedJob in $CompletedJobs) {
   WriteJobProgress -Job $CompletedJob -Completed $true
 }
+$AllJobs = Get-Job
+foreach ($job in $AllJobs) {
+  try {
+    WriteJobProgress -Job $job -Completed $true
+  }
+  catch {}
+}
+
+get-job | stop-job -ErrorAction SilentlyContinue
+get-job | remove-job -ErrorAction SilentlyContinue
 
 #Get-Job | Wait-Job | out-null
 
@@ -931,15 +956,14 @@ try {
         
     foreach ($LogFile in $Logfiles) {
       $FileName = $LogFile.Name
-      $ShortName = ($FileName -split "-")[0]
+      $ShortName = ($FileName -split "-MachineSetup.json")[0]
             
       if ($CheckIn -notcontains $ShortName) {
         $CheckIn += $ShortName
         Write-Host "New machine check-in detected: $ShortName" -ForegroundColor Green
                 
         # Start watcher job for this machine
-        Start-Job -ScriptBlock ${function:Register-Watcher} -ArgumentList $logDirectory, $FileName | 
-        Receive-Job -Wait -AutoRemoveJob
+        Start-Job -ScriptBlock ${function:Register-Watcher} -ArgumentList $logDirectory, $FileName | Receive-Job -Wait -AutoRemoveJob
                 
         $LogArray += $LogFile.FullName
       }
@@ -947,12 +971,8 @@ try {
 
     if ($CheckInPeriod.Elapsed -ge $timeout) {
 
-      if ($Null -eq $NewMachineList) {
-        $NotCheckedInMachines = Compare-Object -ReferenceObject $MachineList -DifferenceObject $CheckIn -PassThru
-      }
-      Else {
-        $NotCheckedInMachines = Compare-Object -ReferenceObject $NewMachineList -DifferenceObject $CheckIn -PassThru
-      }   
+      $NotCheckedInMachines = Compare-Object -ReferenceObject $NewMachineList -DifferenceObject $CheckIn -PassThru
+
       foreach ($NotCheckedInMachine in $NotCheckedInMachines) {
         if ($NotCheckedInMachine -ne "") {
           $ErrorObject = [PSCustomObject]@{
@@ -973,15 +993,13 @@ try {
       $FinishedMachinesFile = Join-Path $RunLocation "Logs\CompletedMachines.txt"
       if (Test-Path $FinishedMachinesFile) {
         $FinishedMachines = Get-Content $FinishedMachinesFile
-        Write-Host "Finished Machines: $($FinishedMachines -join ', ')" -ForegroundColor Cyan
-    
         $ReferenceList = if ($null -eq $NewMachineList) { $MachineList } else { $NewMachineList }
-        Write-Host "Reference List: $($ReferenceList -join ', ')" -ForegroundColor Cyan
     
-        $CompletedMachines = Compare-Object -ReferenceObject $ReferenceList -DifferenceObject $FinishedMachines -PassThru
-        Write-Host "Remaining Machines: $($CompletedMachines -join ', ')" -ForegroundColor Yellow
+        # Get machines that haven't completed yet
+        $RemainingMachines = Compare-Object -ReferenceObject $ReferenceList -DifferenceObject $FinishedMachines -PassThru
     
-        if ($null -eq $CompletedMachines) {
+        # If no remaining machines (null or empty), all are complete
+        if ([string]::IsNullOrEmpty($RemainingMachines)) {
           Write-Host "All Machines have checked in" -ForegroundColor Green
           Write-Host "Starting Inventory Collection" -ForegroundColor Green
           & $RunLocation\bin\RemoteInventory.ps1 -wait

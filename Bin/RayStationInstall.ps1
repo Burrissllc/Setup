@@ -441,23 +441,229 @@ if ($Settings.RAYSTATION.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
       "INDEXSERVICECERT=`"$INDEXSERVICECERT`""
     )
 
+    # Create the Write-PSULog function as scriptblock to pass to runspaces
+    $WriteLogScriptBlock = {
+      param(
+        [ValidateSet('Info', 'Warn', 'Error', 'Start', 'End', IgnoreCase = $false)]
+        [string]$Severity = "Info",
+        [Parameter(Mandatory = $true)]
+        [string]$Message,
+        [string]$logDirectory = "$RunLocation\Logs\",
+        $RemotelogDirectory = "$RemoteLogLocation"
+      )
+            
+      $LogObject = [PSCustomObject]@{
+        Timestamp = Get-Date -Format "dd-MM-yyyy HH:mm:ss"
+        Hostname  = $env:computername
+        Severity  = $Severity
+        Message   = $Message
+      }
 
-    start-process msiexec.exe -ArgumentList $Prams -wait
+      if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+      }
 
-
-    & $RayStationLocation /quiet -wait
-        
-
-    #Write-host "Waiting for RayStation Setup to Complete" -ForegroundColor Green
-    Write-PSULog -Severity Info -Message "Waiting for RayStation Setup to Complete"
-    while ((get-process | Where-Object { $_.ProcessName -match "RayStationSetup" })) {
-
-      start-sleep -Seconds 5
-
+      $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
+      $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
+            
+      if ($RemotelogDirectory -ne $null) {
+        if (!(Test-Path -Path $RemotelogDirectory)) {
+          New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
+        }
+        $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
+        $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $RemotelogFilePath -Append
+      }
+            
+      Write-Host "$($LogObject.Timestamp) $($LogObject.Hostname) Severity=$($LogObject.Severity) Message=$($LogObject.Message)"
     }
 
-    #Write-host "Features Installed $features" -ForegroundColor Green
-    Write-PSULog -Severity Info -Message "Features Installed $features"
+
+    # Create scriptblock for database configuration monitoring
+    $DatabaseConfigMonitor = {
+      param($WriteLogScriptBlock, $RunLocation, $RemoteLogLocation)
+
+      $processStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+      $processFound = $false
+    
+      while ($true) {
+        try {
+          $dbConfigProcess = Get-Process | Where-Object { $_.ProcessName -match "RaySearch.RayStation.SetUp.DatabaseConfiguration" }
+            
+          if ($dbConfigProcess) {
+            if (-not $processFound) {
+              $processFound = $true
+              $processStopwatch.Restart()
+              & $WriteLogScriptBlock -Severity "Info" -Message "Database configuration process started" -logDirectory "$RunLocation\Logs\" -RemotelogDirectory $RemoteLogLocation
+            }
+
+            if ($processStopwatch.Elapsed.TotalMinutes -gt 5) {
+              & $WriteLogScriptBlock -Severity "Error" -Message "Database configuration process exceeded 5 minute timeout. Terminating installation." -logDirectory "$RunLocation\Logs\" -RemotelogDirectory $RemoteLogLocation
+                    
+              # Terminate all related processes
+              $processesToKill = @(
+                "RaySearch.RayStation.SetUp.DatabaseConfiguration",
+                "msiexec",
+                "RayStationSetup"
+              )
+
+              foreach ($procName in $processesToKill) {
+                Get-Process | Where-Object { $_.ProcessName -match $procName } | ForEach-Object {
+                  try {
+                    $_ | Stop-Process -Force -ErrorAction Stop
+                    & $WriteLogScriptBlock -Severity "Info" -Message "Successfully terminated process: $($_.ProcessName)" -logDirectory "$RunLocation\Logs\" -RemotelogDirectory $RemoteLogLocation
+                  }
+                  catch {
+                    & $WriteLogScriptBlock -Severity "Error" -Message "Failed to terminate process $($_.ProcessName): $_" -logDirectory "$RunLocation\Logs\" -RemotelogDirectory $RemoteLogLocation
+                    # Try using taskkill as a fallback
+                    try {
+                      Start-Process "taskkill.exe" -ArgumentList "/F /PID $($_.Id)" -Wait -NoNewWindow
+                      & $WriteLogScriptBlock -Severity "Info" -Message "Terminated process $($_.ProcessName) using taskkill" -logDirectory "$RunLocation\Logs\" -RemotelogDirectory $RemoteLogLocation
+                    }
+                    catch {
+                      & $WriteLogScriptBlock -Severity "Error" -Message "Failed to terminate process $($_.ProcessName) using taskkill: $_" -logDirectory "$RunLocation\Logs\" -RemotelogDirectory $RemoteLogLocation
+                    }
+                  }
+                }
+              }
+                    
+              return $false
+            }
+          }
+          elseif ($processFound) {
+            & $WriteLogScriptBlock -Severity "Info" -Message "Database configuration process completed normally after $([Math]::Floor($processStopwatch.Elapsed.TotalMinutes)) minutes" -logDirectory "$RunLocation\Logs\" -RemotelogDirectory $RemoteLogLocation
+            return $true
+          }
+        }
+        catch {
+          & $WriteLogScriptBlock -Severity "Error" -Message "Error in database configuration monitor: $_" -logDirectory "$RunLocation\Logs\" -RemotelogDirectory $RemoteLogLocation
+        }
+        Start-Sleep -Seconds 10
+      }
+    }
+
+    try {
+      # Create runspaces
+      $runspacePool = [runspacefactory]::CreateRunspacePool(1, 2)
+      $runspacePool.Open()
+
+      # Create monitoring powershell instances
+      $dbMonitorPS = [powershell]::Create().AddScript($DatabaseConfigMonitor)
+      $dbMonitorPS.AddArgument($WriteLogScriptBlock)
+      $dbMonitorPS.AddArgument($RunLocation)
+      $dbMonitorPS.AddArgument($RemoteLogLocation)
+      $dbMonitorPS.RunspacePool = $runspacePool
+
+      # Start MSI installation
+      Write-PSULog -Severity Info -Message "Starting RayStation MSI installation"
+      $msiProcess = Start-Process msiexec.exe -ArgumentList $Prams -PassThru
+
+      # Start monitoring
+      Write-PSULog -Severity Info -Message "Starting monitoring processes"
+      $dbMonitorHandle = $dbMonitorPS.BeginInvoke()
+
+      # Set timeout
+      $timeoutMinutes = 30
+      $timeout = [DateTime]::Now.AddMinutes($timeoutMinutes)
+      $installationComplete = $false
+      $success = $true
+    
+      Write-PSULog -Severity Info -Message "Waiting for installation to complete (timeout: $timeoutMinutes minutes)"
+
+      $progressStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+      $lastProgressUpdate = 0
+
+      while ([DateTime]::Now -lt $timeout -and -not $installationComplete) {
+        # Check monitor results first
+        if ($dbMonitorHandle.IsCompleted) {
+          $dbResult = $dbMonitorPS.EndInvoke($dbMonitorHandle)
+          if ($dbResult -eq $false) {
+            Write-PSULog -Severity Error -Message "Database configuration monitor reported failure, terminating installation"
+            $success = $false
+            break
+          }
+        }
+
+        # Check if MSI process is still running
+        if ($msiProcess.HasExited) {
+          Write-PSULog -Severity Info -Message "MSI process completed with exit code: $($msiProcess.ExitCode)"
+          if ($msiProcess.ExitCode -ne 0) {
+            Write-PSULog -Severity Error -Message "MSI installation failed with exit code: $($msiProcess.ExitCode)"
+            $success = $false
+            break
+          }
+
+          # Check for RayStationSetup process
+          $setupRunning = Get-Process | Where-Object { $_.ProcessName -match "RayStationSetup" }
+          if (-not $setupRunning) {
+            $installationComplete = $true
+            break
+          }
+        }
+
+        # Show progress every 5 minutes
+        $currentMinutes = [Math]::Floor($progressStopwatch.Elapsed.TotalMinutes)
+        if ($currentMinutes -ge ($lastProgressUpdate + 5)) {
+          $remainingMinutes = [Math]::Round(($timeout - [DateTime]::Now).TotalMinutes)
+          Write-PSULog -Severity Info -Message "Installation in progress... ($remainingMinutes minutes remaining)"
+          $lastProgressUpdate = $currentMinutes
+        }
+
+        Start-Sleep -Seconds 30
+      }
+
+      $progressStopwatch.Stop()
+
+      # Clean up runspaces
+      if ($dbMonitorPS -ne $null) {
+        try {
+          $dbMonitorPS.Dispose()
+        }
+        catch {
+          Write-PSULog -Severity Error -Message "Error disposing database monitor: $_"
+        }
+      }
+
+      if ($runspacePool -ne $null) {
+        try {
+          $runspacePool.Close()
+          $runspacePool.Dispose()
+        }
+        catch {
+          Write-PSULog -Severity Error -Message "Error cleaning up runspace pool: $_"
+        }
+      }
+
+      # Final status check
+      if (-not $success) {
+        Write-PSULog -Severity Error -Message "RayStation installation failed - Skipping final setup step"
+        # Ensure all processes are terminated
+        @("RaySearch.RayStation.SetUp.DatabaseConfiguration", "msiexec", "RayStationSetup") | ForEach-Object {
+          Get-Process | Where-Object { $_.ProcessName -match $_ } | Stop-Process -Force -ErrorAction SilentlyContinue
+        }
+        exit 1
+      }
+      elseif ($installationComplete) {
+        Write-PSULog -Severity Info -Message "MSI installation completed successfully, proceeding with RayStation setup"
+        & $RayStationLocation /quiet -wait
+        Write-PSULog -Severity Info -Message "RayStation installation completed successfully"
+      }
+      else {
+        Write-PSULog -Severity Error -Message "Installation timed out after $timeoutMinutes minutes"
+        # Ensure all processes are terminated
+        @("RaySearch.RayStation.SetUp.DatabaseConfiguration", "msiexec", "RayStationSetup") | ForEach-Object {
+          Get-Process | Where-Object { $_.ProcessName -match $_ } | Stop-Process -Force -ErrorAction SilentlyContinue
+        }
+        exit 1
+      }
+    }
+    catch {
+      Write-PSULog -Severity Error -Message "Error in installation process: $_"
+      # Ensure processes are cleaned up
+      @("RaySearch.RayStation.SetUp.DatabaseConfiguration", "msiexec", "RayStationSetup") | ForEach-Object {
+        Get-Process | Where-Object { $_.ProcessName -match $_ } | Stop-Process -Force -ErrorAction SilentlyContinue
+      }
+      exit 1
+    }
 
   }
   else {

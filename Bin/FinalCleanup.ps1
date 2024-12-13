@@ -9,7 +9,7 @@
 #Requires -RunAsAdministrator
 
 param ($RunLocation,
-       $RemoteLogLocation)
+    $RemoteLogLocation)
 
 #----------------------------------------------------------------------------------------------
 function Write-PSULog {
@@ -18,8 +18,8 @@ function Write-PSULog {
         [string]$Severity = "Info",
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        [string]$logDirectory="C:\temp",
-        [string]$RemotelogDirectory="$RemoteLogLocation"
+        [string]$logDirectory = "C:\temp",
+        [string]$RemotelogDirectory = "$RemoteLogLocation"
         #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
@@ -29,14 +29,14 @@ function Write-PSULog {
         Message   = $Message
     }
 
-    if(!(Test-Path -Path $logDirectory)) {
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-        }
+    if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+    }
 
     $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
     $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if($RemotelogDirectory -ne $null){
-        if(!(Test-Path -Path $RemotelogDirectory)) {
+    if ($RemotelogDirectory -ne $null) {
+        if (!(Test-Path -Path $RemotelogDirectory)) {
             New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
         }
         $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
@@ -62,20 +62,23 @@ stop-process -Name explorer -Force
 Start-Sleep -Seconds 5
 
 #Removes the Setup Folder
-Try{
-Remove-Item "$RunLocation" -Force -Recurse
-}
-Catch{
-    Write-host "Failed to Delete the $RunLocation folder. Please delete Manually" -ForegroundColor Red
-    Write-PSULog -Severity Error -Message "Failed to Delete the $RunLocation folder. Please delete Manually"
-}
+function Get-Tree($Path, $Include = '*') { 
+    @(Get-Item $Path -Include $Include -Force) + 
+        (Get-ChildItem $Path -Recurse -Include $Include -Force) | sort-object pspath -Descending -unique
+} 
+
+function Remove-Tree($Path, $Include = '*') { 
+    Get-Tree $Path $Include | Remove-Item -force -recurse
+} 
+
+Remove-Tree $RunLocation
 
 Write-PSULog -Severity End -Message "Completed Setup and Cleanup. Reboting machine"
 
-if($RemoteLogLocation -ne $null){
-$RemotelogFilePath = Join-Path "$RemoteLogLocation" "CompletedMachines.txt"
+if ($RemoteLogLocation -ne $null) {
+    $RemotelogFilePath = Join-Path "$RemoteLogLocation" "CompletedMachines.txt"
 
-$env:COMPUTERNAME | out-file $RemotelogFilePath -Append
+    $env:COMPUTERNAME | out-file $RemotelogFilePath -Append
 
 }
 
