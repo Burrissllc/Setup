@@ -1,11 +1,24 @@
-#------------------------------------------------------
-# Name:        Setup
-# Purpose:     Base Install for App or SQL Server
-# Author:      John Burriss
-# Created:     8/26/2019  5:24 PM 
-# Modified:    10/12/2022 9:55 AM
-# Version:     0.07
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    Base Install for App or SQL Server.
+
+.DESCRIPTION
+    This script performs the base installation for an application or SQL server. It reads settings from a JSON file and performs various setup tasks based on those settings.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\Setup.ps1
+    Runs the setup script with the settings defined in Setup.json.
+
+.NOTES
+    Author: John Burriss
+    Created: 8/26/2019
+    Modified: 10/12/2022
+    Version: 0.07
+#>
+
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted

@@ -1,11 +1,28 @@
-#------------------------------------------------------
-# Name:        ErrorLogReader
-# Purpose:     Reads Error Log
-# Author:      John Burriss
-# Created:     8/26/2023  4:16 PM 
-# Modified:    8/26/2023  4:16 PM 
-#Version:      0.01
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    This script reads and monitors the error log for changes.
+
+.DESCRIPTION
+    The script sets up a file system watcher to monitor the error log file for changes.
+    It reads the latest log entry and displays it with appropriate color coding based on severity.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\ErrorLogReader.ps1
+    Runs the script to monitor and display changes in the error log file.
+
+.NOTES
+    Author: John Burriss
+    Created: 8/26/2023
+    Modified: 8/26/2023
+    Version: 0.01
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#Requires -RunAsAdministrator
+#>
+
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted

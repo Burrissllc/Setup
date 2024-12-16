@@ -1,10 +1,27 @@
-#------------------------------------------------------
-# Name:        DefaultSettings
-# Purpose:     Sets the Default Machine Settings
-# Author:      John Burriss
-# Created:     10/12/2022  5:24 PM 
-#Version:      0.01
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    This script sets the default machine settings.
+
+.DESCRIPTION
+    The script reads the configuration from Setup.json and applies various default settings such as time zone, power settings, disabling IE Enhanced Security and UAC, disabling the firewall, enabling RDP, and enabling .NET 3.5.
+    Logs are created locally and optionally remotely if specified in the Setup.json file.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\DefaultSettings.ps1
+    Runs the script to set the default machine settings.
+
+.NOTES
+    Author: John Burriss
+    Created: 10/12/2022
+    Version: 0.01
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#Requires -RunAsAdministrator
+#>
+
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted
@@ -18,11 +35,12 @@ $RunLocation = $RunLocation.Path
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 
 #----------------------------------------------------------------------------------------------
-if([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True){
+if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
 
     $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
-}else{
-$null = $RemoteLogLocation
+}
+else {
+    $null = $RemoteLogLocation
 }
 function Write-PSULog {
     param(
@@ -30,8 +48,8 @@ function Write-PSULog {
         [string]$Severity = "Info",
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        [string]$logDirectory="$RunLocation\Logs\",
-        [string]$RemotelogDirectory="$RemoteLogLocation"
+        [string]$logDirectory = "$RunLocation\Logs\",
+        [string]$RemotelogDirectory = "$RemoteLogLocation"
         #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
@@ -41,14 +59,14 @@ function Write-PSULog {
         Message   = $Message
     }
 
-    if(!(Test-Path -Path $logDirectory)) {
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-        }
+    if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+    }
 
     $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
     $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if($RemotelogDirectory -ne $null){
-        if(!(Test-Path -Path $RemotelogDirectory)) {
+    if ($RemotelogDirectory -ne $null) {
+        if (!(Test-Path -Path $RemotelogDirectory)) {
             New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
         }
         $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
@@ -71,7 +89,7 @@ function Write-PSULog {
 #$Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 
 # Checking Windows version
-if ((Get-ItemProperty 'HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion' | Select-Object ProductName -ExpandProperty ProductName) -match "Windows 10" -or  "Windows 11") {
+if ((Get-ItemProperty 'HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion' | Select-Object ProductName -ExpandProperty ProductName) -match "Windows 10" -or "Windows 11") {
     $windowsVersion = "Desktop"
 }
 else {

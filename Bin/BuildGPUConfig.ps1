@@ -1,10 +1,27 @@
-#
-#------------------------------------------------------
-# Name:        BuildGPUConfig
-# Purpose:     RayStation defined in json
-# Author:      John Burriss
-# Created:     09/21/2023  3:41 PM 
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    This script builds GPU configuration files for RayStation based on the system's GPU setup.
+
+.DESCRIPTION
+    The script checks for the presence of NVIDIA GPUs and gathers information about them.
+    It then creates GPU configuration files for different versions of RayStation based on the gathered information.
+    Logs are created locally and optionally remotely if specified in the Setup.json file.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\BuildGPUConfig.ps1
+    Runs the script to build GPU configuration files for RayStation.
+
+.NOTES
+    Author: John Burriss
+    Created: 09/21/2023
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#Requires -RunAsAdministrator
+#>
+
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted

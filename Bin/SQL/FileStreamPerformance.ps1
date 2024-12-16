@@ -1,36 +1,53 @@
-#------------------------------------------------------
-# Name:        FileStreamPerformance
-# Purpose:     Checks FileStream Settings for best performance and runs Fixes
-# Author:      John Burriss
-# Created:     11/14/2019  11:24 AM 
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    Checks FileStream Settings for best performance and runs Fixes.
+
+.DESCRIPTION
+    This script checks various settings related to FileStream performance and applies fixes if necessary. 
+    It verifies settings such as NTFS compression, encryption, Windows Defender exclusions, and more.
+
+.PARAMETER FileStreamDirectory
+    The directory where FileStream is located.
+
+.PARAMETER FixProblems
+    If set to "fix", the script will automatically apply fixes for detected issues.
+
+.EXAMPLE
+    .\FileStreamPerformance.ps1 -FileStreamDirectory "C:\FileStream" -FixProblems "fix"
+    This command checks the FileStream settings in the specified directory and applies fixes automatically.
+
+.NOTES
+    Author: John Burriss
+    Created: 11/14/2019 11:24 AM
+    Requires: Run as Administrator
+
+#>
 #Requires -RunAsAdministrator
 
 
 
 Param(
-[Parameter()]
-$FileStreamDirectory,
-[ValidateSet("fix")]
-[String]
-$FixProblems
+    [Parameter()]
+    $FileStreamDirectory,
+    [ValidateSet("fix")]
+    [String]
+    $FixProblems
 )
 
-function Invoke-ConsoleCommand
-{
-    [CmdletBinding(SupportsShouldProcess=$true)]
+function Invoke-ConsoleCommand {
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         # The target of the action.
         $Target,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]
         # The action/command being performed.
         $Action,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [scriptblock]
         # The command to run.
         $ScriptBlock
@@ -40,27 +57,23 @@ function Invoke-ConsoleCommand
 
     Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
 
-    if( -not $PSCmdlet.ShouldProcess( $Target, $Action ) )
-    {
+    if ( -not $PSCmdlet.ShouldProcess( $Target, $Action ) ) {
         return
     }
 
     $output = Invoke-Command -ScriptBlock $ScriptBlock
-    if( $LASTEXITCODE )
-    {
+    if ( $LASTEXITCODE ) {
         $output = $output -join [Environment]::NewLine
-        Write-Error ('Failed action ''{0}'' on target ''{1}'' (exit code {2}): {3}' -f $Action,$Target,$LASTEXITCODE,$output)
+        Write-Error ('Failed action ''{0}'' on target ''{1}'' (exit code {2}): {3}' -f $Action, $Target, $LASTEXITCODE, $output)
     }
-    else
-    {
+    else {
         $output | Where-Object { $_ -ne $null } | Write-Verbose
     }
 }
-function Disable-NtfsCompression
-{
-    [CmdletBinding(SupportsShouldProcess=$true)]
+function Disable-NtfsCompression {
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param(
-        [Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
         [string[]]
         [Alias('FullName')]
         # The path where compression should be disabled.
@@ -71,43 +84,34 @@ function Disable-NtfsCompression
         $Recurse
     )
 
-    begin
-    {
+    begin {
         Set-StrictMode -Version 'Latest'
 
         Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
 
         $compactPath = Join-Path $env:SystemRoot 'system32\compact.exe'
-        if( -not (Test-Path -Path $compactPath -PathType Leaf) )
-        {
-            if( (Get-Command -Name 'compact.exe' -ErrorAction SilentlyContinue) )
-            {
+        if ( -not (Test-Path -Path $compactPath -PathType Leaf) ) {
+            if ( (Get-Command -Name 'compact.exe' -ErrorAction SilentlyContinue) ) {
                 $compactPath = 'compact.exe'
             }
-            else
-            {
+            else {
                 Write-Error ("Compact command '{0}' not found." -f $compactPath)
                 return
             }
         }
     }
 
-    process
-    {
-        foreach( $item in $Path )
-        {
-            if( -not (Test-Path -Path $item) )
-            {
+    process {
+        foreach ( $item in $Path ) {
+            if ( -not (Test-Path -Path $item) ) {
                 Write-Error -Message ('Path {0} not found.' -f $item) -Category ObjectNotFound
                 return
             }
 
             $recurseArg = ''
             $pathArg = $item
-            if( (Test-Path -Path $item -PathType Container) )
-            {
-                if( $Recurse )
-                {
+            if ( (Test-Path -Path $item -PathType Container) ) {
+                if ( $Recurse ) {
                     $recurseArg = ('/S:{0}' -f $item)
                     $pathArg = ''
                 }
@@ -125,7 +129,7 @@ $RunLocation = $RunLocation.Path
 
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 #----------------------------------------------------------------------------------------------
-if($Settings.GENERAL.REMOTELOGGINGLOCATION -ne $null){
+if ($Settings.GENERAL.REMOTELOGGINGLOCATION -ne $null) {
 
     $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
 }
@@ -136,8 +140,8 @@ function Write-PSULog {
         [string]$Severity = "Info",
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        [string]$logDirectory="$RunLocation\Logs\",
-        $RemotelogDirectory="$RemoteLogLocation"
+        [string]$logDirectory = "$RunLocation\Logs\",
+        $RemotelogDirectory = "$RemoteLogLocation"
         #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
@@ -147,14 +151,14 @@ function Write-PSULog {
         Message   = $Message
     }
 
-    if(!(Test-Path -Path $logDirectory)) {
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-        }
+    if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+    }
 
     $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
     $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if($RemotelogDirectory -ne $null){
-        if(!(Test-Path -Path $RemotelogDirectory)) {
+    if ($RemotelogDirectory -ne $null) {
+        if (!(Test-Path -Path $RemotelogDirectory)) {
             New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
         }
         $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
@@ -186,8 +190,8 @@ $FixStripeSize = 1
 
 #Write-Host "Checking FileStream Performance" -ForegroundColor Green
 Write-PSULog -Severity Info -Message "Checking FileStream Performance"
-if($Null -eq $FileStreamDirectory){
-$FileStreamDirectory = Read-Host "Enter the FileStream Directory"
+if ($Null -eq $FileStreamDirectory) {
+    $FileStreamDirectory = Read-Host "Enter the FileStream Directory"
 }
 
 $DefragDir = $FileStreamDirectory.Substring(0, $FileStreamDirectory.IndexOf('\'))
@@ -200,17 +204,17 @@ $Fltmc
 
 
 $NtfsDisableLastAccessUpdate = Get-ItemProperty -Path hklm:SYSTEM\CurrentControlSet\Control\FileSystem -Name "NtfsDisableLastAccessUpdate" -ErrorAction SilentlyContinue
-if($NtfsDisableLastAccessUpdate.NtfsDisableLastAccessUpdate -eq 1){
+if ($NtfsDisableLastAccessUpdate.NtfsDisableLastAccessUpdate -eq 1) {
     #Write-host "last access time is Disabled" -ForegroundColor Green  
     Write-PSULog -Severity Info -Message "last access time is Disabled"
 }
-else{
+else {
     #Write-Host "last access time is enabled. Please Update Registry Key" -ForegroundColor Red
     Write-PSULog -Severity Error -Message "last access time is enabled. Please Update Registry Key"
     $FixLastAccess = 1
 }
 $NtfsDisable8dot3NameCreation = Get-ItemProperty -Path hklm:SYSTEM\CurrentControlSet\Control\FileSystem -Name "NtfsDisable8dot3NameCreation" -ErrorAction SilentlyContinue
-if($NtfsDisable8dot3NameCreation.NtfsDisable8dot3NameCreation -eq 1){
+if ($NtfsDisable8dot3NameCreation.NtfsDisable8dot3NameCreation -eq 1) {
     #Write-host "8.3 naming is Disabled" -ForegroundColor Green 
     Write-PSULog -Severity Info -Message "8.3 naming is Disabled"
 }
@@ -220,25 +224,25 @@ else {
     $Fix83naming = 1
 }
 
-$IsEncrypted = Get-Item "$FileStreamDirectory" -Force -ErrorAction SilentlyContinue | Where-Object {$_.Attributes -ge "Encrypted"} | format-list fullname, attributes
+$IsEncrypted = Get-Item "$FileStreamDirectory" -Force -ErrorAction SilentlyContinue | Where-Object { $_.Attributes -ge "Encrypted" } | format-list fullname, attributes
 
-if($Null -eq $IsEncrypted){
-#Write-Host "FileStream directory is not encrypted" -ForegroundColor Green
-Write-PSULog -Severity Info -Message "FileStream directory is not encrypted"
+if ($Null -eq $IsEncrypted) {
+    #Write-Host "FileStream directory is not encrypted" -ForegroundColor Green
+    Write-PSULog -Severity Info -Message "FileStream directory is not encrypted"
 }
-else{
+else {
     #Write-Host "FileStream Directory is encrypted $IsEncrypted" -ForegroundColor Red
     Write-PSULog -Severity Error -Message "FileStream Directory is encrypted $IsEncrypted"
     $FixEncryption = 1
 }
 
-$Compressed = Get-WmiObject Win32_Volume -ComputerName "$env:COMPUTERNAME" | Select-Object name,label,filesystem,compressed
-$Compressed = $Compressed | Where-Object {$_.name -eq "$DefragDir\"}
-if($Compressed.compressed -match "False"){
+$Compressed = Get-WmiObject Win32_Volume -ComputerName "$env:COMPUTERNAME" | Select-Object name, label, filesystem, compressed
+$Compressed = $Compressed | Where-Object { $_.name -eq "$DefragDir\" }
+if ($Compressed.compressed -match "False") {
     #Write-Host "Compression on FileStream Drive is Disabled" -ForegroundColor Green
     Write-PSULog -Severity Info -Message "Compression on FileStream Drive is Disabled"
 }
-else{
+else {
     #Write-Host "Compression on FileStream Drive is Enabled" -ForegroundColor Red
     Write-PSULog -Severity Error -Message "Compression on FileStream Drive is Enabled"
     $FixCompression = 1
@@ -246,31 +250,31 @@ else{
 
 $WDAVprefs = Get-MpPreference
 
-if($WDAVprefs.ExclusionPath -contains "$FileStreamDirectory"){
+if ($WDAVprefs.ExclusionPath -contains "$FileStreamDirectory") {
     #Write-Host "FileStream is excluded from Windows Defender Scans" -ForegroundColor Green
     Write-PSULog -Severity Info -Message "FileStream is excluded from Windows Defender Scans"
 }
-Else{
+Else {
     #Write-Host "FileStream Directory is not excluded from Windows Defender Scans" -ForegroundColor Red
     Write-PSULog -Severity Error -Message "FileStream Directory is not excluded from Windows Defender Scans"
     $FixDefender = 1
 }
 
-$FileCountDirs =Get-Childitem -Recurse $FileStreamDirectory | Group-Object name | Select-Object count
+$FileCountDirs = Get-Childitem -Recurse $FileStreamDirectory | Group-Object name | Select-Object count
 $FileCount = 0
-foreach($FileCountDir in $FileCountDirs){
-$FileCount = $FileCountDir.count + $FileCount
+foreach ($FileCountDir in $FileCountDirs) {
+    $FileCount = $FileCountDir.count + $FileCount
 }
 
-if($Null -eq $FileCount){
+if ($Null -eq $FileCount) {
     #Write-Host "FileStream Directory has 0 files" -ForegroundColor Green
     Write-PSULog -Severity Info -Message "FileStream Directory has 0 files"
 }
-elseif($FileCount -le 300000){
+elseif ($FileCount -le 300000) {
     #Write-Host "FileStream Directory has $FileCount files" -ForegroundColor Green 
     Write-PSULog -Severity Info -Message "FileStream Directory has $FileCount files"  
 }
-else{
+else {
     #Write-Host "FileStream Directory has $FileCount files. Please look into splitting into multiple directory's" -ForegroundColor Red
     Write-PSULog -Severity Warn -Message "FileStream Directory has $FileCount files. Please look into splitting into multiple directory's"
 }
@@ -282,7 +286,7 @@ Get-WmiObject -Query $wql -ComputerName '.' | Select-Object Label, Blocksize, Na
 $Defrag = defrag /A /V $DefragDir
 
 $Defrag
-if($Defrag  -match "Neither Slab Consolidation nor Slab Analysis will run if slabs are less than 8 MB"){
+if ($Defrag -match "Neither Slab Consolidation nor Slab Analysis will run if slabs are less than 8 MB") {
     $Null = $FixStripeSize
 }
 #Write-Host "`n"
@@ -296,52 +300,52 @@ Write-PSULog -Severity Info -Message "$mftZone"
 $NumbefOfFixes = $FixLastAccess + $Fix83naming + $FixDefender + $FixCompression + $FixEncryption
 
 
-if($NumbefOfFixes -ge 1){
-    if($FixProblems -match "fix"){
+if ($NumbefOfFixes -ge 1) {
+    if ($FixProblems -match "fix") {
         $FixFilestream = "y"
     }
-    else{
+    else {
         $FixFilestream = Read-Host "Would you like to automatically fix some errors (y/n)"
     }
-if($FixFilestream -match "y"){
+    if ($FixFilestream -match "y") {
 
-    Write-PSULog -Severity Info -Message "Starting FileStream Fixes"
+        Write-PSULog -Severity Info -Message "Starting FileStream Fixes"
 
-    if($FixLastAccess -eq 1){
-        fsutil behavior set disablelastaccess 1 | Out-Null
-        #Write-Host "Disabled Last Access Time" -ForegroundColor Green
-        Write-PSULog -Severity Info -Message "Disabled Last Access Time"
-    }
-    if($Fix83naming -eq 1){
-        fsutil behavior set disable8dot3 1 | Out-Null
-        #Write-Host "Disabled 8.3 Naming" -ForegroundColor Green
-        Write-PSULog -Severity Info -Message "Disabled 8.3 Naming"
-    }
-    if($FixCompression -eq 1){
-        Disable-NtfsCompression -Path $DefragDir\ -Recurse
-        #Write-Host "Disabled Compression on FileStream Directory" -ForegroundColor Green
-        Write-PSULog -Severity Info -Message "Disabled Compression on FileStream Directory"
-    }
-    if($FixEncryption -eq 1){
-        cipher /d /s:$FileStreamDirectory
-        #Write-Host "Disabled Encryption on FileStream Directory" -ForegroundColor Green
-        Write-PSULog -Severity Info -Message "Disabled Encryption on FileStream Directory"
-    }
-    if($FixDefender -eq 1){
-        Add-MpPreference -ExclusionPath $FileStreamDirectory
-        #Write-Host "Added Windows Defender Exclusion to $FileStreamDirectory" -ForegroundColor Green
-        Write-PSULog -Severity Info -Message "Added Windows Defender Exclusion to $FileStreamDirectory"
-    }
-    if($FixStripeSize -eq 1){
-        $pattern = '[^a-zA-Z]'
-        $DefragDir = $DefragDir -replace $pattern, ''
-        Optimize-Volume -DriveLetter $DefragDir -Defrag -Verbose
-        #Write-Host "Volume is now Defragged" -ForegroundColor Green
-        Write-PSULog -Severity Info -Message "Volume is now Defragged"
-    }
+        if ($FixLastAccess -eq 1) {
+            fsutil behavior set disablelastaccess 1 | Out-Null
+            #Write-Host "Disabled Last Access Time" -ForegroundColor Green
+            Write-PSULog -Severity Info -Message "Disabled Last Access Time"
+        }
+        if ($Fix83naming -eq 1) {
+            fsutil behavior set disable8dot3 1 | Out-Null
+            #Write-Host "Disabled 8.3 Naming" -ForegroundColor Green
+            Write-PSULog -Severity Info -Message "Disabled 8.3 Naming"
+        }
+        if ($FixCompression -eq 1) {
+            Disable-NtfsCompression -Path $DefragDir\ -Recurse
+            #Write-Host "Disabled Compression on FileStream Directory" -ForegroundColor Green
+            Write-PSULog -Severity Info -Message "Disabled Compression on FileStream Directory"
+        }
+        if ($FixEncryption -eq 1) {
+            cipher /d /s:$FileStreamDirectory
+            #Write-Host "Disabled Encryption on FileStream Directory" -ForegroundColor Green
+            Write-PSULog -Severity Info -Message "Disabled Encryption on FileStream Directory"
+        }
+        if ($FixDefender -eq 1) {
+            Add-MpPreference -ExclusionPath $FileStreamDirectory
+            #Write-Host "Added Windows Defender Exclusion to $FileStreamDirectory" -ForegroundColor Green
+            Write-PSULog -Severity Info -Message "Added Windows Defender Exclusion to $FileStreamDirectory"
+        }
+        if ($FixStripeSize -eq 1) {
+            $pattern = '[^a-zA-Z]'
+            $DefragDir = $DefragDir -replace $pattern, ''
+            Optimize-Volume -DriveLetter $DefragDir -Defrag -Verbose
+            #Write-Host "Volume is now Defragged" -ForegroundColor Green
+            Write-PSULog -Severity Info -Message "Volume is now Defragged"
+        }
 
-    #Write-Host "All Fixes have been applied. Please reboot the machine for them to take effect" -ForegroundColor Green
-    Write-PSULog -Severity End -Message "All Fixes have been applied. Please reboot the machine for them to take effect"
+        #Write-Host "All Fixes have been applied. Please reboot the machine for them to take effect" -ForegroundColor Green
+        Write-PSULog -Severity End -Message "All Fixes have been applied. Please reboot the machine for them to take effect"
 
     }
 }

@@ -1,10 +1,26 @@
-#------------------------------------------------------
-# Name:        AutoLogon
-# Purpose:     Enables Auto Logon
-# Author:      John Burriss
-# Created:     10/12/2022  5:24 PM 
-#Version:      0.01
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    This script enables automatic login for a specified user.
+
+.DESCRIPTION
+    The script reads the configuration from Setup.json to determine if automatic login should be enabled.
+    It prompts for the username and password, sets up the Windows registry for automatic login, and logs the process.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\Autologon.ps1
+    Runs the script to enable automatic login for the specified user.
+
+.NOTES
+    Author: John Burriss
+    Created: 10/12/2022
+    Version: 0.01
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#>
+
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted
@@ -16,11 +32,12 @@ $RunLocation = get-location
 $RunLocation = $RunLocation.Path
 
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
-if([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True){
+if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
 
     $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
-}else{
-$null = $RemoteLogLocation
+}
+else {
+    $null = $RemoteLogLocation
 }
 #----------------------------------------------------------------------------------------------
 function Write-PSULog {
@@ -29,8 +46,8 @@ function Write-PSULog {
         [string]$Severity = "Info",
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        [string]$logDirectory="$RunLocation\Logs\",
-        $RemotelogDirectory="$RemoteLogLocation"
+        [string]$logDirectory = "$RunLocation\Logs\",
+        $RemotelogDirectory = "$RemoteLogLocation"
         #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
@@ -40,14 +57,14 @@ function Write-PSULog {
         Message   = $Message
     }
 
-    if(!(Test-Path -Path $logDirectory)) {
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-        }
+    if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+    }
 
     $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
     $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if($RemotelogDirectory -ne $null){
-        if(!(Test-Path -Path $RemotelogDirectory)) {
+    if ($RemotelogDirectory -ne $null) {
+        if (!(Test-Path -Path $RemotelogDirectory)) {
             New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
         }
         $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
@@ -82,9 +99,9 @@ if ($AutoLoginChoice -match "y") {
     $Domain = $username.split("\")[0]
     $username = $username.split("\")[1]
 
-    if($CleanDomain -match '`.' -or $CleanDomain -match 'localhost'){
+    if ($CleanDomain -match '`.' -or $CleanDomain -match 'localhost') {
         $CleanDomain = "$env:COMPUTERNAME"
-   }
+    }
 
 
     $autologonexe = "$RunLocation\bin\Autologon.exe"

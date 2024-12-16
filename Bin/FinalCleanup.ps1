@@ -1,11 +1,32 @@
-#------------------------------------------------------
-# Name:        Final Cleanup 
-# Purpose:     Removes All Leftover files from setup
-# Author:      John Burriss
-# Created:     10/7/2019  1:00 PM
-# Modified:    10/26/2022 11:07 AM
-# Version:     0.02 
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    This script performs final cleanup by removing all leftover files from setup.
+
+.DESCRIPTION
+    The script stops all open processes, removes the setup folder, logs the completion, and reboots the machine.
+    Logs are created locally and optionally remotely if specified.
+
+.PARAMETER RunLocation
+    The location of the setup files to be cleaned up.
+
+.PARAMETER RemoteLogLocation
+    The remote location where logs should be stored, if specified.
+
+.EXAMPLE
+    .\FinalCleanup.ps1 -RunLocation "C:\Setup" -RemoteLogLocation "\\Server\Logs"
+    Runs the script to perform final cleanup and reboot the machine.
+
+.NOTES
+    Author: John Burriss
+    Created: 10/7/2019
+    Modified: 10/26/2022
+    Version: 0.02
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#Requires -RunAsAdministrator
+#>
+
+
 #Requires -RunAsAdministrator
 
 param ($RunLocation,

@@ -1,74 +1,91 @@
-﻿#------------------------------------------------------
-# Name:        DellWarranty
-# Purpose:     Makes API request to Dell to get support information for Service Tag
-# Author:      John Burriss
-# Created:     10/7/2019  12:13 PM 
-#------------------------------------------------------
+﻿<#
+.SYNOPSIS
+    This script makes an API request to Dell to get support information for the service tag.
+
+.DESCRIPTION
+    The script retrieves the service tag of the machine and makes an API request to Dell to get the warranty and support information.
+    It logs the machine information and support details to a text file on the desktop.
+
+.PARAMETER PWD
+    The password for the local admin account, if provided.
+
+.EXAMPLE
+    .\DellWarranty.ps1
+    Runs the script to get support information for the service tag and logs the details.
+
+.NOTES
+    Author: John Burriss
+    Created: 10/7/2019
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#>
+
+#Requires -RunAsAdministrator
 [CmdletBinding()]
 
 Param(
-[Parameter()]
-$PWD
+  [Parameter()]
+  $PWD
 )
 
-if ($null -ne $pwd ){
-$Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($PWD)
+if ($null -ne $pwd ) {
+  $Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($PWD)
 }
 
 $SN = get-ciminstance win32_bios | Select-object SerialNumber -ExpandProperty SerialNumber
 
-$url=''
+$url = ''
 
-$postdata=''
+$postdata = ''
 
-$content=''
+$content = ''
 
-$auth_response=''
+$auth_response = ''
 
-$url='https://apigtwb2c.us.dell.com/auth/oauth/v2/token'
+$url = 'https://apigtwb2c.us.dell.com/auth/oauth/v2/token'
 
-$postdata= @{client_id='XXXXXXXXXX';client_secret='XXXXXXXX';grant_type='client_credentials'}
+$postdata = @{client_id = 'XXXXXXXXXX'; client_secret = 'XXXXXXXX'; grant_type = 'client_credentials' }
 
-$content='application/x-www-form-urlencoded'
+$content = 'application/x-www-form-urlencoded'
 [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
 
-$auth_response=Invoke-RestMethod -URI $url -Method Post -Body $postdata -ContentType $content
+$auth_response = Invoke-RestMethod -URI $url -Method Post -Body $postdata -ContentType $content
 
 $Token = $auth_response.access_token
 
 
- $params = @{
-    Uri         = "https://apigtwb2c.us.dell.com/PROD/sbil/eapi/v5/asset-entitlements?servicetags=$SN"
-    Headers     = @{ 'Authorization' = "Bearer $Token" }
-    Method      = 'GET'
-    Body        = $jsonSample
-    ContentType = 'application/json'
-    }
+$params = @{
+  Uri         = "https://apigtwb2c.us.dell.com/PROD/sbil/eapi/v5/asset-entitlements?servicetags=$SN"
+  Headers     = @{ 'Authorization' = "Bearer $Token" }
+  Method      = 'GET'
+  Body        = $jsonSample
+  ContentType = 'application/json'
+}
 
-    $Details = Invoke-RestMethod @params
+$Details = Invoke-RestMethod @params
 
-    $Details1 = $Details | where-Object { $_ -match "entitlements" }
-    $Model = (Get-WmiObject -Class:Win32_ComputerSystem).Model
-    $Make = Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object Manufacturer -ExpandProperty Manufacturer
-    $OS = Get-ItemProperty 'HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion' | Select-Object ProductName -ExpandProperty ProductName
-    $Path = "C:\Program Files\NVIDIA CORPORATION\NVSMI\nvidia-smi.exe"
-    if(Test-Path $path){
-    $GPUs = & "C:\Program Files\NVIDIA CORPORATION\NVSMI\nvidia-smi.exe" --query-gpu=name --format=csv | select-object -skip 1
-    $GPUDriver = & "C:\Program Files\NVIDIA CORPORATION\NVSMI\nvidia-smi.exe" --query-gpu=driver_version --format=csv | select-object -skip 1
-    }
-    Else{
-      $GPUs = "N/A"
-      $GPUDriver = "N/A"      
-    }
+$Details1 = $Details | where-Object { $_ -match "entitlements" }
+$Model = (Get-WmiObject -Class:Win32_ComputerSystem).Model
+$Make = Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object Manufacturer -ExpandProperty Manufacturer
+$OS = Get-ItemProperty 'HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion' | Select-Object ProductName -ExpandProperty ProductName
+$Path = "C:\Program Files\NVIDIA CORPORATION\NVSMI\nvidia-smi.exe"
+if (Test-Path $path) {
+  $GPUs = & "C:\Program Files\NVIDIA CORPORATION\NVSMI\nvidia-smi.exe" --query-gpu=name --format=csv | select-object -skip 1
+  $GPUDriver = & "C:\Program Files\NVIDIA CORPORATION\NVSMI\nvidia-smi.exe" --query-gpu=driver_version --format=csv | select-object -skip 1
+}
+Else {
+  $GPUs = "N/A"
+  $GPUDriver = "N/A"      
+}
 
-    Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "$Make $Model"
-    Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "Serial Number: $SN"
-    Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "Hostname: $env:COMPUTERNAME"
-    Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "Installed OS: $OS"
-    Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "GPU(s): $GPUs"
-    Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "GPU Driver: $GPUDriver"
-    if($Null -ne $PWD){
-    Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "The Local Admin pw: $Password"
-    }
-    Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "The support Information for ServiceTag $SN is:"
-    Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" $Details1.entitlements
+Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "$Make $Model"
+Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "Serial Number: $SN"
+Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "Hostname: $env:COMPUTERNAME"
+Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "Installed OS: $OS"
+Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "GPU(s): $GPUs"
+Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "GPU Driver: $GPUDriver"
+if ($Null -ne $PWD) {
+  Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "The Local Admin pw: $Password"
+}
+Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" "The support Information for ServiceTag $SN is:"
+Add-Content "C:\users\$env:UserName\desktop\MachineInfo.txt" $Details1.entitlements

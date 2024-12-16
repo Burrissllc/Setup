@@ -1,9 +1,22 @@
-#------------------------------------------------------
-# Name:        NvidiaPerformance
-# Purpose:     Set Nvidia Cards in App Server to Max Power and Clock
-# Author:      John Burriss
-# Created:     8/22/2019  9:54 PM 
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    Set Nvidia Cards to Max Power and Clock.
+
+.DESCRIPTION
+    This script sets Nvidia cards in an application server to maximum power and clock settings. It also handles various Nvidia-specific configurations.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\NvidiaPerformance.ps1
+    Runs the Nvidia performance optimization script.
+
+.NOTES
+    Author: John Burriss
+    Created: 8/22/2019
+#>
+
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted

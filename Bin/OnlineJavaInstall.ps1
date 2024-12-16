@@ -1,3 +1,24 @@
+<#
+.SYNOPSIS
+    This script downloads and installs Java Runtime Environment (JRE) silently.
+
+.DESCRIPTION
+    The script downloads the JRE installer from the Oracle website and installs it silently using a configuration file.
+    It logs the installation process locally and optionally remotely if specified in the Setup.json file.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\OnlineJavaInstall.ps1
+    Runs the script to download and install JRE silently.
+
+.NOTES
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#Requires -RunAsAdministrator
+#>
+
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted
@@ -10,11 +31,12 @@ $RunLocation = $RunLocation.Path
 
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 #----------------------------------------------------------------------------------------------
-if([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True){
+if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
 
     $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
-}else{
-$null = $RemoteLogLocation
+}
+else {
+    $null = $RemoteLogLocation
 }
 
 function Write-PSULog {
@@ -23,8 +45,8 @@ function Write-PSULog {
         [string]$Severity = "Info",
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        [string]$logDirectory="$RunLocation\Logs\",
-        $RemotelogDirectory=$RemoteLogLocation
+        [string]$logDirectory = "$RunLocation\Logs\",
+        $RemotelogDirectory = $RemoteLogLocation
         #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
@@ -34,13 +56,13 @@ function Write-PSULog {
         Message   = $Message
     }
 
-    if(!(Test-Path -Path $logDirectory)) {
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-        }
+    if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+    }
 
     $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
     $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if($RemotelogDirectory -ne $null){
+    if ($RemotelogDirectory -ne $null) {
         $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
         $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $RemotelogFilePath -Append
     }
@@ -57,8 +79,7 @@ function Write-PSULog {
 $WorkingDirectory = "$RunLocation\bin\java\"
 
 # Check if work directory exists if not create it
-If (!(Test-Path -Path $WorkingDirectory -PathType Container))
-{ 
+If (!(Test-Path -Path $WorkingDirectory -PathType Container)) { 
     Write-PSULog -Severity Info -Message "Creating working directory at $WorkingDirectory"
     New-Item -Path $WorkingDirectory  -ItemType directory 
 }

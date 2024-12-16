@@ -1,10 +1,22 @@
-#
-#------------------------------------------------------
-# Name:        RayStationInstaller
-# Purpose:     RayStation defined in json
-# Author:      John Burriss
-# Created:     07/20/2022  3:41 PM 
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    RayStation Installer.
+
+.DESCRIPTION
+    This script installs RayStation as defined in the setup JSON file. It handles various installation tasks and configurations based on the settings provided.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\RayStationInstall.ps1
+    Runs the RayStation installation script with the settings defined in Setup.json.
+
+.NOTES
+    Author: John Burriss
+    Created: 07/20/2022
+#>
+
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted

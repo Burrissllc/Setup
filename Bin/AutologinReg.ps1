@@ -1,4 +1,27 @@
-﻿$RunLocation = split-path -parent $MyInvocation.MyCommand.Definition
+﻿<#
+.SYNOPSIS
+    This script sets up automatic login for a specified user.
+
+.DESCRIPTION
+    The script reads the username, domain, and encrypted password from the registry.
+    It decrypts the password and sets up the Windows registry for automatic login.
+    Logs are created locally if any errors occur.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\AutologinReg.ps1
+    Runs the script to set up automatic login for the specified user.
+
+.NOTES
+    Author: John Burriss
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#>
+
+#Requires -RunAsAdministrator
+$RunLocation = split-path -parent $MyInvocation.MyCommand.Definition
 set-location $RunLocation
 Set-Location ..
 $RunLocation = get-location

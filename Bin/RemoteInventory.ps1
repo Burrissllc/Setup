@@ -1,10 +1,27 @@
-#------------------------------------------------------
-# Name:        RemoteInventory
-# Purpose:     Collects Inventory Information from Remote Servers
-# Author:      Derek Nelson, Refactored by John Burriss
-# Created:     11/26/2024  2:24 PM 
-# Version:     0.01
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    This script collects inventory information from remote servers.
+
+.DESCRIPTION
+    The script reads the list of remote servers from a file and collects detailed inventory information from each server.
+    It logs the process and exports the collected information to a CSV file.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\RemoteInventory.ps1
+    Runs the script to collect inventory information from remote servers and export it to a CSV file.
+
+.NOTES
+    Author: Derek Nelson, Refactored by John Burriss
+    Created: 11/26/2024
+    Version: 0.01
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#Requires -RunAsAdministrator
+#>
+
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted
@@ -39,20 +56,6 @@ function Write-PSULog {
         Hostname  = $env:computername
         Severity  = $Severity
         Message   = $Message
-    }
-
-    if (!(Test-Path -Path $logDirectory)) {
-        New-Item -Path $logDirectory -ItemType Directory | Out-Null
-    }
-
-    $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
-    $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if ($null -ne $RemotelogDirectory) {
-        if (!(Test-Path -Path $RemotelogDirectory)) {
-            New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
-        }
-        $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
-        $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $RemotelogFilePath -Append
     }
     
     Write-Host "$($LogObject.Timestamp) $($LogObject.Hostname) Severity=$($LogObject.Severity) Message=$($LogObject.Message)"

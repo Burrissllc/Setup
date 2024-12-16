@@ -1,4 +1,27 @@
-﻿#Requires -RunAsAdministrator
+﻿<#
+.SYNOPSIS
+    This script configures NVIDIA GPU settings for optimal performance.
+
+.DESCRIPTION
+    The script checks for the presence of an NVIDIA GPU and .NET Framework 4.8 or higher.
+    It sets the preferred OpenGL GPU and power management mode to "Prefer Maximum Performance".
+    Logs are created locally and optionally remotely if specified in the Setup.json file.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\GPUSetup.ps1
+    Runs the script to configure NVIDIA GPU settings.
+
+.NOTES
+    Author: John Burriss
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#Requires -RunAsAdministrator
+#>
+
+#Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted
 

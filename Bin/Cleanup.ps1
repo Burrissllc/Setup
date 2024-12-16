@@ -1,9 +1,26 @@
-#------------------------------------------------------
-# Name:        Cleanup
-# Purpose:     Removes All Leftover files from setup
-# Author:      John Burriss
-# Created:     8/26/2019  5:24 PM 
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    This script removes all leftover files from setup.
+
+.DESCRIPTION
+    The script monitors VDA install logs and processes, runs Windows updates if configured, removes leftover registry keys, and cleans up user profiles.
+    It then moves logs to a temporary location and sets up the final cleanup script.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\Cleanup.ps1
+    Runs the script to perform cleanup after setup.
+
+.NOTES
+    Author: John Burriss
+    Created: 8/26/2019
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#Requires -RunAsAdministrator
+#>
+
 #Requires -RunAsAdministrator
 
 $RunLocation = split-path -parent $MyInvocation.MyCommand.Definition

@@ -1,12 +1,29 @@
+<#
+.SYNOPSIS
+    This script removes all NVIDIA components and prepares the system for a new driver installation.
 
-#
-#------------------------------------------------------
-# Name:        NvidiaDriverRemover
-# Purpose:     Removed all Nvidia Components. Required for Windows 10 Driver Install.
-# Author:      John Burriss
-# Created:     12/18/2019  11:55 PM 
-#------------------------------------------------------
- #Requires -RunAsAdministrator
+.DESCRIPTION
+    The script reads the configuration from Setup.json to determine if the current NVIDIA driver should be removed.
+    It adds a registry key to stop automatic driver installation, runs Display Driver Uninstaller (DDU) to remove all NVIDIA components, and sets the NVIDIA driver to install on the next boot if specified.
+    Logs are created locally and optionally remotely if specified in the Setup.json file.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\NvidiaDriverRemover.ps1
+    Runs the script to remove all NVIDIA components and prepare the system for a new driver installation.
+
+.NOTES
+    Author: John Burriss
+    Created: 12/18/2019
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#Requires -RunAsAdministrator
+#>
+
+
+#Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted
 
@@ -25,11 +42,12 @@ $RunLocation = $RunLocation.Path
 
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 #----------------------------------------------------------------------------------------------
-if([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True){
+if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
 
     $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
-}else{
-$null = $RemoteLogLocation
+}
+else {
+    $null = $RemoteLogLocation
 }
 function Write-PSULog {
     param(
@@ -37,8 +55,8 @@ function Write-PSULog {
         [string]$Severity = "Info",
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        [string]$logDirectory="$RunLocation\Logs\",
-        $RemotelogDirectory="$RemoteLogLocation"
+        [string]$logDirectory = "$RunLocation\Logs\",
+        $RemotelogDirectory = "$RemoteLogLocation"
         #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
@@ -48,14 +66,14 @@ function Write-PSULog {
         Message   = $Message
     }
 
-    if(!(Test-Path -Path $logDirectory)) {
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-        }
+    if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+    }
 
     $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
     $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if($RemotelogDirectory -ne $null){
-        if(!(Test-Path -Path $RemotelogDirectory)) {
+    if ($RemotelogDirectory -ne $null) {
+        if (!(Test-Path -Path $RemotelogDirectory)) {
             New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
         }
         $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
@@ -70,12 +88,12 @@ function Write-PSULog {
 
 $RemoveNvidiaDriver = $Settings.GPU.REMOVECURRENTDRIVER
 
-if($RemoveNvidiaDriver -match "y"){
+if ($RemoveNvidiaDriver -match "y") {
 
-$ServerType = $Settings.general.SERVERTYPE
+    $ServerType = $Settings.general.SERVERTYPE
 
-#Adds Reg Key to stop Automatic Driver Install
-if($Null -eq (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -name "ExcludeWUDriversInQualityUpdate" -errorAction SilentlyContinue)){
+    #Adds Reg Key to stop Automatic Driver Install
+    if ($Null -eq (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -name "ExcludeWUDriversInQualityUpdate" -errorAction SilentlyContinue)) {
         #Write-Host "Adding Reg Key to stop Automatic Driver Installation" -ForegroundColor Yellow
         Write-PSULog -Severity Info -Message "Adding Reg Key to stop Automatic Driver Installation"
         New-Item "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -Force |  New-ItemProperty -Name "ExcludeWUDriversInQualityUpdate"  -PropertyType dword -Value "1"
@@ -100,11 +118,11 @@ if($Null -eq (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\
     }
 
     
-#$Readhost = $Settings.general.AUTOREBOOT
-#Switch ($ReadHost) {
-#    Y {Write-host "Rebooting now..."; Start-Sleep -s 2; Restart-Computer -Force}
-#    N {Write-Host "Exiting script in 5 seconds. Please Reboot to continue the Script."; Start-Sleep -s 5}
-#    Default {Write-Host "Exiting script in 5 seconds. Please Reboot to continue the Script."; Start-Sleep -s 5}
-#}
+    #$Readhost = $Settings.general.AUTOREBOOT
+    #Switch ($ReadHost) {
+    #    Y {Write-host "Rebooting now..."; Start-Sleep -s 2; Restart-Computer -Force}
+    #    N {Write-Host "Exiting script in 5 seconds. Please Reboot to continue the Script."; Start-Sleep -s 5}
+    #    Default {Write-Host "Exiting script in 5 seconds. Please Reboot to continue the Script."; Start-Sleep -s 5}
+    #}
 }
 #Stop-Transcript

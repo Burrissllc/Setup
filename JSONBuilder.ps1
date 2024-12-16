@@ -1,4 +1,22 @@
-﻿# Load required assemblies
+﻿<#
+.SYNOPSIS
+    JSON Editor for Setup Configuration.
+
+.DESCRIPTION
+    This script provides a WPF GUI for editing the setup configuration JSON file. It allows users to modify various settings through a graphical interface.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\JSONBuilder.ps1
+    Opens the JSON editor GUI.
+
+.NOTES
+    Author: John Burriss
+    Created: 8/26/2019
+#>
+# Load required assemblies
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName System.Windows.Forms
 
@@ -1243,9 +1261,7 @@ $elements = @(
     @{Name = "AddIndexServiceServer"; Type = "Add"; ListBox = "listBoxIndexServiceServer"; TextBox = "textBoxNewIndexServiceServer" },
     @{Name = "RemoveIndexServiceServer"; Type = "Remove"; ListBox = "listBoxIndexServiceServer" },
     @{Name = "AddLicenseAgentServer"; Type = "Add"; ListBox = "listBoxLicenseAgentServer"; TextBox = "textBoxNewLicenseAgentServer" },
-    @{Name = "RemoveLicenseAgentServer"; Type = "Remove"; ListBox = "listBoxLicenseAgentServer" },
-    @{Name = "AddDicomServiceServer"; Type = "Add"; ListBox = "listBoxDicomServiceServer"; TextBox = "textBoxNewDicomServiceServer" },
-    @{Name = "RemoveDicomServiceServer"; Type = "Remove"; ListBox = "listBoxDicomServiceServer" }
+    @{Name = "RemoveLicenseAgentServer"; Type = "Remove"; ListBox = "listBoxLicenseAgentServer" }
     @{Name = "AddGpuOmittedServer"; Type = "Add"; ListBox = "listBoxGpuOmittedServers"; TextBox = "textBoxNewGpuOmittedServer" },
     @{Name = "RemoveGpuOmittedServer"; Type = "Remove"; ListBox = "listBoxGpuOmittedServers" }
 )

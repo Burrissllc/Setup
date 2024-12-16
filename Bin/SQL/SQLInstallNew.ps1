@@ -1,3 +1,74 @@
+<#
+.SYNOPSIS
+    Installs SQL Server with specified features and configurations.
+
+.DESCRIPTION
+    This script installs SQL Server using the provided parameters for features, directories, and configurations.
+    It supports downloading the SQL Server ISO, mounting it, and running the installation in silent mode.
+    Additionally, it can configure SQL Server protocols, set memory limits, and more.
+
+.PARAMETER IsoPath
+    Path to the SQL Server ISO file. If not specified, the script will use the default path or download the ISO.
+
+.PARAMETER Features
+    SQL Server features to install. See the documentation for a list of valid features.
+
+.PARAMETER InstallDir
+    Specifies a non-default installation directory.
+
+.PARAMETER DataDir
+    Data directory for SQL Server.
+
+.PARAMETER BackupDir
+    Backup directory for SQL Server.
+
+.PARAMETER TempDBDDir
+    Temporary Database Directory.
+
+.PARAMETER TempLogDir
+    Temporary Log Directory.
+
+.PARAMETER FileStreamDrive
+    Drive for FileStream.
+
+.PARAMETER FilestreamShareName
+    Share name for FileStream.
+
+.PARAMETER Port
+    Default SQL TCP and Dynamic TCP Port. Default is 1433.
+
+.PARAMETER InstanceName
+    Service name. Default is MSSQLSERVER.
+
+.PARAMETER SaPassword
+    Password for the 'sa' user. If empty, SQL security mode (mixed mode) is disabled.
+
+.PARAMETER ServiceAccountName
+    Username for the service account.
+
+.PARAMETER ServiceAccountPassword
+    Password for the service account.
+
+.PARAMETER SystemAdminAccounts
+    List of system administrative accounts.
+
+.PARAMETER ProductKey
+    Product key for SQL Server. If omitted, evaluation is used unless VL edition which is already activated.
+
+.PARAMETER UseBitsTransfer
+    Use BITS transfer to get files from the Internet.
+
+.PARAMETER EnableProtocols
+    Enable SQL Server protocols: TCP/IP, Named Pipes.
+
+.EXAMPLE
+    .\SQLInstallNew.ps1 -IsoPath "C:\SQLServer2019.iso" -Features "SQLEngine" -InstanceName "RAYSTATION" -SaPassword "Zxcvb12345"
+    This command installs SQL Server with the specified ISO path, features, instance name, and sa password.
+
+.NOTES
+    Requires: Run as Administrator
+
+#>
 #Requires -RunAsAdministrator
 
 
@@ -79,11 +150,12 @@ Start-Transcript "$RunLocation\Logs\$scriptName-$($start.ToString('s').Replace('
 
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 #----------------------------------------------------------------------------------------------
-if([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True){
+if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
 
     $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
-}else{
-$null = $RemoteLogLocation
+}
+else {
+    $null = $RemoteLogLocation
 }
 function Write-PSULog {
     param(
@@ -91,8 +163,8 @@ function Write-PSULog {
         [string]$Severity = "Info",
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        [string]$logDirectory="$RunLocation\Logs\",
-        $RemotelogDirectory="$RemoteLogLocation"
+        [string]$logDirectory = "$RunLocation\Logs\",
+        $RemotelogDirectory = "$RemoteLogLocation"
         #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
@@ -102,14 +174,14 @@ function Write-PSULog {
         Message   = $Message
     }
 
-    if(!(Test-Path -Path $logDirectory)) {
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-        }
+    if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+    }
 
     $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
     $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if($RemotelogDirectory -ne $null){
-        if(!(Test-Path -Path $RemotelogDirectory)) {
+    if ($RemotelogDirectory -ne $null) {
+        if (!(Test-Path -Path $RemotelogDirectory)) {
             New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
         }
         $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
@@ -134,24 +206,25 @@ if (!$IsoPath) {
     $isoName = $isoPath -split '/' | Select-Object -Last 1
     $savePath = Join-Path $saveDir $isoName
 
-    if (Test-Path $savePath){
+    if (Test-Path $savePath) {
         #Write-Host "ISO already downloaded, checking hashsum..."
         Write-PSULog -Severity Info -Message "ISO already downloaded, checking hashsum..."
-        $hash    = Get-FileHash -Algorithm MD5 $savePath | % Hash
+        $hash = Get-FileHash -Algorithm MD5 $savePath | % Hash
         $oldHash = Get-Content "$savePath.md5" -ErrorAction 0
     }
 
-    if ($hash -and $hash -eq $oldHash) { Write-Host "Hash is OK"; Write-PSULog -Severity Info -Message "Hash is OK"} else {
-        if ($hash) { Write-Host "Hash is NOT OK"; Write-PSULog -Severity Warning -Message "Hash is NOT OK"}
+    if ($hash -and $hash -eq $oldHash) { Write-Host "Hash is OK"; Write-PSULog -Severity Info -Message "Hash is OK" } else {
+        if ($hash) { Write-Host "Hash is NOT OK"; Write-PSULog -Severity Warning -Message "Hash is NOT OK" }
         #Write-Host "Downloading: $isoPath"
         Write-PSULog -Severity Info -Message "Downloading: $isoPath"
 
         if ($UseBitsTransfer) {
             #Write-Host "Using bits transfer"
             Write-PSULog -Severity Info -Message "Using bits transfer"
-            $proxy = if ($ENV:HTTP_PROXY) { @{ ProxyList = $ENV:HTTP_PROXY -replace 'http?://'; ProxyUsage = 'Override' }} else { @{} }
+            $proxy = if ($ENV:HTTP_PROXY) { @{ ProxyList = $ENV:HTTP_PROXY -replace 'http?://'; ProxyUsage = 'Override' } } else { @{} }
             Start-BitsTransfer -Source $isoPath -Destination $saveDir @proxy
-        }  else {
+        }
+        else {
             Invoke-WebRequest $IsoPath -OutFile $savePath -UseBasicParsing -Proxy $ENV:HTTP_PROXY
         }
 
@@ -164,7 +237,7 @@ if (!$IsoPath) {
 #Write-Host "`IsoPath: " $IsoPath
 Write-PSULog -Severity Info -Message "`IsoPath: $IsoPath"
 
-$volume    = Mount-DiskImage $IsoPath -StorageType ISO -PassThru | Get-Volume
+$volume = Mount-DiskImage $IsoPath -StorageType ISO -PassThru | Get-Volume
 $sql_drive = $volume.DriveLetter + ':'
 Get-ChildItem $sql_drive | ft -auto | Out-String
 
@@ -174,7 +247,7 @@ Get-CimInstance win32_process | ? { $_.commandLine -like '*setup.exe*/ACTION=ins
     Stop-Process $_.processId -Force
 }
 
-$cmd =@(
+$cmd = @(
     "${sql_drive}setup.exe"
     '/Q'                                # Silent install
     '/INDICATEPROGRESS'                 # Specifies that the verbose Setup log file is piped to the console
@@ -225,7 +298,7 @@ Write-Host
 "$cmd_out"
 Invoke-Expression "$cmd"
 if ($LastExitCode) {
-    if ($LastExitCode -ne 3010) { throw "SqlServer installation failed, exit code: $LastExitCode"; Write-PSULog -Severity Error -Message "SqlServer installation failed, exit code: $LastExitCode"}
+    if ($LastExitCode -ne 3010) { throw "SqlServer installation failed, exit code: $LastExitCode"; Write-PSULog -Severity Error -Message "SqlServer installation failed, exit code: $LastExitCode" }
     #Write-Warning "SYSTEM REBOOT IS REQUIRED"
     Write-PSULog -Severity Warning -Message "SYSTEM REBOOT IS REQUIRED"
 }
@@ -245,45 +318,40 @@ if ($EnableProtocols) {
     #Get-Service | where {$_.DisplayName -like "*$instanceName*"} | restart-service -force
 }
 
-function SetPort($InstanceName, $port)
-{
+function SetPort($InstanceName, $port) {
     # fetch the WMI object that contains TCP settings; filter for the 'IPAll' setting only
     # note that the 'ComputerManagement13' corresponds to SQL Server 2017
 
-$inst = (get-itemproperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server').InstalledInstances
-$i = ($inst | Where-Object {$_ -match $InstanceName})
+    $inst = (get-itemproperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server').InstalledInstances
+    $i = ($inst | Where-Object { $_ -match $InstanceName })
 
-   $p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$i
-   $Version = ((Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Version).split('.')[0]
+    $p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$i
+    $Version = ((Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\Setup").Version).split('.')[0]
 
     $WMISettings = Get-WmiObject `
-            -Namespace root/Microsoft/SqlServer/ComputerManagement$Version `
-            -Class ServerNetworkProtocolProperty `
-            -Filter "InstanceName=`'$InstanceName`' and IPAddressName='IPAll' and PropertyType=1 and ProtocolName='Tcp'"
+        -Namespace root/Microsoft/SqlServer/ComputerManagement$Version `
+        -Class ServerNetworkProtocolProperty `
+        -Filter "InstanceName=`'$InstanceName`' and IPAddressName='IPAll' and PropertyType=1 and ProtocolName='Tcp'"
 
     # there are two settings in a list: TcpPort and TcpDynamicPorts
-    foreach ($setting in $WMIsettings)
-    {
-        if ($null-ne $setting )
-        {
+    foreach ($setting in $WMIsettings) {
+        if ($null -ne $setting ) {
             # set the static TCP port and at the same time clear any dynamic ports
-            if ($setting.PropertyName -eq "TcpPort")
-            {
+            if ($setting.PropertyName -eq "TcpPort") {
                 $setting.SetStringValue($port)
             }
-            elseif ($setting.PropertyName -eq "TcpDynamicPorts")
-            {
+            elseif ($setting.PropertyName -eq "TcpDynamicPorts") {
                 $setting.SetStringValue("")
             }
         }
     }
     #Write-Host "Restarting SQL Services" -ForegroundColor Yellow
     Write-PSULog -Severity Info -Message "Restarting SQL Services"
-    Get-service | Where-Object {$_.Name -eq "MSSQL`$$InstanceName"} | Restart-Service -Force
+    Get-service | Where-Object { $_.Name -eq "MSSQL`$$InstanceName" } | Restart-Service -Force
 
-    (Get-Service | Where-Object {$_.Name -eq "MSSQL`$$InstanceName"}).WaitForStatus('Running')
+    (Get-Service | Where-Object { $_.Name -eq "MSSQL`$$InstanceName" }).WaitForStatus('Running')
 
-    }
+}
 #Write-Host "Attempting to Set SQL port to $port" -ForegroundColor Green
 Write-PSULog -Severity Info -Message "Attempting to Set SQL port to $port"
 SetPort "$InstanceName" "$port"
@@ -291,14 +359,15 @@ SetPort "$InstanceName" "$port"
 Write-PSULog -Severity Info -Message "Set SQL Port to $port"
 
 Function Get-SQLMaxMemory { 
-    $memtotal = (Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).sum /1mb
+    $memtotal = (Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).sum / 1mb
     $min_os_mem = 2048 ;
     if ($memtotal -le $min_os_mem) {
         Return $null;
     }
     if ($memtotal -le 8192) {
         $sql_mem = $memtotal - 2048
-    } else {
+    }
+    else {
         $sql_mem = $memtotal * 0.8 ;
     }
     return [int]$sql_mem ;  

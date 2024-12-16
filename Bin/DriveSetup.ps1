@@ -1,9 +1,25 @@
-#------------------------------------------------------
-# Name:        SQLDriveSetup
-# Purpose:     Sets up Drives for SQL server setup and passes info to the SQL install script
-# Author:      John Burriss
-# Created:     10/10/2022  2:24 PM 
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    This script sets up drives for SQL server setup and passes information to the SQL install script.
+
+.DESCRIPTION
+    The script reads the configuration from Setup.json to determine the drive setup.
+    It initializes and formats the drives based on the configuration and logs the process.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\DriveSetup.ps1
+    Runs the script to set up drives for SQL server setup.
+
+.NOTES
+    Author: John Burriss
+    Created: 10/10/2022
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#Requires -RunAsAdministrator
+#>
 
 #Requires -RunAsAdministrator
 
@@ -22,11 +38,12 @@ $RunLocation = $RunLocation.Path
 #Start-Transcript -Path "$RunLocation\Logs\SQLDriveSetup.log" -Force -Append
 
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
-if([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True){
+if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
 
     $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
-}else{
-$null = $RemoteLogLocation
+}
+else {
+    $null = $RemoteLogLocation
 }
 #----------------------------------------------------------------------------------------------
 function Write-PSULog {
@@ -35,8 +52,8 @@ function Write-PSULog {
         [string]$Severity = "Info",
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        [string]$logDirectory="$RunLocation\Logs\",
-        $RemotelogDirectory="$RemoteLogLocation"
+        [string]$logDirectory = "$RunLocation\Logs\",
+        $RemotelogDirectory = "$RemoteLogLocation"
         #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
@@ -46,14 +63,14 @@ function Write-PSULog {
         Message   = $Message
     }
 
-    if(!(Test-Path -Path $logDirectory)) {
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-        }
+    if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+    }
 
     $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
     $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if($RemotelogDirectory -ne $null){
-        if(!(Test-Path -Path $RemotelogDirectory)) {
+    if ($RemotelogDirectory -ne $null) {
+        if (!(Test-Path -Path $RemotelogDirectory)) {
             New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
         }
         $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
@@ -70,7 +87,7 @@ $newdiskcount = $newdisk.number.count
 
 $uniquedisknumber = $Settings.DRIVES.DriveNumber | Get-Unique
 
-if($uniquedisknumber.count -ne $Settings.DRIVES.DriveNumber.count){
+if ($uniquedisknumber.count -ne $Settings.DRIVES.DriveNumber.count) {
     
     #Write-host "JSON DriveNumber contains non unique Numbers. Please ensure that all drive numbers are unique and sequntial." -ForegroundColor Red
     Write-PSULog -Severity Error -Message "JSON DriveNumber contains non unique Numbers. Please ensure that all drive numbers are unique and sequntial."
@@ -82,7 +99,7 @@ if($uniquedisknumber.count -ne $Settings.DRIVES.DriveNumber.count){
 
 $uniqueDriveLetter = $Settings.DRIVES.DriveLetter | Get-Unique
 
-if ($uniqueDriveLetter.count -ne $settings.DRIVES.DriveLetter.count){
+if ($uniqueDriveLetter.count -ne $settings.DRIVES.DriveLetter.count) {
     
     #Write-Host "JSON DriveLetter contains non unique Letters. Please ensure that all drive letters are unique." -ForegroundColor Red
     Write-PSULog -Severity Error -Message "JSON DriveLetter contains non unique Letters. Please ensure that all drive letters are unique."
@@ -94,7 +111,7 @@ if ($uniqueDriveLetter.count -ne $settings.DRIVES.DriveLetter.count){
 
 $uniqueDriveLabel = $Settings.DRIVES.DriveLabel | Get-Unique
 
-if ($uniqueDriveLabel.count -ne $settings.DRIVES.DriveLabel.count){
+if ($uniqueDriveLabel.count -ne $settings.DRIVES.DriveLabel.count) {
     
     #Write-Host "JSON DriveLabel contains non unique Lables. Please ensure that all drive Lables are unique." -ForegroundColor Red
     Write-PSULog -Severity Error -Message "JSON DriveLabel contains non unique Lables. Please ensure that all drive Lables are unique."
@@ -105,7 +122,7 @@ if ($uniqueDriveLabel.count -ne $settings.DRIVES.DriveLabel.count){
 }
 
 
-if ($newdiskcount -ne $Settings.DRIVES.DriveNumber.count){
+if ($newdiskcount -ne $Settings.DRIVES.DriveNumber.count) {
 
     #Write-host "New Disk Count does not match count in JSON file. Please fix count to match $newdiskcount Disks." -ForegroundColor Red
     Write-PSULog -Severity Error -Message "New Disk Count does not match count in JSON file. Please fix count to match $newdiskcount Disks."
@@ -118,11 +135,11 @@ if ($newdiskcount -ne $Settings.DRIVES.DriveNumber.count){
 
 $driveLetters = (Get-PSDrive).Name -match '^[a-z]$'
 
-foreach ($driveLetterJSON in $settings.Drives.DriveLetter){
+foreach ($driveLetterJSON in $settings.Drives.DriveLetter) {
 
-    foreach ($driveLetter in $driveLetters){
+    foreach ($driveLetter in $driveLetters) {
 
-    if($driveLetter -match $driveLetterJSON){
+        if ($driveLetter -match $driveLetterJSON) {
 
             #Write-host "One of the DriveLetters $driveLetter already exists on the system. Please update the JSON file to fix this conflict." -ForegroundColor Red
             Write-PSULog -Severity Error -Message "One of the DriveLetters $driveLetter already exists on the system. Please update the JSON file to fix this conflict."
@@ -138,19 +155,19 @@ foreach ($driveLetterJSON in $settings.Drives.DriveLetter){
 }
 
 $SettingsDrives = $Settings.DRIVES
-foreach ($disk in $newdisk){
+foreach ($disk in $newdisk) {
     $diskNumber = $disk.number
     
-    foreach($drive in $SettingsDrives){
-       $DriveINT = $drive.DriveNumber
-        if($diskNumber -match $DriveINT){
+    foreach ($drive in $SettingsDrives) {
+        $DriveINT = $drive.DriveNumber
+        if ($diskNumber -match $DriveINT) {
 
-          get-disk -number $driveINT | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -DriveLetter $drive.DriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel $drive.DriveLabel -AllocationUnitSize 65536 -Confirm:$false
+            get-disk -number $driveINT | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -DriveLetter $drive.DriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel $drive.DriveLabel -AllocationUnitSize 65536 -Confirm:$false
         }
-     }
- }
- #Write-Host "Restarting Explorer to clear screen." -ForegroundColor Green
- Write-PSULog -Severity Info -Message "Restarting Explorer to clear screen."
- Stop-Process -name explorer -force
+    }
+}
+#Write-Host "Restarting Explorer to clear screen." -ForegroundColor Green
+Write-PSULog -Severity Info -Message "Restarting Explorer to clear screen."
+Stop-Process -name explorer -force
 
- #Stop-Transcript
+#Stop-Transcript

@@ -1,10 +1,24 @@
-#
-#------------------------------------------------------
-# Name:        NvidiaInstaller
-# Purpose:     Nvidia Driver defined in json
-# Author:      John Burriss
-# Created:     12/16/2019  2:07 PM 
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    Installs Nvidia GPU drivers and configures settings based on a JSON configuration file.
+
+.DESCRIPTION
+    This script installs Nvidia GPU drivers, configures Nvidia Control Panel settings, and handles licensing for virtual GPUs.
+    It reads settings from a JSON configuration file and logs the process locally and optionally to a remote location.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.NOTES
+    Author: John Burriss
+    Created: 12/16/2019 2:07 PM
+    Requires: Run as Administrator
+
+.EXAMPLE
+    .\NvidiaInstaller.ps1
+    Runs the script to install and configure Nvidia GPU drivers based on the settings in Setup.json.
+
+#>
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted

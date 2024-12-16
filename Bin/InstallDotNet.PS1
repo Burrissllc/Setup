@@ -1,10 +1,25 @@
-#------------------------------------------------------
-# Name:        InstallDotNet
-# Purpose:     Installs .net 4.8
-# Author:      John Burriss
-# Created:     12/8/2022  5:24 PM 
-#Version:      0.01
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    This script installs .NET Framework 4.8.
+
+.DESCRIPTION
+    The script installs .NET Framework 4.8 and logs the installation process.
+    If a reboot is required, it sets up the script to continue after the reboot.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\InstallDotNet.ps1
+    Runs the script to install .NET Framework 4.8.
+
+.NOTES
+    Author: John Burriss
+    Created: 12/8/2022
+    Version: 0.01
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+#>
+
 #Requires -RunAsAdministrator
 
 set-ExecutionPolicy Unrestricted
@@ -18,11 +33,12 @@ $RunLocation = $RunLocation.Path
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 
 #----------------------------------------------------------------------------------------------
-if([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True){
+if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
 
     $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
-}else{
-$null = $RemoteLogLocation
+}
+else {
+    $null = $RemoteLogLocation
 }
 function Write-PSULog {
     param(
@@ -30,8 +46,8 @@ function Write-PSULog {
         [string]$Severity = "Info",
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        [string]$logDirectory="$RunLocation\Logs\",
-        $RemotelogDirectory="$RemoteLogLocation"
+        [string]$logDirectory = "$RunLocation\Logs\",
+        $RemotelogDirectory = "$RemoteLogLocation"
         #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
@@ -41,14 +57,14 @@ function Write-PSULog {
         Message   = $Message
     }
 
-    if(!(Test-Path -Path $logDirectory)) {
-            New-Item -Path $logDirectory -ItemType Directory | Out-Null
-        }
+    if (!(Test-Path -Path $logDirectory)) {
+        New-Item -Path $logDirectory -ItemType Directory | Out-Null
+    }
 
     $logFilePath = Join-Path "$logDirectory" "MachineSetup.json"
     $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $logFilePath -Append
-    if($RemotelogDirectory -ne $null){
-        if(!(Test-Path -Path $RemotelogDirectory)) {
+    if ($RemotelogDirectory -ne $null) {
+        if (!(Test-Path -Path $RemotelogDirectory)) {
             New-Item -Path $RemotelogDirectory -ItemType Directory | Out-Null
         }
         $RemotelogFilePath = Join-Path "$RemotelogDirectory" "$($LogObject.Hostname)-MachineSetup.json"
@@ -75,26 +91,26 @@ Write-PSULog -Severity Start -Message "Installing .net4.8"
 #Write-host "Finished Installing .net4.8" -ForegroundColor Green
 Write-PSULog -Severity Info -Message "Finished Installing .net4.8"
 
-if((Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release) -le 528040){
+if ((Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release) -le 528040) {
 
-Write-PSULog -Severity Info -Message "Setting Script to continue after reboot"
+    Write-PSULog -Severity Info -Message "Setting Script to continue after reboot"
 
-$path = "HKLM:\SOFTWARE\MachineSetup"
-if (!(Test-Path $path)) {mkdir $path | Out-Null}
+    $path = "HKLM:\SOFTWARE\MachineSetup"
+    if (!(Test-Path $path)) { mkdir $path | Out-Null }
 
-Set-ItemProperty $path "dotNet" -Value "1" -Force
+    Set-ItemProperty $path "dotNet" -Value "1" -Force
 
-$RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\Setup.ps1"
+    $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+    Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\Setup.ps1"
 
-Write-PSULog -Severity Info -Message "Machine Needs to Reboot for setup to continue"
+    Write-PSULog -Severity Info -Message "Machine Needs to Reboot for setup to continue"
 
-$Readhost = $Settings.general.AUTOREBOOT
-Switch ($ReadHost) {
-    Y { Write-PSULog -Severity End -Message "Rebooting now..."; Start-Sleep -s 2; Restart-Computer -Force }
-    N { Write-PSULog -Severity Info -Message "Exiting script in 5 seconds."; Start-Sleep -s 5 }
-    Default { Write-PSULog -Severity Info -Message "Exiting script in 5 seconds"; Start-Sleep -s 5 }
-}
+    $Readhost = $Settings.general.AUTOREBOOT
+    Switch ($ReadHost) {
+        Y { Write-PSULog -Severity End -Message "Rebooting now..."; Start-Sleep -s 2; Restart-Computer -Force }
+        N { Write-PSULog -Severity Info -Message "Exiting script in 5 seconds."; Start-Sleep -s 5 }
+        Default { Write-PSULog -Severity Info -Message "Exiting script in 5 seconds"; Start-Sleep -s 5 }
+    }
 
 }
 

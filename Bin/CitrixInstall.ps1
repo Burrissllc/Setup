@@ -1,9 +1,27 @@
-#------------------------------------------------------
-# Name:        CitrixInstall
-# Purpose:     Installs Citrix VDA
-# Author:      John Burriss
-# Created:     1/6/2020  9:49 PM 
-#------------------------------------------------------
+<#
+.SYNOPSIS
+    This script installs Citrix VDA based on the configuration settings.
+
+.DESCRIPTION
+    The script reads the configuration from Setup.json to determine if Citrix VDA should be installed.
+    It mounts the Citrix ISO or extracts the Citrix EXE and runs the installation.
+    Logs are created locally and optionally remotely if specified in the Setup.json file.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\CitrixInstall.ps1
+    Runs the script to install Citrix VDA if configured to do so.
+
+.NOTES
+    Author: John Burriss
+    Created: 1/6/2020
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+
+#>
+
+#requires -RunAsAdministrator
 
 $RunLocation = split-path -parent $MyInvocation.MyCommand.Definition
 set-location $RunLocation
