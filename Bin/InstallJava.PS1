@@ -97,8 +97,7 @@ Switch ($INSTALLJAVA) {
         #Write-Host "Finished Installing 7Zip" -ForegroundColor Green
 
         #Installs Java
-        $Internet = PING.EXE 8.8.8.8
-        if ($internet -contains "Packets: Sent = 4, Received = 4" -or "Packets: Sent = 4, Received = 3") {
+        if (Test-Connection 8.8.8.8 -Count 1 -Quiet) {
             #Write-Host "Installing Java" -ForegroundColor Yellow
             Write-PSULog -Severity Start -Message "Installing Java"
             & $RunLocation\bin\OnlineJavaInstall.ps1
@@ -108,7 +107,8 @@ Switch ($INSTALLJAVA) {
         else {
             #Write-Host "Installing Java" -ForegroundColor Yellow
             Write-PSULog -Severity Start -Message "Installing Java"
-            & $RunLocation\bin\Java\JavaSetup8u221.exe  INSTALLDIR=C:\jre | Out-Null
+            $WorkingDirectory = "$RunLocation\bin\java\"
+            Start-Process -FilePath "$WorkingDirectory\openjdk.msi" -ArgumentList "ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome INSTALLDIR=`"c:\Program Files\Temurin\`" /quiet" -Wait
             #Write-Host "Finished Installing Java" -ForegroundColor Green
             Write-PSULog -Severity Info -Message "Finished Installing Java"
         }

@@ -93,12 +93,59 @@ $INSTALLADOBE = $Settings.General.INSTALLADOBE
 
 Switch ($INSTALLADOBE) {
     Y {
-        #Installs Adobe Reader DC
-        #Write-Host "Installing Adobe Reader" -ForegroundColor Yellow
-        Write-PSULog -Severity Start -Message "Installing Adobe Reader"
-        & $RunLocation\bin\Acrobat\AcroRdrDC1502320070_en_US.exe /sAll | Out-Null
-        #Write-Host "Finished Installing Acrobat Reader" -ForegroundColor Green
-        Write-PSULog -Severity Info -Message "Finished Installing Acrobat Reader"
+
+
+        if (Test-Connection 8.8.8.8 -Count 1 -Quiet) { 
+            Write-PSULog -Severity Info -Message "Internet Connection Detected"
+            Write-PSULog -Severity Info -Message "Downloading Adobe Reader"
+            # Variables
+            $repoUrl = "https://api.github.com/repos/microsoft/winget-pkgs/contents/manifests/a/Adobe/Acrobat/Reader/32-bit"
+            $headers = @{ "User-Agent" = "PowerShell" }
+
+            # Get the version directories
+            $response = Invoke-RestMethod -Uri $repoUrl -Headers $headers
+            $versions = $response | Where-Object { $_.type -eq "dir" } | Select-Object -ExpandProperty name
+
+            # Find the latest version
+            $latestVersion = $versions | Sort-Object -Descending | Select-Object -First 1
+
+            # Get the manifest file for the latest version
+            $manifestUrl = "$repoUrl/$latestVersion"
+            $manifestResponse = Invoke-RestMethod -Uri $manifestUrl -Headers $headers
+            $yamlFile = $manifestResponse | Where-Object { $_.name -like "*.yaml" -and $_.name -match "installer" } | Select-Object -ExpandProperty download_url
+
+            # Download and parse the YAML
+            $yamlContent = Invoke-RestMethod -Uri $yamlFile -Headers $headers
+            $installerUrl = ($yamlContent -split "`n" | Where-Object { $_ -like "*InstallerUrl*" }) -replace "InstallerUrl:\s*", ""
+
+            # Output the download URL
+            Write-PSULog -Severity Info -Message "Latest Version: $latestVersion"
+            Write-PSULog -Severity Info -Message "Download URL: $installerUrl"
+
+            $downloadPath = "$RunLocation\bin\Acrobat\AcroRdrInstaller.exe"
+            $installArgs = "/sAll /msi EULA_ACCEPT=YES"
+
+            # Download the installer
+            Invoke-WebRequest -Uri $installerUrl -OutFile $downloadPath
+
+            # Silent install
+            Write-PSULog -Severity Info -Message "Installing Adobe Reader"
+            Start-Process -FilePath $downloadPath -ArgumentList $installArgs -Wait
+            Write-PSULog -Severity Info -Message "Finished Installing Acrobat Reader"
+
+            # Cleanup
+            Remove-Item $downloadPath
+        
+        }
+
+        else {
+            #Installs Adobe Reader DC
+            #Write-Host "Installing Adobe Reader" -ForegroundColor Yellow
+            Write-PSULog -Severity Start -Message "Installing Adobe Reader"
+            & $RunLocation\bin\Acrobat\AcroRdrDC1502320070_en_US.exe /sAll | Out-Null
+            #Write-Host "Finished Installing Acrobat Reader" -ForegroundColor Green
+            Write-PSULog -Severity Info -Message "Finished Installing Acrobat Reader"
+        }
     }
     
     N {

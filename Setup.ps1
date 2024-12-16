@@ -79,7 +79,7 @@ Get-Process Powershell  | Where-Object { $_.ID -ne $pid } | Stop-Process
 #if (!(Test-Path $Path)) { 
 #    New-Item -ItemType File -Path "$RunLocation\Logs\setup.log"
 #}
-4
+
 if (Test-Connection 8.8.8.8 -Count 1 -Quiet) { 
     Install-PackageProvider -Name NuGet -Force | Out-Null
 }

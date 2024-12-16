@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
-    This script downloads and installs Java Runtime Environment (JRE) silently.
+    This script downloads and installs the latest OpenJDK (OpenJRE) silently.
 
 .DESCRIPTION
-    The script downloads the JRE installer from the Oracle website and installs it silently using a configuration file.
+    The script dynamically fetches the latest OpenJDK version from the Eclipse Adoptium GitHub repository and installs it silently.
     It logs the installation process locally and optionally remotely if specified in the Setup.json file.
 
 .PARAMETER None
     This script does not take any parameters.
 
 .EXAMPLE
-    .\OnlineJavaInstall.ps1
-    Runs the script to download and install JRE silently.
+    .\OpenJDKInstall.ps1
+    Runs the script to download and install the latest OpenJDK silently.
 
 .NOTES
     Requires: PowerShell 5.1 or higher, Administrator privileges
@@ -25,7 +25,7 @@ set-ExecutionPolicy Unrestricted
 
 $RunLocation = split-path -parent $MyInvocation.MyCommand.Definition
 set-location $RunLocation
-Set-Location ..
+Set-Location .. 
 $RunLocation = get-location
 $RunLocation = $RunLocation.Path
 
@@ -47,7 +47,6 @@ function Write-PSULog {
         [string]$Message,
         [string]$logDirectory = "$RunLocation\Logs\",
         $RemotelogDirectory = $RemoteLogLocation
-        #[System.Management.Automation.ErrorRecord]$LastException = $_
     )
     $LogObject = [PSCustomObject]@{
         Timestamp = Get-Date -Format "dd-MM-yyyy HH:mm:ss"
@@ -68,43 +67,50 @@ function Write-PSULog {
     }
     
     Write-Host "$($LogObject.Timestamp) $($LogObject.Hostname) Severity=$($LogObject.Severity) Message=$($LogObject.Message)"
-    #if ($Severity -eq "Error") {throw $LastException}
 }
+
 #-------------------------------------------------------------------------------------------------------------
+# Fetch the latest OpenJDK download link dynamically from Adoptium GitHub releases
 
+# GitHub API URL to get the latest release info
+$githubApiUrl = "https://api.github.com/repos/adoptium/temurin11-binaries/releases/latest"
 
-# Download and silent install Java Runtime Environnement
+# Set the User-Agent header to make the request
+$headers = @{ "User-Agent" = "Mozilla/5.0" }
 
-# working directory path
+# Make the API request to get the latest release info
+$response = Invoke-RestMethod -Uri $githubApiUrl -Headers $headers
+
+# Find the MSI download URL in the assets section
+$msiUrl = $response.assets | Where-Object { $_.name -like "*msi" -and $_.name -match "jre_x64" } | Select-Object -ExpandProperty browser_download_url
+
+# Validate if a valid URL is found
+if (-not $msiUrl) {
+    Write-PSULog -Severity Error -Message "Could not find MSI download link in the latest release."
+    exit 1
+}
+
+Write-PSULog -Severity Info -Message "Latest OpenJDK MSI found: $msiUrl"
+
+# Working directory path for download
 $WorkingDirectory = "$RunLocation\bin\java\"
 
-# Check if work directory exists if not create it
+# Check if working directory exists, create if not
 If (!(Test-Path -Path $WorkingDirectory -PathType Container)) { 
     Write-PSULog -Severity Info -Message "Creating working directory at $WorkingDirectory"
     New-Item -Path $WorkingDirectory  -ItemType directory 
 }
 
-#create config file for silent install
-$text = '
-INSTALL_SILENT=Enable
-AUTO_UPDATE=Enable
-SPONSORS=Disable
-REMOVEOUTOFDATEJRES=1
-'
-$text | Set-Content "$WorkingDirectory\jreinstall.cfg"
-    
-#download executable, this is the small online installer
-[Net.ServicePointManager]::SecurityProtocol = "tls12"
-$source = "http://javadl.oracle.com/webapps/download/AutoDL?BundleId=230511_2f38c3b165be4555a1fa6e98c45e0808"
-$destination = "$WorkingDirectory\jreInstall.exe"
-Write-PSULog -Severity Info -Message "Downloading JRE"
+# Download the latest OpenJDK MSI
+$destination = "$WorkingDirectory\openjdk.msi"
+Write-PSULog -Severity Info -Message "Downloading OpenJDK from $msiUrl"
 $client = New-Object System.Net.WebClient
-$client.DownloadFile($source, $destination)
+$client.DownloadFile($msiUrl, $destination)
 
-#install silently
-Write-PSULog -Severity Info -Message "Installing JRE from $WorkingDirectory\jreInstall.exe"
-Start-Process -FilePath "$WorkingDirectory\jreInstall.exe" -ArgumentList INSTALLCFG="$WorkingDirectory\jreinstall.cfg" -Wait
+# Install OpenJDK silently
+Write-PSULog -Severity Info -Message "Installing OpenJDK from $destination"
+Start-Process -FilePath "$WorkingDirectory\openjdk.msi" -ArgumentList "ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome INSTALLDIR=`"c:\Program Files\Temurin\`" /quiet" -Wait
 
-# Remove the installer
-Write-PSULog -Severity Info -Message "Cleaning up JRE Install Folder"
-Remove-Item $WorkingDirectory\jre* -Force
+# Clean up
+Write-PSULog -Severity Info -Message "Cleaning up OpenJDK Install Folder"
+Remove-Item $WorkingDirectory\openjdk.msi -Force
