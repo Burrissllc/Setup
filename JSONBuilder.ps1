@@ -46,20 +46,20 @@ Add-Type -AssemblyName System.Windows.Forms
 
                         <Label Content="Enable Auto Logon" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <CheckBox x:Name="checkboxEnableAutoLogon" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"/>
-                        <Label Content="Leave Unchecked for Remote Deployment" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <Label Content="Leave Unchecked for Remote Deployment" Grid.Column="1" VerticalAlignment="Center" Margin="34,0,-24,0"/>
 
                         <Label Content="Machine Name" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <TextBox x:Name="textBoxMachineName" Grid.Row="1" Grid.Column="1" Margin="0,5,0,5"/>
 
                         <Label Content="Time Zone" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                             <ComboBox x:Name="comboBoxTimeZone" Grid.Row="2" Grid.Column="1" Margin="0,5,0,5">
-                             <ComboBoxItem Content=""/>
-                             <ComboBoxItem Content="EST"/>
-                             <ComboBoxItem Content="CST"/>
-                             <ComboBoxItem Content="MST"/>
-                             <ComboBoxItem Content="PST"/>
-                             <ComboBoxItem Content="AST"/>
-                             <ComboBoxItem Content="HST"/>
+                        <ComboBox x:Name="comboBoxTimeZone" Grid.Row="2" Grid.Column="1" Margin="0,5,0,5">
+                            <ComboBoxItem Content=""/>
+                            <ComboBoxItem Content="EST"/>
+                            <ComboBoxItem Content="CST"/>
+                            <ComboBoxItem Content="MST"/>
+                            <ComboBoxItem Content="PST"/>
+                            <ComboBoxItem Content="AST"/>
+                            <ComboBoxItem Content="HST"/>
                         </ComboBox>
 
                         <Label Content="Install Adobe" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
@@ -112,6 +112,24 @@ Add-Type -AssemblyName System.Windows.Forms
 
                         <Label Content="Remote Logging Location" Grid.Row="19" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <TextBox x:Name="textBoxRemoteLoggingLocation" Grid.Row="19" Grid.Column="1" Margin="0,5,0,5"/>
+                            <TextBlock IsHitTestVisible="False" Text="Normally Empty" Grid.Row="19" Grid.Column="1" VerticalAlignment="Center" Margin="5,0,0,0" Foreground="DarkGray">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, ElementName=textBoxRemoteLoggingLocation}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Text, ElementName=textBoxRemoteLoggingLocation}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsFocused, ElementName=textBoxRemoteLoggingLocation}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                     </Grid>
                 </ScrollViewer>
             </TabItem>
@@ -965,7 +983,7 @@ function Validate-InputData {
     }
 
     $textBoxRemoteLogging = $window.FindName("textBoxRemoteLoggingLocation").Text
-    if ($textBoxRemoteLogging -and $textBoxRemoteLogging -notmatch '^[a-zA-Z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*$') {
+    if ($textBoxRemoteLogging -and $textBoxRemoteLogging -notmatch '^\\\\(?:[a-zA-Z0-9_.-]+|(?:\d{1,3}\.){3}\d{1,3})\\[a-zA-Z0-9$_.-]+(?:\\[a-zA-Z0-9$_.-]+)*$') {
         $errors += "Remote Logging Location is not a valid directory path format."
     }
 

@@ -10,6 +10,10 @@
 set-ExecutionPolicy Unrestricted
 
 $RunLocation = split-path -parent $MyInvocation.MyCommand.Definition
+set-location $RunLocation
+Set-Location ..
+$RunLocation = get-location
+$RunLocation = $RunLocation.Path
 
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
@@ -55,7 +59,7 @@ function Write-PSULog {
     #if ($Severity -eq "Error") {throw $LastException}
 }
 #----------------------------------------------------------------------------------------------
-$outfile = $RunLocation + "\ServerInfo.csv"
+$outfile = $RunLocation + "\Logs\ServerInfo.csv"
 $servers = Get-Content "$RunLocation\RemoteMachines.txt"
 
 # Maximum number of concurrent jobs
@@ -99,7 +103,7 @@ $jobScriptBlock = {
             [string]$ComputerName
         )
         
-        # Get common system information
+        # Get common system Information
         $systemInfo = Get-CimInstance -ClassName Win32_ComputerSystem -ComputerName $ComputerName @cimParams
         $ram = (Get-CimInstance Win32_PhysicalMemory -ComputerName $ComputerName @cimParams | 
             Measure-Object -Property Capacity -Sum).Sum / 1GB
@@ -126,10 +130,10 @@ $jobScriptBlock = {
             "$($_.DeviceID) $([math]::Round($_.Size /1GB))GB"
         }
         $serverDetails['Disks'] = $disks -join '; '
-        # Add virtual-specific information
+        # Add virtual-specific Information
         $osInfo = Get-CimInstance -ClassName Win32_OperatingSystem -ComputerName $ComputerName @cimParams
             
-        # Get GPU and driver info
+        # Get GPU and driver Info
         $gpuInfo = Get-CimInstance -ClassName Win32_VideoController -ComputerName $ComputerName @cimParams |
         Where-Object { $_.Name -like "NVIDIA*" } |
         Select-Object -First 1
@@ -194,7 +198,7 @@ $jobScriptBlock = {
 # Initialize results collection
 $results = @()
 
-Write-PSULog  -Severity "Start" -Message "Starting parallel server information collection..."
+Write-PSULog  -Severity "Start" -Message "Starting parallel server Information collection..."
 
 # Create jobs in batches
 $jobs = @()
@@ -229,9 +233,9 @@ while ($jobs) {
     $jobs = @($jobs | Where-Object { $_.State -eq 'Running' })
 }
 
-Write-PSULog  -Severity "INFO" -Message  "Collection complete. Processing results..."
+Write-PSULog  -Severity "Info" -Message  "Collection complete. Processing results..."
 
 # Export results
 $results | Export-Csv -Path $outfile -NoTypeInformation
 
-Write-PSULog  -Severity "INFO" -Message "Results exported to $outfile"
+Write-PSULog  -Severity "Info" -Message "Results exported to $outfile"

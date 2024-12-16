@@ -1,11 +1,35 @@
-#------------------------------------------------------
-# Name:        RemoteLauncher2.0
-# Purpose:     Kicks off Machine setup on remote machines
-# Author:      John Burriss
-# Created:     10/24/2022  2:22 PM 
-# Modified:    09/13/2023  11:08 AM
-#Version:      0.15
-#------------------------------------------------------
+<#
+.SYNOPSIS
+Automates monitoring and managing machine setup status through JSON log files.
+
+.DESCRIPTION
+This script monitors a specified directory for `*MachineSetup.json` log files. 
+It identifies new machines checking in, starts monitoring jobs for each machine, 
+and ensures all machines complete their setup processes. Machines that do not 
+check in within a specified timeout are logged as warnings. Once all machines 
+have completed, a remote inventory collection process is initiated.
+
+.PARAMETER logDirectory
+Specifies the directory where machine setup log files are stored.
+
+.PARAMETER timeout
+Defines the timeout period for machine check-ins.
+
+.PARAMETER CheckInPeriod
+A stopwatch to track intervals for machine monitoring cycles.
+
+.NOTES
+Version: 1.0.0
+Author: John Burriss
+Date: 10/24/2022
+License: MIT
+
+.EXAMPLE
+# Example to run the script with a specified log directory
+$logDirectory = "C:\\Setup\\Logs"
+.
+Run the script to monitor the directory for new machine setup log files.
+#>
 #Requires -RunAsAdministrator
 
 
@@ -491,153 +515,6 @@ foreach ($job in $AllJobs) {
 get-job | stop-job -ErrorAction SilentlyContinue
 get-job | remove-job -ErrorAction SilentlyContinue
 
-#Get-Job | Wait-Job | out-null
-
-
-
-<#
-OLD SINGLE THREAD CODE
-foreach ($Machine in $MachineList) {
-
-  $CredsToReg = {
-    $path = "HKLM:\SOFTWARE\MachineSetup"
-    $CleanDomain = $Using:Domain
-    if ($CleanDomain -match '`.' -or $CleanDomain -match 'localhost') {
-      $CleanDomain = "$Using:Machine"
-    }
-    if (!(Test-Path $path)) { mkdir $path | Out-Null }
-    Set-ItemProperty $path "Password" -Value $Using:encrypted -Force
-    Set-ItemProperty $path "UserName" -Value $Using:Username -Force
-    Set-ItemProperty $path "Domain" -Value $CleanDomain -Force
-  }
-
-  $AdjustConfigFile = {
-    Write-Host "Copy to Machine $Using:machine Completed" -ForegroundColor Green
-    Write-Host "Adjusting Configuration Files on $Using:machine" -ForegroundColor Green
-    @("Set-Location `"$Using:DestinationDirOriginal\setup`"") + (Get-Content "$Using:RunLocation\Launcher.ps1") | Set-Content "$Using:RunLocation\Launcher.ps1"
-    @("Set-Location `"$Using:DestinationDirOriginal\setup`"") + (Get-Content "$Using:RunLocation\Setup.ps1") | Set-Content "$Using:RunLocation\Setup.ps1"
-    @("Set-Location `"$Using:DestinationDirOriginal\setup`"") + (Get-Content "$Using:RunLocation\bin\cleanup.ps1") | Set-Content "$Using:RunLocation\bin\cleanup.ps1"
-    @("Set-Location `"$Using:DestinationDirOriginal\setup`"") + (Get-Content "$Using:RunLocation\bin\NvidiaPerformance.ps1") | Set-Content "$Using:RunLocation\bin\NvidiaPerformance.ps1"
-  }
-
-  $AddInstallAccounttoAdmin = {
-    $AdminGroupMembership = Get-LocalGroupMember -Group "Administrators" | Where-Object { $_.Name -Match "$Using:username" }
-    if ($Null -eq $AdminGroupMembership) {
-      Add-LocalGroupMember -Group "Administrators" -Member $Using:UsernameFQDN
-    }
-  }
-
-  if ($null -ne $DistributionCreds) {
-    Invoke-Command -ComputerName $machine -ScriptBlock $AdjustConfigFile -Credential $DistributionCreds
-    Invoke-Command -ComputerName $machine -ScriptBlock $AddInstallAccounttoAdmin -Credential $DistributionCreds
-  }
-  else {
-    Invoke-Command -ComputerName $machine -ScriptBlock $AdjustConfigFile
-  }
-
-  $EnableAutoLogon = {
-    #write-host "Start-Process Powershell -ArgumentList -file $Using:DestinationDirOriginal\setup\bin\AutologinReg.ps1"
-    & powershell.exe -file "$Using:DestinationDirOriginal\setup\bin\AutologinReg.ps1"
-  } 
-      
-  $EncryptedLogin = {
-    $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-    Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $Using:DestinationDirOriginal\setup\Setup.ps1"
-    Write-Host "Finished setting Remote Machine: $Using:machine for Install." -ForegroundColor Green
-    #Write-Host "Restarting Machine" -ForegroundColor Green
-    #Restart-Computer -ComputerName $Using:machine -Force
-  }
-
-  $PSRemoting = Test-WSMan -ComputerName $machine -ErrorAction SilentlyContinue
-
-  if ($PSRemoting -ne $null) {
-
-    Write-Host "Securely enabling Auto Logon Remotely" -ForegroundColor Green
-
-    if ($null -ne $DistributionCreds) {
-      Invoke-command -ComputerName $Machine -ScriptBlock $CredsToReg -Credential $DistributionCreds
-    }
-    else {
-      Invoke-command -ComputerName $Machine -ScriptBlock $CredsToReg
-    }
-
-    if ($null -ne $DistributionCreds) {
-      $RemoteSession = New-PSSession -ComputerName $Machine -Credential $DistributionCreds
-    }
-    else {
-      $RemoteSession = New-PSSession -ComputerName $Machine
-    }
-
-    if ($null -ne $DistributionCreds) {
-      Invoke-command -session $RemoteSession -ScriptBlock $EnableAutoLogon #-credential $DistributionCreds
-      #start-sleep -Seconds 3
-      $checkLogin = Invoke-Command -ComputerName $machine { Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon | select AutoAdminLogon }
-      if ($checkLogin.AutoAdminLogon -eq "0") {
-        write-host "Failed to enable Auto Logon on $machine, trying again" -ForegroundColor Yellow
-        Invoke-command -session $RemoteSession -ScriptBlock $EnableAutoLogon # -Credential $DistributionCreds
-        #start-sleep -Seconds 2
-        $checkLogin = Invoke-Command -ComputerName $machine { Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon | select AutoAdminLogon }
-        if ($checkLogin.AutoAdminLogon -eq "0") {
-          Write-Host "Failed to enable Auto Logon on $machine. Please Login Manually to start script" -ForegroundColor Red  
-        }
-      }
-      Invoke-Command -session $RemoteSession -ScriptBlock $EncryptedLogin # -Credential $DistributionCreds
-    }
-    else {
-      Invoke-command -session $RemoteSession -ScriptBlock $EnableAutoLogon
-      start-sleep -Seconds 1
-      $checkLogin = Invoke-Command -ComputerName $machine { Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon | select AutoAdminLogon }
-      if ($checkLogin.AutoAdminLogon -eq "0") {
-        write-host "Failed to enable Auto Logon on $machine, trying again" -ForegroundColor Yellow
-        Invoke-command -session $RemoteSession -ScriptBlock $EnableAutoLogon
-        #start-sleep -Seconds 1
-        $checkLogin = Invoke-Command -ComputerName $machine { Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name AutoAdminLogon | select AutoAdminLogon }
-        if ($checkLogin.AutoAdminLogon -eq "0") {
-          Write-Host "Failed to enable Auto Logon on $machine. Please Login Manually to start script" -ForegroundColor Red  
-        }
-      }
-      Invoke-Command -session $RemoteSession -ScriptBlock $EncryptedLogin
-    }
-    Remove-PSSession $RemoteSession
-  }
-  else {
-    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
-    $TempPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-
-    if ($Domain -match '`.' -or $Domain -match 'localhost') {
-      $Domain = $Machine
-    }
-    $ClearLogin = {
-      $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-      Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $Using:DestinationDirOriginal\setup\Setup.ps1"
-      $RegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
-      Set-ItemProperty $RegPath "AutoAdminLogon" -Value "1" -type String 
-      Set-ItemProperty $RegPath "DefaultUsername" -Value "$Using:Username" -type String 
-      Set-ItemProperty $RegPath "DefaultPassword" -Value "$Using:TempPassword" -type String
-      Set-ItemProperty $RegPath "DefaultDomainName" -Value "$Using:Domain" -type String  
-      Set-ItemProperty $RegPath "AutoLogonCount" -Value "1" -type String
-      $message = "This Machine is going to restart!"
-      Invoke-WmiMethod -Class win32_process -ComputerName $Using:Machine -Name create -ArgumentList  "c:\windows\system32\msg.exe * $message" | Out-Null
-
-      Write-Host "Finished setting Remote Machine: $Using:machine for Install." -ForegroundColor Green
-      #Write-Host "Restarting Machine" -ForegroundColor Green
-
-      #Restart-Computer -ComputerName $Using:machine -Force
-    }
-    write-host "Falling back on Clear Text Login and restarting" -ForegroundColor Yellow
-      
-    if ($null -ne $DistributionCreds) {
-      Invoke-Command -ComputerName $machine -ScriptBlock $ClearLogin -Credential $DistributionCreds
-    }
-    else {
-      Invoke-Command -ComputerName $machine -ScriptBlock $ClearLogin
-    }
-  }
-
-
-}
-#>
-#_______________________________________________________________________________________________________________________________
 
 #New Multi-Threaded Code
 $JobResults = @()
@@ -839,53 +716,6 @@ Get-job | Remove-Job -ErrorAction SilentlyContinue
 
 Write-Host "Starting Log Reader" -ForegroundColor Green
 
-<#
-Function Register-Watcher {
-  param ($folder,
-    $FileName
-  )
-
-  $filter = "$FileName" #all files
-  $watcher = New-Object IO.FileSystemWatcher $folder, $filter -Property @{ 
-    IncludeSubdirectories = $false
-    EnableRaisingEvents   = $true
-  }
-
-  $changeAction = [scriptblock]::Create('
-      # This is the code which will be executed every time a file change is detected
-      $path = $Event.SourceEventArgs.FullPath
-      $ParentPath = split-path -path $path -parent
-
-      $content = Get-Content -Path $path -Tail 1 | ConvertFrom-Json
-
-      $LogObject = [PSCustomObject]@{
-      Timestamp = $content.Timestamp
-      Hostname  = $content.Hostname
-      Severity  = $content.Severity
-      Message   = $content.message
-      }
-        if($LogObject.Severity -match "Info"){
-          $Color = "White"
-        }
-        elseif ($LogObject.Severity -match "Warn") {
-          $Color = "Yellow"
-        }
-        elseif ($LogObject.Severity -match "Error") {
-          $Color = "Red"
-        }
-        elseif ($LogObject.Severity -match "Start") {
-          $Color = "Green"
-        }
-        elseif ($LogObject.Severity -match "End") {
-          $Color = "Blue"
-        }
-      $WarningsErrors = $logObject | Where-Object { $_.Severity -like "Error" -or $_.Severity -like "Warning"} | ConvertTo-Json -Compress | Out-File -FilePath $ParentPath\ErrorLog.json -Append -ErrorAction SilentlyContinue
-      Write-Host "$($LogObject.Timestamp) $($LogObject.Hostname) Severity=$($LogObject.Severity) Message=$($LogObject.Message)" -ForegroundColor $Color
-  ')
-
-  Register-ObjectEvent $Watcher -EventName "Changed" -Action $changeAction | out-null
-}
-#>
 function Register-Watcher {
   param(
     [string]$folder,
@@ -948,86 +778,93 @@ $CheckIn = @()
 Start-Process powershell -ArgumentList "-noexit", "-noprofile", "-file $RunLocation\bin\ErrorLogReader.ps1"
 
 try {
-  $timeout = New-TimeSpan -Minutes 3
-  $CheckInPeriod = [diagnostics.stopwatch]::StartNew()
-    
-  while ($true) {
+$timeout = New-TimeSpan -Minutes 3
+$CheckInPeriod = [Diagnostics.Stopwatch]::StartNew()
+
+while ($true) {
     $Logfiles = Get-ChildItem -Path $logDirectory -Filter "*MachineSetup.json"
-        
+
     foreach ($LogFile in $Logfiles) {
-      $FileName = $LogFile.Name
-      $ShortName = ($FileName -split "-MachineSetup.json")[0]
+        $FileName = $LogFile.Name
+        $ShortName = ($FileName -split "-MachineSetup.json")[0]
+        
+        if ($CheckIn -notcontains $ShortName) {
+            $CheckIn += $ShortName
+            Write-Host "New machine check-in detected: $ShortName" -ForegroundColor Green
             
-      if ($CheckIn -notcontains $ShortName) {
-        $CheckIn += $ShortName
-        Write-Host "New machine check-in detected: $ShortName" -ForegroundColor Green
-                
-        # Start watcher job for this machine
-        Start-Job -ScriptBlock ${function:Register-Watcher} -ArgumentList $logDirectory, $FileName | Receive-Job -Wait -AutoRemoveJob
-                
-        $LogArray += $LogFile.FullName
-      }
+            # Start watcher job with timeout
+            $Job = Start-Job -ScriptBlock ${function:Register-Watcher} -ArgumentList $logDirectory, $FileName
+            Receive-Job -Job $Job | Write-Host -ForegroundColor Cyan
+            
+            $LogArray += $LogFile.FullName
+        }
     }
 
     if ($CheckInPeriod.Elapsed -ge $timeout) {
-
-      $NotCheckedInMachines = Compare-Object -ReferenceObject $NewMachineList -DifferenceObject $CheckIn -PassThru
-
-      foreach ($NotCheckedInMachine in $NotCheckedInMachines) {
-        if ($NotCheckedInMachine -ne "") {
-          $ErrorObject = [PSCustomObject]@{
-            Timestamp = Get-Date -Format "dd-MM-yyyy HH:mm:ss"
-            Hostname  = $env:computername
-            Severity  = "Warning"
-            Message   = "Host: $NotCheckedInMachine has not checked in"
-          }
-
-          $ErrorObject | ConvertTo-Json -Compress | 
-          Out-File -FilePath "$logDirectory\ErrorLog.json" -Append
-                    
-          Write-Host "$($ErrorObject.Timestamp) $($ErrorObject.Hostname) Severity=$($ErrorObject.Severity) Message=$($ErrorObject.Message)" -ForegroundColor Yellow
-        }
+        $NotCheckedInMachines = Compare-Object -ReferenceObject $NewMachineList -DifferenceObject $CheckIn -PassThru
+        foreach ($NotCheckedInMachine in $NotCheckedInMachines) {
+            if ($NotCheckedInMachine -ne "") {
+                $ErrorObject = [PSCustomObject]@{
+                    Timestamp = Get-Date -Format "dd-MM-yyyy HH:mm:ss"
+                    Hostname  = $env:computername
+                    Severity  = "Warning"
+                    Message   = "Host: $NotCheckedInMachine has not checked in"
+                }
+                $ErrorObject | ConvertTo-Json -Compress | 
+                Out-File -FilePath "$logDirectory\ErrorLog.json" -Append
+                
+                Write-Host "$($ErrorObject.Timestamp) $($ErrorObject.Hostname) Severity=$($ErrorObject.Severity) Message=$($ErrorObject.Message)" -ForegroundColor Yellow
+            }
       }
 
       # Inside the main loop:
       $FinishedMachinesFile = Join-Path $RunLocation "Logs\CompletedMachines.txt"
       if (Test-Path $FinishedMachinesFile) {
-        $FinishedMachines = Get-Content $FinishedMachinesFile
+        $FinishedMachines = Get-Content $FinishedMachinesFile -ErrorAction Stop
         $ReferenceList = if ($null -eq $NewMachineList) { $MachineList } else { $NewMachineList }
-    
+
+        # Normalize data to prevent case or whitespace issues
+        $FinishedMachines = ($FinishedMachines | ForEach-Object { $_.Trim() }).ToUpper()
+        $ReferenceList = ($ReferenceList | ForEach-Object { $_.Trim() }).ToUpper()
+
+        #Write-Host "Finished Machines: $($FinishedMachines -join ', ')" -ForegroundColor Yellow
+        #Write-Host "Reference List: $($ReferenceList -join ', ')" -ForegroundColor Yellow
+
         # Get machines that haven't completed yet
-        $RemainingMachines = Compare-Object -ReferenceObject $ReferenceList -DifferenceObject $FinishedMachines -PassThru
-    
-        # If no remaining machines (null or empty), all are complete
-        if ([string]::IsNullOrEmpty($RemainingMachines)) {
+        $RemainingMachines = Compare-Object -ReferenceObject $ReferenceList -DifferenceObject $FinishedMachines -PassThru | Where-Object { $_ }
+
+        # If no remaining machines (empty array), all are complete
+        if (-not $RemainingMachines) {
           Write-Host "All Machines have checked in" -ForegroundColor Green
           Write-Host "Starting Inventory Collection" -ForegroundColor Green
-          & $RunLocation\bin\RemoteInventory.ps1 -wait
-        
+          & $RunLocation\bin\RemoteInventory.ps1
+
           $DeploymentTimeMin = $DeploymentTime.Elapsed.Minutes
           $DeploymentTimeSec = $DeploymentTime.Elapsed.Seconds
           $message = "Setup Has Completed on All Machines. Time to complete: $DeploymentTimeMin Minutes $DeploymentTimeSec Seconds."
-        
+
           Write-Host $message -ForegroundColor Green
           Invoke-WmiMethod -Class win32_process -Name create -ArgumentList "c:\windows\system32\msg.exe * $message" | Out-Null
-        
+
           # Stop all monitoring jobs
           Get-Job | Stop-Job
           Get-Job | Remove-Job
           Break
         }
       }
+
             
       $CheckInPeriod.Restart()
     }
         
     # Display job output
     Get-Job | Where-Object { $_.HasMoreData } | ForEach-Object {
-      Receive-Job -Job $_ 
+        Receive-Job -Job $_ | Write-Host -ForegroundColor Cyan
+        #Remove-Job -Job $_
     }
-        
+
     Start-Sleep -Seconds 1
-  }
+}
 }
 catch {
   Write-Error "Error in main monitoring loop: $_"

@@ -1,7 +1,33 @@
-#/
-Copy the entire Setup Directory to the C: drive. Edit the setup.json file with the needed parameters using only capital Y or N for the General Section of the file then run the launcher.ps1 as Administrator
-Once the Script is started it should be left alone until it completes. Depending on parameters in the setup.json it will reboot and logon automatically.
-Depending on the options selected the machine will reboot a couple of times to complete the install.
-Remote Machine setup can be completed by adding the machine IP Addresses to the remoteMachine.txt file one per line then running the RemoteLauncher.ps1 file and follow the prompts.
-If running the RemoteLauncher.ps1 please do not use Autologon option in the Setup.json as it breaks the automation
-This is not a finished script so please report any errors with the attached transcript log to john.burriss@raysearchlabs.com
+# PowerShell Machine Monitoring Script
+
+This script automates the monitoring and management of machine setup processes through JSON log files. It identifies new machine check-ins, starts monitoring jobs for each machine, and ensures all machines complete their setup processes. Any machine that does not check in within a specified timeout is logged as a warning. Once all machines are setup, a remote inventory collection process is initiated.
+
+## Features
+
+- Monitors for `*MachineSetup.json` log files in a specified directory.
+- Tracks machine check-ins and initiates parallel monitoring jobs.
+- Logs warnings for machines that do not check in within a specified timeout.
+- Automatically initiates a remote inventory collection process after all machines complete.
+- Includes detailed logging for all actions.
+
+## Requirements
+
+- PowerShell 5.1 or later.
+- Necessary permissions to access the log directory and execute remote inventory scripts.
+
+## Usage
+
+### Parameters
+
+- `logDirectory`: Specifies the directory containing machine setup log files.
+  
+- `timeout`: Defines the timeout period for machine check-ins.
+
+### Example
+
+```powershell
+
+# Example to run the script with a specified log directory
+$logDirectory = "C:\Setup\Logs"
+.
+Run the script to monitor the directory for new machine setup log files.

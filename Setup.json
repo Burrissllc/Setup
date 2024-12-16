@@ -129,22 +129,25 @@
                 "REMOVECURRENTDRIVER":  "N"
             },
     "GENERAL":  {
-                    "INSTALLGPUDRIVER":  "Y",
-                    "INSTALLSQL":  "Y",
-                    "AUTOREBOOT":  "Y",
-                    "LOCALGROUPS":  "N",
-                    "BUILDRAYSTATIONGPUCONFIGS":  "Y",
-                    "INSTALLJAVA":  "Y",
-                    "INSTALLRAYSTATION":  "Y",
                     "INSTALLCITRIX":  "Y",
-                    "INSTALLLMX":  "Y",
                     "ENABLEAUTOLOGON":  "N",
-                    "CLEANUP":  "Y",
-                    "FORMATDRIVES":  "Y",
                     "MACHINENAME":  "",
+                    "BUILDRAYSTATIONGPUCONFIGS":  "Y",
+                    "LOCALGROUPS":  "N",
+                    "INSTALLSQL":  "Y",
+                    "FORMATDRIVES":  "Y",
+                    "INSTALLLMX":  "Y",
+                    "AUTOREBOOT":  "Y",
+                    "REMOTELOGGINGLOCATION":  "",
                     "INSTALLDOTNET":  "Y",
+                    "CLEANUP":  "Y",
+                    "UPDATEWINDOWS":  "N",
+                    "INSTALLGPUDRIVER":  "Y",
+                    "INSTALLRAYSTATION":  "Y",
+                    "INSTALLJAVA":  "Y",
+                    "INSTALLLICENSEAGENT":  "Y",
                     "INSTALLADOBE":  "Y",
                     "TIMEZONE":  "EST",
-                    "UPDATEWINDOWS":  "N"
+                    "INSTALLDICOM":  "N"
                 }
 }

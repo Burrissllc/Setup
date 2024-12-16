@@ -562,7 +562,7 @@ if ($Settings.RAYSTATION.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
       $dbMonitorHandle = $dbMonitorPS.BeginInvoke()
 
       # Set timeout
-      $timeoutMinutes = 30
+      $timeoutMinutes = 15
       $timeout = [DateTime]::Now.AddMinutes($timeoutMinutes)
       $installationComplete = $false
       $success = $true
