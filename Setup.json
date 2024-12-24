@@ -1,153 +1,152 @@
 {
-    "SQL":  {
-                "INSTANCENAME":  "RAYSTATION",
-                "ISOPATH":  "C:\\Setup\\Packages\\SQLServer2019-x64-ENU.iso",
-                "SERVICEACCOUNTPASSWORD":  "",
-                "TEMPLOGDIR":  "L:\\Logs",
-                "FILESTREAMDRIVE":  "I:",
-                "FILESTREAMSHARENAME":  "RAYSTATION",
-                "PRODUCTKEY":  "",
-                "PORT":  "1433",
-                "TEMPDBDIR":  "T:\\Temp",
-                "INSTALLDIR":  "",
-                "DATADIR":  "F:\\SQLDATA",
-                "SAPASSWORD":  "",
-                "USETRANSFERBITS":  "N",
-                "FEATURES":  "SQLEngine",
-                "ENABLEPROTOCOLS":  "Y",
-                "SERVICEACCOUNTNAME":  "",
-                "BACKUPDIR":  "J:\\BACKUP"
-            },
-    "RAYSTATION":  {
-                       "IndexServicePort":  "",
-                       "FEATURES":  "RayStation,StorageTool",
-                       "TransferServicePwd":  "",
-                       "GenerateSelfSignedCert":  "Y",
-                       "WAITFORSQLCONNECTION":  "Y",
-                       "INDEXSERVICESERVER":  [
-                                                  "Services01"
-                                              ],
-                       "DATABASESUFFIX":  "2023B_Test",
-                       "TRANSFERSERVICESERVER":  [
-                                                     "Services01"
-                                                 ],
-                       "TransferServiceUser":  "RSSERVICE@rsanyit.local",
-                       "DATABASEADDRESS":  "SQL01",
-                       "DATABASEINSTANCE":  "RAYSTATION",
-                       "IndexServiceUser":  "RSSERVICE@rsanyit.local",
-                       "RAYSTATIONLOCATION":  "C:\\Setup\\Packages\\RayStation-2023B_14.0.0.3338-Clinical\\RayStationSetup.exe",
-                       "DATABASEPORT":  "",
-                       "INDEXSERVICECERT":  "",
-                       "OMITTEDSERVERS":  [
-                                              "SQL01"
-                                          ],
-                       "IndexServicePwd":  ""
-                   },
-    "CITRIX":  {
-                   "DELIVERYCONTROLLERS":  "RSA-CTXCTRL3.rsanyit.local RSA-CTXCTRL4.rsanyit.local",
-                   "OMITTEDSERVERS":  [
-                                          "Services01",
-                                          "SQL01"
-                                      ],
-                   "CITRIXISOLOCATION":  "C:\\Setup\\Packages\\Citrix_Virtual_Apps_and_Desktops_7_2106.iso"
-               },
-    "LICENSING":  {
-                      "HALSERVER2":  "",
-                      "LOCALLICENSE":  "N",
-                      "HALSERVER1":  "",
-                      "HALSERVER3":  "",
-                      "DESIGNATEDSERVER":  [
-                                               "Services01"
-                                           ],
-                      "LICENSELOCATION":  "C:\\Setup\\Packages\\Internal_1772831988_Khai_20240806_Network_7_lic_including__14.0.0_13.0.0_13.1.0.lic",
-                      "CONFIGUREHAL":  "N"
-                  },
-    "SERVICES":  {
-                     "DATABASEPORT":  "",
-                     "SCPPORT":  "105",
-                     "CERTLOCATION":  "",
-                     "SECUREHOSTING":  "Y",
-                     "SCPFOLDER":  "C:\\temp",
-                     "SERVICEPWD":  "",
-                     "LICENSEAGENTSERVER":  [
-                                                "Services01"
-                                            ],
-                     "SERVICEPORT":  "",
-                     "DICOMSERVICELOCATION":  "C:\\Setup\\Packages\\DicomStorageServiceSetup.msi",
-                     "SCPDAYS":  "10",
-                     "CERTSTORE":  "",
-                     "DICOMSERVICESERVER":  [
-                                                "Services01"
-                                            ],
-                     "DATABASEADDRESS":  "172.17.11.153",
-                     "INSTALLDIR":  "",
-                     "LICENSESERVICEENDPOINT":  "https://rslicense.raysearchlabs.com",
-                     "SCPTITLE":  "RAYSTATION_SSCP",
-                     "DATABASEINSTANCE":  "RAYSTATION",
-                     "GenerateSelfSignedCert":  "Y",
-                     "LICENSESETUPEXE":  "C:\\Setup\\Packages\\LicenseAgent-2023B_14.0.0.3338-Clinical\\LicenseAgentSetup.exe",
-                     "CERTSUBJECT":  "",
-                     "OFFLINEMODE":  "N",
-                     "SERVICEUSER":  "RSSERVICE@rsanyit.local"
-                 },
-    "DRIVES":  [
-                   {
-                       "DriveLetter":  "F",
-                       "DriveNumber":  "1",
-                       "DriveLabel":  "Data"
-                   },
-                   {
-                       "DriveLetter":  "I",
-                       "DriveNumber":  "2",
-                       "DriveLabel":  "FileStream"
-                   },
-                   {
-                       "DriveLetter":  "J",
-                       "DriveNumber":  "3",
-                       "DriveLabel":  "Backup"
-                   },
-                   {
-                       "DriveLetter":  "L",
-                       "DriveNumber":  "4",
-                       "DriveLabel":  "Logs"
-                   },
-                   {
-                       "DriveLetter":  "T",
-                       "DriveNumber":  "5",
-                       "DriveLabel":  "Temp"
-                   }
-               ],
-    "DESIGNATEDSQLSERVER":  {
-                                "DESIGNATEDSQLSERVER":  [
-
-                                                        ]
-                            },
-    "GPU":  {
-                "DRIVERLOCATION":  "C:\\Setup\\Packages\\529.11_grid_win10_win11_server2019_server2022_dch_64bit_international.exe",
-                "CLEANINSTALL":  "N",
-                "NVIDIALICENSETOKENLOCATION":  "C:\\Setup\\Packages\\client_configuration_token_08-17-2023-21-53-17.tok",
-                "REMOVECURRENTDRIVER":  "N"
-            },
-    "GENERAL":  {
-                    "INSTALLCITRIX":  "Y",
-                    "ENABLEAUTOLOGON":  "N",
-                    "MACHINENAME":  "",
-                    "BUILDRAYSTATIONGPUCONFIGS":  "Y",
-                    "LOCALGROUPS":  "N",
-                    "INSTALLSQL":  "Y",
-                    "FORMATDRIVES":  "Y",
-                    "INSTALLLMX":  "Y",
-                    "AUTOREBOOT":  "Y",
-                    "REMOTELOGGINGLOCATION":  "",
-                    "INSTALLDOTNET":  "Y",
-                    "CLEANUP":  "Y",
-                    "UPDATEWINDOWS":  "N",
-                    "INSTALLGPUDRIVER":  "Y",
-                    "INSTALLRAYSTATION":  "Y",
-                    "INSTALLJAVA":  "Y",
-                    "INSTALLLICENSEAGENT":  "Y",
-                    "INSTALLADOBE":  "Y",
-                    "TIMEZONE":  "EST",
-                    "INSTALLDICOM":  "N"
-                }
+    "SQL": {
+        "INSTANCENAME": "RAYSTATION",
+        "ISOPATH": "C:\\Setup\\Packages\\SQLServer2019-x64-ENU.iso",
+        "SERVICEACCOUNTPASSWORD": "",
+        "TEMPLOGDIR": "L:\\Logs",
+        "FILESTREAMDRIVE": "I:",
+        "FILESTREAMSHARENAME": "RAYSTATION",
+        "PRODUCTKEY": "",
+        "PORT": "1433",
+        "TEMPDBDIR": "T:\\Temp",
+        "INSTALLDIR": "",
+        "DATADIR": "F:\\SQLDATA",
+        "SAPASSWORD": "",
+        "USETRANSFERBITS": "N",
+        "FEATURES": "SQLEngine",
+        "ENABLEPROTOCOLS": "Y",
+        "SERVICEACCOUNTNAME": "",
+        "BACKUPDIR": "J:\\BACKUP"
+    },
+    "RAYSTATION": {
+        "IndexServicePort": "",
+        "FEATURES": "RayStation,StorageTool",
+        "TransferServicePwd": "",
+        "GenerateSelfSignedCert": "Y",
+        "WAITFORSQLCONNECTION": "Y",
+        "INDEXSERVICESERVER": [
+            "Services01"
+        ],
+        "DATABASESUFFIX": "2023B_Test",
+        "TRANSFERSERVICESERVER": [
+            "Services01"
+        ],
+        "TransferServiceUser": "RSSERVICE@rsanyit.local",
+        "DATABASEADDRESS": "SQL01",
+        "DATABASEINSTANCE": "RAYSTATION",
+        "IndexServiceUser": "RSSERVICE@rsanyit.local",
+        "RAYSTATIONLOCATION": "C:\\Setup\\Packages\\RayStation-2023B_14.0.0.3338-Clinical\\RayStationSetup.exe",
+        "DATABASEPORT": "",
+        "INDEXSERVICECERT": "",
+        "OMITTEDSERVERS": [
+            "SQL01"
+        ],
+        "IndexServicePwd": ""
+    },
+    "CITRIX": {
+        "DELIVERYCONTROLLERS": "RSA-CTXCTRL3.rsanyit.local RSA-CTXCTRL4.rsanyit.local",
+        "OMITTEDSERVERS": [
+            "Services01",
+            "SQL01"
+        ],
+        "CITRIXISOLOCATION": "C:\\Setup\\Packages\\Citrix_Virtual_Apps_and_Desktops_7_2106.iso"
+    },
+    "LICENSING": {
+        "HALSERVER2": "",
+        "LOCALLICENSE": "N",
+        "HALSERVER1": "",
+        "HALSERVER3": "",
+        "DESIGNATEDSERVER": [
+            "Services01"
+        ],
+        "LICENSELOCATION": "C:\\Setup\\Packages\\Internal_1772831988_Khai_20240806_Network_7_lic_including__14.0.0_13.0.0_13.1.0.lic",
+        "CONFIGUREHAL": "N"
+    },
+    "SERVICES": {
+        "DATABASEPORT": "",
+        "SCPPORT": "105",
+        "CERTLOCATION": "",
+        "SECUREHOSTING": "Y",
+        "SCPFOLDER": "C:\\temp",
+        "SERVICEPWD": "",
+        "LICENSEAGENTSERVER": [
+            "Services01"
+        ],
+        "SERVICEPORT": "",
+        "DICOMSERVICELOCATION": "C:\\Setup\\Packages\\DicomStorageServiceSetup.msi",
+        "SCPDAYS": "10",
+        "CERTSTORE": "",
+        "DICOMSERVICESERVER": [
+            "Services01"
+        ],
+        "DATABASEADDRESS": "172.17.11.153",
+        "INSTALLDIR": "",
+        "LICENSESERVICEENDPOINT": "https://rslicense.raysearchlabs.com",
+        "SCPTITLE": "RAYSTATION_SSCP",
+        "DATABASEINSTANCE": "RAYSTATION",
+        "GenerateSelfSignedCert": "Y",
+        "LICENSESETUPEXE": "C:\\Setup\\Packages\\LicenseAgent-2023B_14.0.0.3338-Clinical\\LicenseAgentSetup.exe",
+        "CERTSUBJECT": "",
+        "OFFLINEMODE": "N",
+        "SERVICEUSER": "RSSERVICE@rsanyit.local"
+    },
+    "DRIVES": [
+        {
+            "DriveLetter": "F",
+            "DriveNumber": "1",
+            "DriveLabel": "Data"
+        },
+        {
+            "DriveLetter": "I",
+            "DriveNumber": "2",
+            "DriveLabel": "FileStream"
+        },
+        {
+            "DriveLetter": "J",
+            "DriveNumber": "3",
+            "DriveLabel": "Backup"
+        },
+        {
+            "DriveLetter": "L",
+            "DriveNumber": "4",
+            "DriveLabel": "Logs"
+        },
+        {
+            "DriveLetter": "T",
+            "DriveNumber": "5",
+            "DriveLabel": "Temp"
+        }
+    ],
+    "DESIGNATEDSQLSERVER": {
+        "DESIGNATEDSQLSERVER": []
+    },
+    "GPU": {
+        "DRIVERLOCATION": "C:\\Setup\\Packages\\529.11_grid_win10_win11_server2019_server2022_dch_64bit_international.exe",
+        "CLEANINSTALL": "N",
+        "NVIDIALICENSETOKENLOCATION": "C:\\Setup\\Packages\\client_configuration_token_08-17-2023-21-53-17.tok",
+        "REMOVECURRENTDRIVER": "N"
+    },
+    "GENERAL": {
+        "INSTALLCITRIX": "Y",
+        "ENABLEAUTOLOGON": "N",
+        "MACHINENAME": "",
+        "BUILDRAYSTATIONGPUCONFIGS": "Y",
+        "AUTOUPDATEGPUUUID": "Y",
+        "LOCALGROUPS": "N",
+        "INSTALLSQL": "Y",
+        "FORMATDRIVES": "Y",
+        "INSTALLLMX": "Y",
+        "AUTOREBOOT": "Y",
+        "REMOTELOGGINGLOCATION": "",
+        "INSTALLDOTNET": "Y",
+        "CLEANUP": "Y",
+        "UPDATEWINDOWS": "N",
+        "INSTALLGPUDRIVER": "Y",
+        "INSTALLRAYSTATION": "Y",
+        "INSTALLJAVA": "Y",
+        "INSTALLLICENSEAGENT": "Y",
+        "INSTALLADOBE": "Y",
+        "TIMEZONE": "EST",
+        "INSTALLDICOM": "N"
+    }
 }

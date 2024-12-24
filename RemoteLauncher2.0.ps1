@@ -80,7 +80,7 @@ function Test-Cred {
   $Username = $null
   $Password = $null
       
-  If ($Credentials -eq $null) {
+  If ($null -eq $Credentials) {
     Try {
       $Credentials = Get-Credential "domain\$env:username" -ErrorAction Stop
     }
@@ -111,7 +111,7 @@ function Test-Cred {
     Write-Warning "Something went wrong"
   }
   Else {
-    If ($domain.name -ne $null) {
+    If ($null -ne $domain.name) {
       return "Authenticated"
     }
     Else {
@@ -135,7 +135,7 @@ $Connection = Get-Content -path "$RunLocation\RemoteMachines.txt"  | ForEach-Obj
 
 $Unreachable = $Connection | Where-Object { $_.Reachable -Match "False" }
 
-if ($Unreachable -ne $null) {
+if ($null -ne $Unreachable) {
 
   $unreachable = $Unreachable | Format-Table -AutoSize | Out-String
 
@@ -441,6 +441,245 @@ ForEach ($machine in $MachineList) {
     }
   }
 
+  #_______________________________________________________________________________________________________________________
+  $computers = @(Get-Content -Path "$RunLocation\RemoteMachines.txt")
+
+  Write-Host "Checking if Logon Banner is Enabled on remote Machines" -ForegroundColor Green
+
+  # Maximum number of concurrent jobs
+  $maxConcurrentJobs = 50  # Adjust this number based on your needs
+
+  # Create a script block for the check
+  $checkScript = {
+    param($computer)
+    
+    try {
+      # Test connection before attempting to query
+      if (Test-Connection -ComputerName $computer -Count 1 -Quiet) {
+        try {
+          # Use PowerShell remoting to check registry
+          $result = Invoke-Command -ComputerName $computer -ScriptBlock {
+            $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+                    
+            try {
+              $regValues = Get-ItemProperty -Path $regPath -ErrorAction Stop
+                        
+              return @{
+                Success       = $true
+                BannerText    = $regValues.legalnoticetext
+                BannerCaption = $regValues.legalnoticecaption
+                Error         = $null
+              }
+            }
+            catch {
+              return @{
+                Success       = $false
+                BannerText    = $null
+                BannerCaption = $null
+                Error         = $_.Exception.Message
+              }
+            }
+          } -ErrorAction Stop
+                
+          if ($result.Success) {
+            $resultObj = [PSCustomObject]@{
+              ComputerName  = $computer
+              Status        = "Success"
+              BannerEnabled = ($null -ne $result.BannerText -or $null -ne $result.BannerCaption)
+              BannerText    = if ($result.BannerText) { $result.BannerText } else { "Not Set" }
+              BannerCaption = if ($result.BannerCaption) { $result.BannerCaption } else { "Not Set" }
+              Error         = $null
+            }
+          }
+          else {
+            $resultObj = [PSCustomObject]@{
+              ComputerName  = $computer
+              Status        = "Failed"
+              BannerEnabled = $false
+              BannerText    = "Not Found"
+              BannerCaption = "Not Found"
+              Error         = $result.Error
+            }
+          }
+        }
+        catch {
+          # Handle PowerShell remoting errors
+          if ($_.Exception.Message -like "*Access is denied*") {
+            # Try alternative method using WMI
+            try {
+              $regProv = Get-WmiObject -List "StdRegProv" -ComputerName $computer -Namespace root\default
+              $HKLM = 2147483650
+              $key = "SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+                        
+              $bannerText = $regProv.GetStringValue($HKLM, $key, "legalnoticetext").sValue
+              $bannerCaption = $regProv.GetStringValue($HKLM, $key, "legalnoticecaption").sValue
+                        
+              $resultObj = [PSCustomObject]@{
+                ComputerName  = $computer
+                Status        = "Success"
+                BannerEnabled = (([string]::IsNullOrEmpty($bannerText)) -or $null -eq $bannerCaption)
+                BannerText    = if ($bannerText) { $bannerText } else { "Not Set" }
+                BannerCaption = if ($bannerCaption) { $bannerCaption } else { "Not Set" }
+                Error         = $null
+              }
+            }
+            catch {
+              $resultObj = [PSCustomObject]@{
+                ComputerName  = $computer
+                Status        = "Failed"
+                BannerEnabled = $false
+                BannerText    = $null
+                BannerCaption = $null
+                Error         = "WMI access failed: $($_.Exception.Message)"
+              }
+            }
+          }
+          else {
+            $resultObj = [PSCustomObject]@{
+              ComputerName  = $computer
+              Status        = "Failed"
+              BannerEnabled = $false
+              BannerText    = $null
+              BannerCaption = $null
+              Error         = "Remote access error: $($_.Exception.Message)"
+            }
+          }
+        }
+      }
+      else {
+        $resultObj = [PSCustomObject]@{
+          ComputerName  = $computer
+          Status        = "Failed"
+          BannerEnabled = $false
+          BannerText    = $null
+          BannerCaption = $null
+          Error         = "Unable to connect to computer"
+        }
+      }
+    }
+    catch {
+      $resultObj = [PSCustomObject]@{
+        ComputerName  = $computer
+        Status        = "Failed"
+        BannerEnabled = $false
+        BannerText    = $null
+        BannerCaption = $null
+        Error         = $_.Exception.Message
+      }
+    }
+    
+    return $resultObj
+  }
+
+  # Initialize results array
+  $results = @()
+
+  # Create a queue of computers
+  $computerQueue = [System.Collections.Queue]::new()
+  foreach ($computer in $computers) {
+    $computerQueue.Enqueue($computer)
+  }
+
+  # Initialize progress counter
+  $totalComputers = $computers.Count
+  $processedComputers = 0
+
+  Write-Host "Starting parallel checks for $totalComputers computers..."
+
+  # Initialize job tracking
+  $runningJobs = @{}
+
+  # Process all computers
+  while ($computerQueue.Count -gt 0 -or $runningJobs.Count -gt 0) {
+    # Start new jobs if we have computers to process and are under the limit
+    while ($computerQueue.Count -gt 0 -and $runningJobs.Count -lt $maxConcurrentJobs) {
+      $computer = $computerQueue.Dequeue()
+      $job = Start-Job -ScriptBlock $checkScript -ArgumentList $computer
+      $runningJobs[$job.Id] = @{
+        Job       = $job
+        Computer  = $computer
+        StartTime = Get-Date
+      }
+    }
+    
+    # Check for completed jobs
+    $completedJobIds = @($runningJobs.Keys | Where-Object { $runningJobs[$_].Job.State -ne 'Running' })
+    
+    foreach ($jobId in $completedJobIds) {
+      $jobInfo = $runningJobs[$jobId]
+      $job = $jobInfo.Job
+        
+      # Get the results
+      try {
+        $result = Receive-Job -Job $job -ErrorAction Stop
+        if ($result) {
+          $results += $result
+        }
+        else {
+          # Handle null result
+          $results += [PSCustomObject]@{
+            ComputerName  = $jobInfo.Computer
+            Status        = "Failed"
+            BannerEnabled = $false
+            BannerText    = $null
+            BannerCaption = $null
+            Error         = "No result returned from job"
+          }
+        }
+      }
+      catch {
+        # Handle job failure
+        $results += [PSCustomObject]@{
+          ComputerName  = $jobInfo.Computer
+          Status        = "Failed"
+          BannerEnabled = $false
+          BannerText    = $null
+          BannerCaption = $null
+          Error         = "Job failed: $($_.Exception.Message)"
+        }
+      }
+        
+      # Clean up the job
+      Remove-Job -Job $job
+      $runningJobs.Remove($jobId)
+        
+      # Update progress
+      $processedComputers++
+      $percentComplete = [math]::Round(($processedComputers / $totalComputers) * 100, 2)
+      Write-Progress -Activity "Checking computers" -Status "$processedComputers of $totalComputers complete ($percentComplete%)" -PercentComplete $percentComplete
+    }
+    
+    # Brief pause to prevent CPU overload
+    Start-Sleep -Milliseconds 100
+  }
+
+  Write-Progress -Activity "Checking computers" -Completed
+
+
+  # Display summary
+  Write-Host "Total computers checked: $($results.Count)"
+  Write-Host "Successful checks: $($results.Where({$_.Status -eq 'Success'}).Count)"
+  Write-Host "Failed checks: $($results.Where({$_.Status -eq 'Failed'}).Count)"
+  Write-Host "Computers with banner enabled: $($results.Where({$_.BannerEnabled -eq $true}).Count)"
+
+  if ($results.BannerEnabled -contains "True") {
+    # Display detailed results in console
+    $results | Format-Table -Property ComputerName, Status, BannerEnabled, Error -AutoSize
+
+    Write-Host "A Logon Banner has been detected. Please note that this may cause issues with the Remote Setup Process." -ForegroundColor Yellow
+    Write-Host "Do you wish to continue with the Remote Setup Process? Press any key to continue..." -ForegroundColor Yellow
+    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+  }
+  elseif ($null -ne $results.error) {
+    Write-Host "An error occurred while checking for logon banners: $($results.error)" -ForegroundColor Red
+    Write-Host "Do you wish to continue with the Remote Setup Process? Press any key to continue..." -ForegroundColor Yellow
+    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+  }
+  else {
+    Write-Host "No logon banners detected on any of the remote machines." -ForegroundColor Green
+  }
+
+  #_______________________________________________________________________________________________________________________
   $DeploymentTime = [diagnostics.stopwatch]::StartNew()
 
   Try {
@@ -479,7 +718,7 @@ ForEach ($machine in $MachineList) {
   }
 }
 
-if ($NewMachineList -ne $null -and $NewMachineList -notmatch $MachineList) {
+if ($null -ne $NewMachineList -and $NewMachineList -notmatch $MachineList) {
 
   Move-Item -Path "$RunLocation\RemoteMachines.txt" -destination "$RunLocation\OriginalRemoteMachines.txt" -Force
 
@@ -778,43 +1017,43 @@ $CheckIn = @()
 Start-Process powershell -ArgumentList "-noexit", "-noprofile", "-file $RunLocation\bin\ErrorLogReader.ps1"
 
 try {
-$timeout = New-TimeSpan -Minutes 3
-$CheckInPeriod = [Diagnostics.Stopwatch]::StartNew()
+  $timeout = New-TimeSpan -Minutes 3
+  $CheckInPeriod = [Diagnostics.Stopwatch]::StartNew()
 
-while ($true) {
+  while ($true) {
     $Logfiles = Get-ChildItem -Path $logDirectory -Filter "*MachineSetup.json"
 
     foreach ($LogFile in $Logfiles) {
-        $FileName = $LogFile.Name
-        $ShortName = ($FileName -split "-MachineSetup.json")[0]
+      $FileName = $LogFile.Name
+      $ShortName = ($FileName -split "-MachineSetup.json")[0]
         
-        if ($CheckIn -notcontains $ShortName) {
-            $CheckIn += $ShortName
-            Write-Host "New machine check-in detected: $ShortName" -ForegroundColor Green
+      if ($CheckIn -notcontains $ShortName) {
+        $CheckIn += $ShortName
+        Write-Host "New machine check-in detected: $ShortName" -ForegroundColor Green
             
-            # Start watcher job with timeout
-            $Job = Start-Job -ScriptBlock ${function:Register-Watcher} -ArgumentList $logDirectory, $FileName
-            Receive-Job -Job $Job | Write-Host -ForegroundColor Cyan
+        # Start watcher job with timeout
+        $Job = Start-Job -ScriptBlock ${function:Register-Watcher} -ArgumentList $logDirectory, $FileName
+        Receive-Job -Job $Job | Write-Host -ForegroundColor Cyan
             
-            $LogArray += $LogFile.FullName
-        }
+        $LogArray += $LogFile.FullName
+      }
     }
 
     if ($CheckInPeriod.Elapsed -ge $timeout) {
-        $NotCheckedInMachines = Compare-Object -ReferenceObject $NewMachineList -DifferenceObject $CheckIn -PassThru
-        foreach ($NotCheckedInMachine in $NotCheckedInMachines) {
-            if ($NotCheckedInMachine -ne "") {
-                $ErrorObject = [PSCustomObject]@{
-                    Timestamp = Get-Date -Format "dd-MM-yyyy HH:mm:ss"
-                    Hostname  = $env:computername
-                    Severity  = "Warning"
-                    Message   = "Host: $NotCheckedInMachine has not checked in"
-                }
-                $ErrorObject | ConvertTo-Json -Compress | 
-                Out-File -FilePath "$logDirectory\ErrorLog.json" -Append
+      $NotCheckedInMachines = Compare-Object -ReferenceObject $NewMachineList -DifferenceObject $CheckIn -PassThru
+      foreach ($NotCheckedInMachine in $NotCheckedInMachines) {
+        if ($NotCheckedInMachine -ne "") {
+          $ErrorObject = [PSCustomObject]@{
+            Timestamp = Get-Date -Format "dd-MM-yyyy HH:mm:ss"
+            Hostname  = $env:computername
+            Severity  = "Warning"
+            Message   = "Host: $NotCheckedInMachine has not checked in"
+          }
+          $ErrorObject | ConvertTo-Json -Compress | 
+          Out-File -FilePath "$logDirectory\ErrorLog.json" -Append
                 
-                Write-Host "$($ErrorObject.Timestamp) $($ErrorObject.Hostname) Severity=$($ErrorObject.Severity) Message=$($ErrorObject.Message)" -ForegroundColor Yellow
-            }
+          Write-Host "$($ErrorObject.Timestamp) $($ErrorObject.Hostname) Severity=$($ErrorObject.Severity) Message=$($ErrorObject.Message)" -ForegroundColor Yellow
+        }
       }
 
       # Inside the main loop:
@@ -859,12 +1098,12 @@ while ($true) {
         
     # Display job output
     Get-Job | Where-Object { $_.HasMoreData } | ForEach-Object {
-        Receive-Job -Job $_ | Write-Host -ForegroundColor Cyan
-        #Remove-Job -Job $_
+      Receive-Job -Job $_ | Write-Host -ForegroundColor Cyan
+      #Remove-Job -Job $_
     }
 
     Start-Sleep -Seconds 1
-}
+  }
 }
 catch {
   Write-Error "Error in main monitoring loop: $_"

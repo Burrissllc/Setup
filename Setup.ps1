@@ -613,6 +613,12 @@ if ($settings.GENERAL.BUILDRAYSTATIONGPUCONFIGS -match "y") {
     & $RunLocation\bin\BuildGPUConfig.ps1 -wait
 }
 
+if ($settings.GENERAL.AUTOUPDATEGPUUUID -match "y") {
+    #Write-Host "Writing RayStation GPU Configs" -ForegroundColor Green
+    Write-PSULog -Severity Info -Message "Auto Updating GPU UUID"
+    & $RunLocation\bin\AutoUpdateGPUUUID.ps1 -wait
+}
+
 if ($settings.GENERAL.INSTALLDICOM -match "y") {
     #Write-Host "Writing RayStation GPU Configs" -ForegroundColor Green
     #Write-PSULog -Severity Info -Message "Installing DICOM Service"

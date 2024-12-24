@@ -60,6 +60,7 @@ Add-Type -AssemblyName System.Windows.Forms
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <Label Content="Enable Auto Logon" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
@@ -119,18 +120,21 @@ Add-Type -AssemblyName System.Windows.Forms
                         <Label Content="Build RayStation GPU Configs" Grid.Row="15" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
                         <CheckBox x:Name="checkboxBuildRaystationGpuConfigs" Grid.Row="15" Grid.Column="1" VerticalAlignment="Center"/>
 
-                        <Label Content="Update Windows" Grid.Row="16" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <CheckBox x:Name="checkboxUpdateWindows" Grid.Row="16" Grid.Column="1" VerticalAlignment="Center"/>
+                        <Label Content="Enable Auto UUID Update for RS Config" Grid.Row="16" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <CheckBox x:Name="checkboxAutoUUIDUpdate" Grid.Row="16" Grid.Column="1" VerticalAlignment="Center"/>
 
-                        <Label Content="Auto Reboot" Grid.Row="17" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <CheckBox x:Name="checkboxAutoReboot" Grid.Row="17" Grid.Column="1" VerticalAlignment="Center"/>
+                        <Label Content="Update Windows" Grid.Row="17" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <CheckBox x:Name="checkboxUpdateWindows" Grid.Row="17" Grid.Column="1" VerticalAlignment="Center"/>
 
-                        <Label Content="Cleanup" Grid.Row="18" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <CheckBox x:Name="checkboxCleanup" Grid.Row="18" Grid.Column="1" VerticalAlignment="Center"/>
+                        <Label Content="Auto Reboot" Grid.Row="18" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <CheckBox x:Name="checkboxAutoReboot" Grid.Row="18" Grid.Column="1" VerticalAlignment="Center"/>
 
-                        <Label Content="Remote Logging Location" Grid.Row="19" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
-                        <TextBox x:Name="textBoxRemoteLoggingLocation" Grid.Row="19" Grid.Column="1" Margin="0,5,0,5"/>
-                            <TextBlock IsHitTestVisible="False" Text="Normally Empty" Grid.Row="19" Grid.Column="1" VerticalAlignment="Center" Margin="5,0,0,0" Foreground="DarkGray">
+                        <Label Content="Cleanup" Grid.Row="19" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <CheckBox x:Name="checkboxCleanup" Grid.Row="19" Grid.Column="1" VerticalAlignment="Center"/>
+
+                        <Label Content="Remote Logging Location" Grid.Row="20" Grid.Column="0" VerticalAlignment="Center" Margin="0,5,10,5"/>
+                        <TextBox x:Name="textBoxRemoteLoggingLocation" Grid.Row="20" Grid.Column="1" Margin="0,5,0,5"/>
+                            <TextBlock IsHitTestVisible="False" Text="Normally Empty" Grid.Row="20" Grid.Column="1" VerticalAlignment="Center" Margin="5,0,0,0" Foreground="DarkGray">
                                 <TextBlock.Style>
                                     <Style TargetType="{x:Type TextBlock}">
                                         <Style.Triggers>
@@ -703,6 +707,7 @@ function Load-ExistingJSON {
         $window.FindName("checkboxInstallDotNet").IsChecked = $jsonContent.GENERAL.INSTALLDOTNET -eq "Y"
         $window.FindName("checkboxCleanup").IsChecked = $jsonContent.GENERAL.CLEANUP -eq "Y"
         $window.FindName("checkboxBuildRaystationGpuConfigs").IsChecked = $jsonContent.GENERAL.BUILDRAYSTATIONGPUCONFIGS -eq "Y"
+        $window.FindName("checkboxAutoUUIDUpdate").IsChecked = $jsonContent.GENERAL.AUTOUPDATEGPUUUID -eq "Y"
         $window.FindName("checkboxInstallSql").IsChecked = $jsonContent.GENERAL.INSTALLSQL -eq "Y"
         $window.FindName("checkboxUpdateWindows").IsChecked = $jsonContent.GENERAL.UPDATEWINDOWS -eq "Y"
         $window.FindName("checkboxInstallRaystation").IsChecked = $jsonContent.GENERAL.INSTALLRAYSTATION -eq "Y"
@@ -867,6 +872,7 @@ function Save-JSON {
             INSTALLDOTNET             = if ($window.FindName("checkboxInstallDotNet").IsChecked) { "Y" } else { "N" }
             CLEANUP                   = if ($window.FindName("checkboxCleanup").IsChecked) { "Y" } else { "N" }
             BUILDRAYSTATIONGPUCONFIGS = if ($window.FindName("checkboxBuildRaystationGpuConfigs").IsChecked) { "Y" } else { "N" }
+            AUTOUPDATEGPUUUID         = if ($window.FindName("AUTOUPDATEGPUUUID").IsChecked) { "Y" } else { "N" }
             INSTALLSQL                = if ($window.FindName("checkboxInstallSql").IsChecked) { "Y" } else { "N" }
             UPDATEWINDOWS             = if ($window.FindName("checkboxUpdateWindows").IsChecked) { "Y" } else { "N" }
             INSTALLRAYSTATION         = if ($window.FindName("checkboxInstallRaystation").IsChecked) { "Y" } else { "N" }
@@ -1260,6 +1266,8 @@ $elements = @(
     @{Name = "RemoveTransferServiceServer"; Type = "Remove"; ListBox = "listBoxTransferServiceServer" },
     @{Name = "AddIndexServiceServer"; Type = "Add"; ListBox = "listBoxIndexServiceServer"; TextBox = "textBoxNewIndexServiceServer" },
     @{Name = "RemoveIndexServiceServer"; Type = "Remove"; ListBox = "listBoxIndexServiceServer" },
+    @{Name = "AddDicomServiceServer"; Type = "Add"; ListBox = "listBoxDicomServiceServer"; TextBox = "textBoxNewDicomServiceServer" },
+    @{Name = "RemoveDicomServiceServer"; Type = "Remove"; ListBox = "listBoxDicomServiceServer" }
     @{Name = "AddLicenseAgentServer"; Type = "Add"; ListBox = "listBoxLicenseAgentServer"; TextBox = "textBoxNewLicenseAgentServer" },
     @{Name = "RemoveLicenseAgentServer"; Type = "Remove"; ListBox = "listBoxLicenseAgentServer" }
     @{Name = "AddGpuOmittedServer"; Type = "Add"; ListBox = "listBoxGpuOmittedServers"; TextBox = "textBoxNewGpuOmittedServer" },
