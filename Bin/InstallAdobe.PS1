@@ -95,7 +95,7 @@ Switch ($INSTALLADOBE) {
     Y {
 
 
-        if (Test-Connection 8.8.8.8 -Count 1 -Quiet) { 
+        if (Test-Connection "8.8.8.8" -Count 1 -Quiet) { 
             Write-PSULog -Severity Info -Message "Internet Connection Detected"
             Write-PSULog -Severity Info -Message "Downloading Adobe Reader"
             # Variables
@@ -126,7 +126,9 @@ Switch ($INSTALLADOBE) {
             $installArgs = "/sAll /msi EULA_ACCEPT=YES"
 
             # Download the installer
-            Invoke-WebRequest -Uri $installerUrl -OutFile $downloadPath
+            #Invoke-WebRequest -Uri $installerUrl -OutFile $downloadPath
+
+            (New-Object Net.WebClient).DownloadFile($installerUrl, $downloadPath)
 
             # Silent install
             Write-PSULog -Severity Info -Message "Installing Adobe Reader"
@@ -142,7 +144,7 @@ Switch ($INSTALLADOBE) {
             #Installs Adobe Reader DC
             #Write-Host "Installing Adobe Reader" -ForegroundColor Yellow
             Write-PSULog -Severity Start -Message "Installing Adobe Reader"
-            & $RunLocation\bin\Acrobat\AcroRdrDC1502320070_en_US.exe /sAll | Out-Null
+            & $RunLocation\bin\Acrobat\AcroRdrInstaller.exe /sAll | Out-Null
             #Write-Host "Finished Installing Acrobat Reader" -ForegroundColor Green
             Write-PSULog -Severity Info -Message "Finished Installing Acrobat Reader"
         }

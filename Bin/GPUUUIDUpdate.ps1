@@ -26,8 +26,8 @@ if (Test-Path -Path "C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe") 
 elseif (Test-Path -Path "C:\Windows\System32\nvidia-smi.exe") {
     $NVSMILocation = "C:\Windows\System32"
 }
-elseif (Test-Path ((Get-WmiObject Win32_SystemDriver | Select-Object DisplayName, @{n = "Path"; e = { (gi $_.pathname) } } | Where-Object { $_.DisplayName -match "nvlddmkm" }).path | split-path -Parent)) {
-    $NVSMILocation = (Get-WmiObject Win32_SystemDriver | select-object DisplayName, @{n = "Path"; e = { (gi $_.pathname) } } | Where-Object { $_.DisplayName -match "nvlddmkm" }).path | split-path -Parent
+elseif (Test-Path ((Get-WmiObject Win32_SystemDriver | Select-Object DisplayName, @{n = "Path"; e = { (get-item $_.pathname) } } | Where-Object { $_.DisplayName -match "nvlddmkm" }).path | split-path -Parent)) {
+    $NVSMILocation = (Get-WmiObject Win32_SystemDriver | select-object DisplayName, @{n = "Path"; e = { (get-item $_.pathname) } } | Where-Object { $_.DisplayName -match "nvlddmkm" }).path | split-path -Parent
 }
 
 # Path to the RayStation GPU settings files
@@ -37,14 +37,14 @@ $FILES = Get-ChildItem "$configpath\*.config"
 # Loop through each config file
 foreach ($file in $files) {
     # Get the current GPU driver version
-    $DRIVER = (& $NVSMILocation --query-gpu=driver_version --format=csv, noheader)
+    $DRIVER = (& $NVSMILocation\nvidia-smi.exe --query-gpu=driver_version --format=csv, noheader)
     $DRIVERVERSION = -join ('GPU driver ', $DRIVER)
     
     # Get the current GPU UUID
-    $NVIDIAGUID = (& $NVSMILocation --query-gpu=gpu_uuid --format=csv, noheader)
+    $NVIDIAGUID = (& $NVSMILocation\nvidia-smi.exe --query-gpu=gpu_uuid --format=csv, noheader)
     
     # Get the current GPU RAM in GB
-    $NVIDIARAM = [int]((& $NVSMILocation --query-gpu=memory.total --format=csv, noheader, nounits))
+    $NVIDIARAM = (& $NVSMILocation\nvidia-smi.exe --query-gpu=memory.total --format=csv, noheader, nounits)
     $NVIDIARAM = [math]::ceiling($NVIDIARAM / 1024)
     $RAMINGB = -join ($NVIDIARAM, ' GB')
     
