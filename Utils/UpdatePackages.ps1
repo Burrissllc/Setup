@@ -49,9 +49,10 @@ function Write-PSULog {
 }
 
 Write-Host "Checking for Internet Connectivity"
+$NetAdapters = Get-NetConnectionProfile | Where-Object { $_.IPv4Connectivity -eq 'Internet' -or $_.IPv6Connectivity -eq 'Internet' } | Select-Object -Property IPv4Connectivity, IPv6Connectivity
 
-try {
-    if (Test-Connection 8.8.8.8 -Count 1 -Quiet) { 
+if ($NetAdapters -match "Internet") { 
+    try {
         Write-PSULog -Severity Info -Message "Internet Connection Detected"
         Write-Host "Downloading Adobe Reader"
         # Variables
@@ -85,66 +86,67 @@ try {
 
         Write-Host "Downloading Adobe Reader Complete"
     }
-    else {
-        Write-PSULog -Severity Error -Message "No Internet Connection Detected"
-        throw "No Internet Connection Detected"
-    }
-}
-catch {
-    Write-PSULog -Severity Error -Message "Failed to download Adobe Reader: $_"
-    Write-Host "Failed to download Adobe Reader: $_"
-}
-
-try {
-    Write-Host "Downloading Java JRE"
-
-    $githubApiUrl = "https://api.github.com/repos/adoptium/temurin11-binaries/releases/latest"
-
-    # Set the User-Agent header to make the request
-    $headers = @{ "User-Agent" = "Mozilla/5.0" }
-
-    # Make the API request to get the latest release info
-    $response = Invoke-RestMethod -Uri $githubApiUrl -Headers $headers
-
-    # Find the MSI download URL in the assets section
-    $msiUrl = $response.assets | Where-Object { $_.name -like "*msi" -and $_.name -match "jre_x64" } | Select-Object -ExpandProperty browser_download_url
-
-    # Validate if a valid URL is found
-    if (-not $msiUrl) {
-        Write-Host "Could not find MSI download link in the latest release."
-        throw "Could not find MSI download link in the latest release."
+    catch {
+        Write-PSULog -Severity Error -Message "Failed to download Adobe Reader: $_"
+        Write-Host "Failed to download Adobe Reader: $_"
     }
 
-    Write-Host "Latest OpenJDK MSI found: $msiUrl"
+    try {
+        Write-Host "Downloading Java JRE"
 
-    # Working directory path for download
-    $WorkingDirectory = "$RunLocation\bin\java\"
+        $githubApiUrl = "https://api.github.com/repos/adoptium/temurin11-binaries/releases/latest"
 
-    # Download the latest OpenJDK MSI
-    $destination = "$WorkingDirectory\openjdk.msi"
-    Write-PSULog -Severity Info -Message "Downloading OpenJDK from $msiUrl"
-    $client = New-Object System.Net.WebClient
-    $client.DownloadFile($msiUrl, $destination)
-    Write-Host "Downloading Java Complete"
+        # Set the User-Agent header to make the request
+        $headers = @{ "User-Agent" = "Mozilla/5.0" }
+
+        # Make the API request to get the latest release info
+        $response = Invoke-RestMethod -Uri $githubApiUrl -Headers $headers
+
+        # Find the MSI download URL in the assets section
+        $msiUrl = $response.assets | Where-Object { $_.name -like "*msi" -and $_.name -match "jre_x64" } | Select-Object -ExpandProperty browser_download_url
+
+        # Validate if a valid URL is found
+        if (-not $msiUrl) {
+            Write-Host "Could not find MSI download link in the latest release."
+            throw "Could not find MSI download link in the latest release."
+        }
+
+        Write-Host "Latest OpenJDK MSI found: $msiUrl"
+
+        # Working directory path for download
+        $WorkingDirectory = "$RunLocation\bin\java\"
+
+        # Download the latest OpenJDK MSI
+        $destination = "$WorkingDirectory\openjdk.msi"
+        Write-PSULog -Severity Info -Message "Downloading OpenJDK from $msiUrl"
+        $client = New-Object System.Net.WebClient
+        $client.DownloadFile($msiUrl, $destination)
+        Write-Host "Downloading Java Complete"
+    }
+    catch {
+        Write-PSULog -Severity Error -Message "Failed to download Java JRE: $_"
+        Write-Host "Failed to download Java JRE: $_"
+    }
+
+    try {
+        Write-Host "Downloading SSMS"
+
+        $filepath = "$RunLocation\bin\SQL\SSMS-Local\SSMS-Setup-ENU.exe"
+        $URL = "https://aka.ms/ssmsfullsetup"
+
+        Write-Host "Latest SSMS installer download URL: $URL"
+
+        $clnt = New-Object System.Net.WebClient
+        $clnt.DownloadFile($url, $filepath)
+        Write-Host "SSMS installer download complete"
+    }
+    catch {
+        Write-PSULog -Severity Error -Message "Failed to download SSMS: $_"
+        Write-Host "Failed to download SSMS: $_"
+    }
+
 }
-catch {
-    Write-PSULog -Severity Error -Message "Failed to download Java JRE: $_"
-    Write-Host "Failed to download Java JRE: $_"
-}
-
-try {
-    Write-Host "Downloading SSMS"
-
-    $filepath = "$RunLocation\bin\SQL\SSMS-Local\SSMS-Setup-ENU.exe"
-    $URL = "https://aka.ms/ssmsfullsetup"
-
-    Write-Host "Latest SSMS installer download URL: $URL"
-
-    $clnt = New-Object System.Net.WebClient
-    $clnt.DownloadFile($url, $filepath)
-    Write-Host "SSMS installer download complete"
-}
-catch {
-    Write-PSULog -Severity Error -Message "Failed to download SSMS: $_"
-    Write-Host "Failed to download SSMS: $_"
+else {
+    Write-PSULog -Severity Error -Message "No Internet Connection Detected"
+    throw "No Internet Connection Detected"
 }

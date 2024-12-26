@@ -16,6 +16,7 @@
                     "INSTALLDICOM":  "Y",
                     "INSTALLLICENSEAGENT":  "Y",
                     "BUILDRAYSTATIONGPUCONFIGS":  "Y",
+                    "AUTOUPDATEGPUUUID": "Y",
                     "UPDATEWINDOWS":  "N",
                     "AUTOREBOOT":  "Y",
                     "CLEANUP":  "Y",
