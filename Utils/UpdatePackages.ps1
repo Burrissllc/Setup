@@ -45,16 +45,17 @@ function Write-PSULog {
         Message   = $Message
     }
     
-    Write-Host "$($LogObject.Timestamp) $($LogObject.Hostname) Severity=$($LogObject.Severity) Message=$($LogObject.Message)"
+    write-host "$($LogObject.Timestamp) $($LogObject.Hostname) Severity=$($LogObject.Severity) Message=$($LogObject.Message)"
 }
 
-Write-Host "Checking for Internet Connectivity"
+Write-PSULog -Severity Info "Checking for Internet Connectivity"
 $NetAdapters = Get-NetConnectionProfile | Where-Object { $_.IPv4Connectivity -eq 'Internet' -or $_.IPv6Connectivity -eq 'Internet' } | Select-Object -Property IPv4Connectivity, IPv6Connectivity
 
 if ($NetAdapters -match "Internet") { 
     try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         Write-PSULog -Severity Info -Message "Internet Connection Detected"
-        Write-Host "Downloading Adobe Reader"
+        Write-PSULog -Severity Info "Downloading Adobe Reader"
         # Variables
         $repoUrl = "https://api.github.com/repos/microsoft/winget-pkgs/contents/manifests/a/Adobe/Acrobat/Reader/32-bit"
         $headers = @{ "User-Agent" = "PowerShell" }
@@ -76,30 +77,30 @@ if ($NetAdapters -match "Internet") {
         $installerUrl = ($yamlContent -split "`n" | Where-Object { $_ -like "*InstallerUrl*" }) -replace "InstallerUrl:\s*", ""
 
         # Output the download URL
-        Write-Host "Latest Version: $latestVersion"
-        Write-Host "Download URL: $installerUrl"
+        Write-PSULog -Severity Info "Latest Version: $latestVersion"
+        Write-PSULog -Severity Info "Download URL: $installerUrl"
 
         $downloadPath = "$RunLocation\bin\Acrobat\AcroRdrInstaller.exe"
 
         # Download the installer
         (New-Object Net.WebClient).DownloadFile($installerUrl, $downloadPath)
 
-        Write-Host "Downloading Adobe Reader Complete"
+        Write-PSULog -Severity Info "Downloading Adobe Reader Complete"
     }
     catch {
         Write-PSULog -Severity Error -Message "Failed to download Adobe Reader: $_"
-        Write-Host "Failed to download Adobe Reader: $_"
+        Write-PSULog -Severity Info "Failed to download Adobe Reader: $_"
     }
 
     try {
-        Write-Host "Downloading Java JRE"
+        Write-PSULog -Severity Info "Downloading Java JRE"
 
         $githubApiUrl = "https://api.github.com/repos/adoptium/temurin11-binaries/releases/latest"
 
         # Set the User-Agent header to make the request
         $headers = @{ "User-Agent" = "Mozilla/5.0" }
 
-        # Make the API request to get the latest release info
+        # Make the API request to get the latest release Info
         $response = Invoke-RestMethod -Uri $githubApiUrl -Headers $headers
 
         # Find the MSI download URL in the assets section
@@ -107,11 +108,11 @@ if ($NetAdapters -match "Internet") {
 
         # Validate if a valid URL is found
         if (-not $msiUrl) {
-            Write-Host "Could not find MSI download link in the latest release."
+            Write-PSULog -Severity Info "Could not find MSI download link in the latest release."
             throw "Could not find MSI download link in the latest release."
         }
 
-        Write-Host "Latest OpenJDK MSI found: $msiUrl"
+        Write-PSULog -Severity Info "Latest OpenJDK MSI found: $msiUrl"
 
         # Working directory path for download
         $WorkingDirectory = "$RunLocation\bin\java\"
@@ -121,28 +122,28 @@ if ($NetAdapters -match "Internet") {
         Write-PSULog -Severity Info -Message "Downloading OpenJDK from $msiUrl"
         $client = New-Object System.Net.WebClient
         $client.DownloadFile($msiUrl, $destination)
-        Write-Host "Downloading Java Complete"
+        Write-PSULog -Severity Info "Downloading Java Complete"
     }
     catch {
         Write-PSULog -Severity Error -Message "Failed to download Java JRE: $_"
-        Write-Host "Failed to download Java JRE: $_"
+        Write-PSULog -Severity Info "Failed to download Java JRE: $_"
     }
 
     try {
-        Write-Host "Downloading SSMS"
+        Write-PSULog -Severity Info "Downloading SSMS"
 
         $filepath = "$RunLocation\bin\SQL\SSMS-Local\SSMS-Setup-ENU.exe"
         $URL = "https://aka.ms/ssmsfullsetup"
 
-        Write-Host "Latest SSMS installer download URL: $URL"
+        Write-PSULog -Severity Info "Latest SSMS installer download URL: $URL"
 
         $clnt = New-Object System.Net.WebClient
         $clnt.DownloadFile($url, $filepath)
-        Write-Host "SSMS installer download complete"
+        Write-PSULog -Severity Info "SSMS installer download complete"
     }
     catch {
         Write-PSULog -Severity Error -Message "Failed to download SSMS: $_"
-        Write-Host "Failed to download SSMS: $_"
+        Write-PSULog -Severity Info "Failed to download SSMS: $_"
     }
 
 }
