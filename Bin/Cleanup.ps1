@@ -132,6 +132,9 @@ Switch ($ReadHost1) {
 #Runs Machine Info Script before Final Cleanup
 & $RunLocation\bin\MachineInfo.ps1
 
+#Runs Validation Script before Final Cleanup
+& $RunLocation\bin\InstallValidator.ps1
+
 #Removes Leftover Reg keys of they exist
 #Write-Host "Removing Leftover Reg Keys" -ForegroundColor Yellow
 Write-PSULog -Severity Info -Message "Removing Leftover Reg Keys"

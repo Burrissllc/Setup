@@ -1082,6 +1082,128 @@ try {
           $DeploymentTimeSec = $DeploymentTime.Elapsed.Seconds
           $message = "Setup Has Completed on All Machines. Time to complete: $DeploymentTimeMin Minutes $DeploymentTimeSec Seconds."
 
+          # Generate consolidated report
+          $reportDirectory = "$RunLocation\Logs\Reports"
+          $outputFile = "$RunLocation\Logs\ConsolidatedReport.html"
+
+          # HTML template with tabs functionality
+          $htmlTemplate = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Consolidated System Configuration Reports</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .tab-container { margin-top: 20px; }
+        .tab-buttons { overflow: hidden; border: 1px solid #ccc; background-color: #f1f1f1; }
+        .tab-buttons button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+        }
+        .tab-buttons button:hover { background-color: #ddd; }
+        .tab-buttons button.active { background-color: #ccc; }
+        .tab-content {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+        iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+        }
+    </style>
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        window.onload = function() {
+            // Open first tab by default
+            document.getElementsByClassName("tab-button")[0].click();
+        }
+    </script>
+</head>
+<body>
+    <h1>Consolidated System Configuration Reports</h1>
+    <div class="tab-container">
+        <div class="tab-buttons">
+            {{TAB_BUTTONS}}
+        </div>
+        {{TAB_CONTENT}}
+    </div>
+</body>
+</html>
+"@
+
+          # Create reports directory if it doesn't exist
+          if (-not (Test-Path $reportDirectory)) {
+            New-Item -ItemType Directory -Path $reportDirectory
+          }
+
+          # Get all HTML files in the directory
+          $reports = Get-ChildItem -Path $reportDirectory -Filter "*.html"
+
+          $tabButtons = ""
+          $tabContent = ""
+          $firstTab = $true
+
+          foreach ($report in $reports) {
+            # Read the report content
+            $content = Get-Content -Path $report.FullName -Raw
+    
+            # Extract server name using regex
+            if ($content -match '<h2>Server Name:\s*(.+?)</h2>') {
+              $serverName = $matches[1].Trim()
+            }
+            else {
+              $serverName = $report.BaseName
+            }
+    
+            # Create safe ID for the tab (remove special characters)
+            $tabId = "tab_" + ($serverName -replace '[^a-zA-Z0-9]', '_')
+    
+            # Add tab button
+            $activeClass = if ($firstTab) { ' active' } else { '' }
+            $tabButtons += "<button class=`"tab-button$activeClass`" onclick=`"openTab(event, '$tabId')`">$serverName</button>`n"
+    
+            # Add tab content
+            $displayStyle = if ($firstTab) { 'block' } else { 'none' }
+            $tabContent += @"
+    <div id="$tabId" class="tab-content" style="display: $displayStyle;">
+        $content
+    </div>
+"@
+    
+            $firstTab = $false
+          }
+
+          # Replace placeholders in template
+          $finalHtml = $htmlTemplate -replace '{{TAB_BUTTONS}}', $tabButtons
+          $finalHtml = $finalHtml -replace '{{TAB_CONTENT}}', $tabContent
+
+          # Write the consolidated report
+          $finalHtml | Out-File -FilePath $outputFile -Encoding UTF8
+
+          Write-Host "Consolidated report has been generated at: $outputFile"
+
+
           Write-Host $message -ForegroundColor Green
           Invoke-WmiMethod -Class win32_process -Name create -ArgumentList "c:\windows\system32\msg.exe * $message" | Out-Null
 

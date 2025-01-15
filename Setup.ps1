@@ -658,6 +658,16 @@ if ($settings.DESIGNATEDSQLSERVER -contains $env:computername -or $null -eq $set
     & $RunLocation\bin\CheckSQLConnections.ps1 -wait
 }
 
+if ($settings.GENERAL.CLEANUP -notmatch "y") {
+
+    Write-PSULog -Severity Info -Message "Running Instalation Validation Report"
+    & $RunLocation\bin\InstallValidator.ps1 -wait
+
+    $RemotelogFilePath = Join-Path "$RemoteLogLocation" "CompletedMachines.txt"
+
+    $env:COMPUTERNAME | out-file $RemotelogFilePath -Append
+
+}
 
 $Readhost = $Settings.general.AUTOREBOOT
 Switch ($ReadHost) {

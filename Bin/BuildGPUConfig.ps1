@@ -144,6 +144,54 @@ function AddpostReleaseApprovedSelfTestOutputs {
     #return $xml
 }
 
+
+# Initialize empty hashtable
+$installedSoftware = @{}
+
+# Function to process registry keys
+function Get-SoftwareFromRegistry {
+    param (
+        [string]$RegPath
+    )
+    
+    Get-ChildItem -Path $RegPath | ForEach-Object {
+        $app = Get-ItemProperty $_.PSPath
+        if ($app.DisplayName) {
+            $key = if ($app.DisplayName -and $app.DisplayVersion) {
+                "$($app.DisplayName)_$($app.DisplayVersion)"
+            }
+            else {
+                $app.DisplayName
+            }
+            
+            # Only add if not already in hashtable
+            if (-not $installedSoftware.ContainsKey($key)) {
+                $installedSoftware[$key] = @{
+                    DisplayName    = $app.DisplayName
+                    DisplayVersion = $app.DisplayVersion
+                    Publisher      = $app.Publisher
+                }
+            }
+        }
+    }
+}
+
+# Get software from both registry locations
+Get-SoftwareFromRegistry "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
+Get-SoftwareFromRegistry "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+
+# Convert hashtable to ordered output
+$sortedSoftware = $installedSoftware.GetEnumerator() | 
+Sort-Object { $_.Value.DisplayName } | 
+ForEach-Object {
+    [PSCustomObject]@{
+        DisplayName    = $_.Value.DisplayName
+        DisplayVersion = $_.Value.DisplayVersion
+        Publisher      = $_.Value.Publisher
+    }
+}
+
+
 $GPUInstalled = ((Get-WmiObject Win32_VideoController) | where-object { $_.Name -match "NVIDIA" }).Name
     
 if ($Null -ne $GPUInstalled) {
@@ -155,13 +203,14 @@ if ($Null -ne $GPUInstalled) {
 
     }
 
-    $RSversions = Get-WmiObject -Class Win32_Product | where vendor -eq 'RaySearch Laboratories' | select Name, Version
+
+    $RSVersions = $sortedSoftware | Where-Object { $_.Displayname -match "RayStation" } | Select-Object -Property DisplayName, DisplayVersion
     $cleanRSVersions = @()
     foreach ($RSVersion in $RSVersions) {
 
-        if ($RSVersion.name -match "RayStation \d+" -or $RSVersion.name -match "RayStation \w+-R" -or $RSVersion.name -match "MicroRayStation .+") {
+        if ($RSVersion.DisplayName -match "RayStation \d+" -or $RSVersion.DisplayName -match "RayStation \w+-R" -or $RSVersion.DisplayName -match "MicroRayStation .+") {
 
-            $RSVersion = $RSVersion.Version
+            $RSVersion = $RSVersion.DisplayVersion
 
             if ($RSVersion.Split('.', 4)[3] -ne $null) {
 
