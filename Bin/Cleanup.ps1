@@ -17,8 +17,6 @@
     Author: John Burriss
     Created: 8/26/2019
     Requires: PowerShell 5.1 or higher, Administrator privileges
-
-#Requires -RunAsAdministrator
 #>
 
 #Requires -RunAsAdministrator

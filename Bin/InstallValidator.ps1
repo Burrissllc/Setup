@@ -1,11 +1,21 @@
-# System Configuration Check Script with Enhanced Error Handling
-param(
-    [Parameter(Mandatory = $false)]
-    [string]$ConfigPath = "c:\setup\Setup.json",
-    [Parameter(Mandatory = $false)]
-    [string]$OutputPath = "C:\setup\Logs\Reports\$env:ComputerName-SystemConfigurationReport.html"
-)
+<#
+.SYNOPSIS
+    This script Validates the install and configuration.
 
+.DESCRIPTION
+    The script checks if the install and configuration ran properly and generates a report and saves it locally and remote if the location exists.
+
+.PARAMETER None
+    This script does not take any parameters.
+
+.EXAMPLE
+    .\InstallValidator.ps1
+
+.NOTES
+    Author: John Burriss
+    Created: 1/15/2025
+    Requires: PowerShell 5.1 or higher, Administrator privileges
+#>
 
 #Requires -RunAsAdministrator
 
@@ -17,6 +27,8 @@ Set-Location ..
 $RunLocation = get-location
 $RunLocation = $RunLocation.Path
 
+$ConfigPath = "$RunLocation\Setup.json"
+$OutputPath = "$RunLocation\Logs\Reports\$env:ComputerName-SystemConfigurationReport.html"
 function Write-PSULog {
     param(
         [ValidateSet('Info', 'Warn', 'Error', 'Start', 'End', IgnoreCase = $false)]
@@ -236,6 +248,9 @@ try {
         $null = $RemoteLogLocation
     }
 
+    if (-not (Test-Configuration -Settings $Settings)) {
+        throw "Invalid configuration file"
+    }
     Test-Configuration -Config $Settings
     
     # Validate output path
