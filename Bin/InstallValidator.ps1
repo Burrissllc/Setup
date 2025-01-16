@@ -29,6 +29,19 @@ $RunLocation = $RunLocation.Path
 
 $ConfigPath = "$RunLocation\Setup.json"
 $OutputPath = "$RunLocation\Logs\Reports\$env:ComputerName-SystemConfigurationReport.html"
+
+    
+# Import and validate configuration
+$Settings = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+
+if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
+
+    $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
+}
+else {
+    $null = $RemoteLogLocation
+}
+
 function Write-PSULog {
     param(
         [ValidateSet('Info', 'Warn', 'Error', 'Start', 'End', IgnoreCase = $false)]
@@ -60,31 +73,10 @@ function Write-PSULog {
         $LogObject | ConvertTo-Json -Compress | Out-File -FilePath $RemotelogFilePath -Append
     }
     
-    Write-PSULog -Severity "Info" -Message  "$($LogObject.Timestamp) $($LogObject.Hostname) Severity=$($LogObject.Severity) Message=$($LogObject.Message)"
+    Write-Host "$($LogObject.Timestamp) $($LogObject.Hostname) Severity=$($LogObject.Severity) Message=$($LogObject.Message)"
     #if ($Severity -eq "Error") {throw $LastException}
 }
 
-
-# Function to validate configuration
-function Test-Configuration {
-    param(
-        [PSCustomObject]$Settings
-    )
-    
-    $requiredProperties = @('GENERAL', 'SQL', 'DRIVES', 'LICENSING', 'SERVICES')
-    $missingProperties = $requiredProperties.Where({ -not $Settings.PSObject.Properties.Name.Contains($_) })
-    
-    if ($missingProperties.Count -gt 0) {
-        throw "Missing required configuration properties: $($missingProperties -join ', ')"
-    }
-    
-    # Validate GENERAL section
-    if (-not $Settings.GENERAL.PSObject.Properties.Name.Contains('INSTALLSQL')) {
-        throw "Missing INSTALLSQL property in GENERAL section"
-    }
-    
-    return $true
-}
 
 # Function to validate and prepare output path
 function Test-OutputPath {
@@ -236,22 +228,6 @@ try {
     if (-not (Test-Path $ConfigPath)) {
         throw "Setup.json file not found at: $ConfigPath"
     }
-    
-    # Import and validate configuration
-    $Settings = Get-Content $ConfigPath -Raw | ConvertFrom-Json
-
-    if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
-
-        $RemoteLogLocation = $Settings.GENERAL.REMOTELOGGINGLOCATION 
-    }
-    else {
-        $null = $RemoteLogLocation
-    }
-
-    if (-not (Test-Configuration -Settings $Settings)) {
-        throw "Invalid configuration file"
-    }
-    Test-Configuration -Config $Settings
     
     # Validate output path
     if (-not (Test-OutputPath -Path $OutputPath)) {
@@ -1087,14 +1063,16 @@ try {
 
     try {
         # Ensure Remote output directory exists
-        if ($RemotelogDirectory -ne $Null) {
-            $outputDir = Join-Path $RemotelogDirectory -ChildPath "Reports"
+        if ($RemoteLogLocation -ne $Null) {
+            $outputDir = Join-Path $RemoteLogLocation -ChildPath "Reports"
+
             if (-not (Test-Path $outputDir)) {
                 New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
             }
 
             # Save report
-            $htmlContent | Out-File -FilePath $RemotelogDirectory -Encoding UTF8 -Force
+            #$htmlContent | Out-File -FilePath $outputDir -Encoding UTF8 -Force
+            Copy-Item -Path $OutputPath -Destination $outputDir
             Write-PSULog -Severity "Info" -Message  "Report generated successfully at: $OutputDir"
         }
     }
