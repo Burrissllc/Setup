@@ -74,7 +74,7 @@ function Write-PSULog {
 
 #$Path = "$RunLocation\Logs\"
 
-Get-Process Powershell  | Where-Object { $_.ID -ne $pid } | Stop-Process
+Get-Process Powershell  | Where-Object { $_.ID -ne $pid } | Stop-Process -Force -Confirm:$false
 
 #if (!(Test-Path $Path)) { 
 #    New-Item -ItemType File -Path "$RunLocation\Logs\setup.log"
@@ -281,7 +281,7 @@ if ($Dotnet -eq $false) {
 
     #Write-host "Running through Default Settings" -ForegroundColor Green
     Write-PSULog -Severity Info -Message "Running through Default Settings"
-    & $RunLocation\bin\DefaultSettings.ps1
+    & $RunLocation\bin\DefaultSettings.ps1 -wait
 
     if ($null -ne $settings.GENERAL.MACHINENAME) {
         #write-host "Renaming machine" -ForegroundColor Green
@@ -516,7 +516,7 @@ if ($settings.DESIGNATEDSQLSERVER -contains $env:computername -or $null -eq $set
 
             #Write-Host "Fixing FileStream Directory" -ForegroundColor Green
             Write-PSULog -Severity Start -Message "Fixing FileStream Directory"
-            & $RunLocation\bin\sql\FileStreamPerformance.ps1 -FileStreamDirectory "$FILESTREAMDRIVE':\'" -FixProblems "fix"
+            & $RunLocation\bin\sql\FileStreamPerformance.ps1 -FileStreamDirectory "$FILESTREAMDRIVE':\'" -FixProblems "fix" -wait
 
         }
 
@@ -532,7 +532,7 @@ if ($settings.DESIGNATEDSQLSERVER -contains $env:computername -or $null -eq $set
 
         #Write-Host "Installing SSMS" -ForegroundColor Green
         Write-PSULog -Severity Start -Message "Installing SSMS"
-        & $RunLocation\bin\SSMSInstall.ps1
+        & $RunLocation\bin\SSMSInstall.ps1 -wait
 
     }
 }
@@ -568,7 +568,7 @@ $InstallNvidiaDriver = $Settings.GENERAL.INSTALLGPUDRIVER
 if ($InstallNvidiaDriver -match "y") {
     #Write-Host "Attempting to Install GPU Driver" -ForegroundColor Green
     Write-PSULog -Severity Start -Message "Attempting to Install GPU Driver"
-    & $RunLocation\bin\NvidiaInstaller.ps1
+    & $RunLocation\bin\NvidiaInstaller.ps1 -wait
 }
 
 
@@ -579,7 +579,7 @@ Switch ($CitrixInstall) {
     Y {
         #Write-Host "Attempting to Install Citrix." -ForegroundColor Green
         Write-PSULog -Severity Start -Message "Attempting to Install Citrix."
-        & $RunLocation\bin\CitrixInstall.ps1
+        & $RunLocation\bin\CitrixInstall.ps1 -wait
     }
     N {
         #Write-Host "Skipping Citrix VDA Install" -ForegroundColor Green
@@ -595,7 +595,7 @@ Switch ($CitrixInstall) {
 if ($Settings.GENERAL.INSTALLLMX -match "y") {
     #Write-Host "Attempting to Install RayStation Licensing"
     Write-PSULog -Severity Start -Message "Attempting to Install RayStation Licensing"
-    & $RunLocation\bin\LicensingInstall.ps1
+    & $RunLocation\bin\LicensingInstall.ps1 -wait
 }
 #Runs the Machine Info Script
 
@@ -641,7 +641,7 @@ Switch ($ReadHost1) {
     Y {
         #Write-Host "Installing Windows Updates" -ForegroundColor Green
         Write-PSULog -Severity Start -Message "Installing Windows Updates"
-        & $RunLocation\bin\UpdateWindows.ps1
+        & $RunLocation\bin\UpdateWindows.ps1 -wait
     }
     N {
         #Write-Host "Skipping Windows Updates" -ForegroundColor Green

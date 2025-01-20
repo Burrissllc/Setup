@@ -83,7 +83,7 @@ function Get-RecentlyModifiedFiles {
 
 function Get-InstallerProcesses {
     Get-Process | Where-Object { 
-        $_.Name -match "msiexec|install|setup|XenDesktopVdaSetup" 
+        $_.Name -match "msiexec|install|setup|XenDesktopVdaSetup|Python" 
     }
 }
 
@@ -196,6 +196,7 @@ if (!(Test-Path $Path)) {
 Copy-Item "$RunLocation\Logs\*.json" "C:\Temp" -ErrorAction SilentlyContinue
 Copy-Item "$RunLocation\Logs\*.txt" "C:\Temp" -ErrorAction SilentlyContinue
 Copy-Item "$RunLocation\Logs\*.log" "C:\Temp" -ErrorAction SilentlyContinue
+Copy-Item "$RunLocation\Logs\Reports\*.html" "C:\Temp" -ErrorAction SilentlyContinue
 Copy-Item "$RunLocation\VDAInstallLogs\" "C:\Temp\" -Recurse -ErrorAction SilentlyContinue
 Copy-Item "$RunLocation\bin\FinalCleanup.ps1" "C:\Temp\"
 

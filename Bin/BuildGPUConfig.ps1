@@ -277,7 +277,8 @@ if ($Null -ne $GPUInstalled) {
     $GPUObjects = foreach ($GPU in $GPUs) {
 
         $GPUName = $GPU.product_name
-        if ($GPUName.Split(' ').count -le 2) { $GPUNameShort = $GPUName.Split(' ')[-1] }
+        if ($GPUName.Split(' ').count -le 2 -and $GPUName -notmatch "GRID") { $GPUNameShort = $GPUName.Split(' ')[-1] }
+        if ($GPUName.Split(' ').count -le 2 -and $GPUName -match "GRID") { $GPUNameDash = $GPUName -replace " ", "-" }
         if ($GPUName.Split(' ').count -eq 3) { $GPUNameShort = [string]::Join('', $GPUName.Split(' ')[1], $GPUName.Split(' ')[2]) }
         $DriverModel = $GPU.driver_model.current_dm
         $uuid_machine = $GPU.uuid
@@ -294,6 +295,7 @@ if ($Null -ne $GPUInstalled) {
             GPU          = "GPU$GPUCount"
             GPUName      = $GPUName
             GPUNameShort = $GPUNameShort
+            GPUNameDash  = $GPUNameDash
             DriverModel  = $DriverModel
             UUID         = $uuid_machine
             PCI          = $pci_machine
@@ -468,7 +470,7 @@ if ($Null -ne $GPUInstalled) {
 
         }#----------------------------------------------------------------------------------------------------------------------------
 
-        if ($Version -ge [System.Version]"13.0.0") {
+        if ($Version -ge [System.Version]"13.0.0" -and $Version -lt [System.Version]"14.0.0") {
             $xml = [xml]$BaseConfig
             $xml.PreserveWhitespace = $true
             $GPUStringCombined = @()
@@ -481,6 +483,8 @@ if ($Null -ne $GPUInstalled) {
                 $GPUDriverModel = $GPUObject.DriverModel
                 $GPUPci = $GPUObject.PCI
                 $GPUuuid = $GPUObject.uuid
+
+                if ($GPUObject.GPUName -match "GRID") { $GPUName = $GPUObject.GPUName }
 
                 $GPUString = $delimiter + "$GPU" + ": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUuuid"
 
@@ -518,12 +522,14 @@ if ($Null -ne $GPUInstalled) {
             foreach ($GPUObject in $GPUObjects) {
 
                 $GPU = $GPUObject.gpu
-                $GPUName = $GPUObject.GPUNameDash
+                $GPUName = $GPUObject.GPUNameShort
                 $GPUMemory = $GPUObject.Memory
                 $GPUEcc = $GPUObject.ECC
                 $GPUDriverModel = $GPUObject.DriverModel
                 $GPUPci = $GPUObject.PCI
                 $GPUuuid = $GPUObject.uuid
+
+                if ($GPUObject.GPUName -match "GRID") { $GPUName = $GPUObject.GPUNameDash }
 
                 $GPUString = $delimiter + "$GPU" + ": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUuuid"
 
@@ -567,6 +573,8 @@ if ($Null -ne $GPUInstalled) {
                 $GPUDriverModel = $GPUObject.DriverModel
                 $GPUPci = $GPUObject.PCI
                 $GPUuuid = $GPUObject.uuid
+
+                if ($GPUObject.GPUName -match "GRID") { $GPUName = $GPUObject.GPUNameDash }
 
                 $GPUString = $delimiter + "$GPU" + ": $GPUName, $GPUMemory GB$GPUEcc, $GPUDriverModel, $GPUuuid"
 

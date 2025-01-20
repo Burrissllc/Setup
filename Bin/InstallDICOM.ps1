@@ -77,6 +77,13 @@ function Write-PSULog {
     #if ($Severity -eq "Error") {throw $LastException}
 }
 
+$sleepInterval = 30
+function Get-InstallerProcesses {
+    Get-Process | Where-Object { 
+        $_.Name -match "msiexec|install|setup|XenDesktopVdaSetup|Python" 
+    }
+}
+
 
 if ([string]::IsNullOrEmpty($Settings.SERVICES.DICOMSERVICESERVER) -or $Settings.SERVICES.DICOMSERVICESERVER -contains $env:COMPUTERNAME) {
 
@@ -128,6 +135,14 @@ if ([string]::IsNullOrEmpty($Settings.SERVICES.DICOMSERVICESERVER) -or $Settings
 
         try {
             start-process msiexec.exe -ArgumentList @("/i $DICOMLOCATION", "/q", "SCPTITLE=$SCPTITLE", "SCPPORT=$SCPPORT", "SCPFOLDER=$SCPFOLDER", "SCPDAYS=$SCPDAYS") -wait
+            do {
+                $installers = Get-InstallerProcesses
+                if ($installers) {
+                    Write-PSULog -Severity Info -Message "Installer processes still running. Waiting $sleepInterval seconds..."
+                    Write-PSULog -Severity Info -Message "Running processes: $($installers.Name -join ', ')"
+                    Start-Sleep -Seconds $sleepInterval
+                }
+            } while ($installers)
         }
         Catch {
             Write-PSULog -Severity Error -Message "Failed to Install DICOM Service"

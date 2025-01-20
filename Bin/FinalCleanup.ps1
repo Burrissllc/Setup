@@ -77,7 +77,7 @@ Start-Sleep -Seconds 10
 Stop-Process -ProcessName explorer
 
 #Closes all other open Powershell windows
-Get-Process Powershell  | Where-Object { $_.ID -ne $pid } | Stop-Process
+Get-Process Powershell  | Where-Object { $_.ID -ne $pid } | Stop-Process -Force -Confirm:$false
 stop-process -Name explorer -Force
 
 Start-Sleep -Seconds 5
