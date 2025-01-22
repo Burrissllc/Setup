@@ -135,8 +135,14 @@ if ($Settings.CITRIX.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
         #Write-Host "Installing Citrix VDA" -ForegroundColor Yellow
         Write-PSULog -Severity Info -Message "Installing Citrix VDA"
 
-        Start-process $CitrixEXE -ArgumentList "/components VDA /controllers `"$DeliveryControllers`" /disableexperiencemetrics /enable_framehawk_port /enable_hdx_ports /enable_hdx_udp_ports /enable_real_time_transport /enable_remote_assistance /exclude `"Personal vDisk, Citrix Personalization for App-V - VDA`" /optimize /logpath $RunLocation\VDAInstallLogs /noreboot /quiet" -wait
-
+        #$InstallNvidiaDriver = $Settings.GENERAL.INSTALLGPUDRIVER
+        #$Cleanup = $Settings.GENERAL.CLEANUP
+        #if ($InstallNvidiaDriver -match "y" -or $Cleanup -match "y") {
+        #    Start-process $CitrixEXE -ArgumentList "/components VDA /controllers `"$DeliveryControllers`" /disableexperiencemetrics /enable_framehawk_port /enable_hdx_ports /enable_hdx_udp_ports /enable_real_time_transport /enable_remote_assistance /exclude `"Personal vDisk, Citrix Personalization for App-V - VDA`" /optimize /logpath $RunLocation\VDAInstallLogs /noreboot /NORESUME /quiet" -wait
+        #}
+        #else {
+        Start-process $CitrixEXE -ArgumentList "/components VDA /controllers `"$DeliveryControllers`" /disableexperiencemetrics /enable_framehawk_port /enable_hdx_ports /enable_hdx_udp_ports /enable_real_time_transport /enable_remote_assistance /exclude `"Personal vDisk, Citrix Personalization for App-V - VDA`" /optimize /logpath $RunLocation\VDAInstallLogs /noreboot /quiet" -wait    
+        #}
         if ((get-process | Where-Object { $_.ProcessName -match "XenDesktopVdaSetup" })) {
 
             #Write-host "Waiting for Citrix  Setup to Complete" -ForegroundColor Green

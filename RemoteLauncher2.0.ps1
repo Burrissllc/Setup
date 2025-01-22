@@ -47,10 +47,13 @@ Get-ChildItem -Path "$RunLocation\" -Recurse | Unblock-File
 Get-Job | Stop-Job
 Get-Job | Remove-Job
 
-if ((Get-ChildItem "$RunLocation\Logs").count -ge "1") {
-  $ClearLogs = read-Host "Would you like to purge old Log Files?(y/n)"
+if ((Get-ChildItem "$RunLocation\Logs").count -ge "1" -or (Get-ChildItem "$RunLocation\Logs\Reports").count -ge "1") {
+  $ClearLogs = read-Host "Would you like to purge old Log Files and Reports?(y/n)"
   Switch ($ClearLogs) {
-    Y { Remove-Item -Path "$RunLocation\Logs\*.*" -Recurse -Force }
+    Y {
+      Remove-Item -Path "$RunLocation\Logs\*.*" -Recurse -Force
+      Remove-Item -Path "$RunLocation\Logs\Reports\*.*" -Recurse -Force   
+    }
     N {  }
     Default {  }
 

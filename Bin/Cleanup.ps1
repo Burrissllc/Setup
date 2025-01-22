@@ -87,6 +87,12 @@ function Get-InstallerProcesses {
     }
 }
 
+#if ($settings.GENERAL.INSTALLCITRIX -match "y") {
+#    Write-PSULog -Severity Info -Message "Finalizing Citrix Install"
+#    $CitrixEXE = "$RunLocation\bin\Citrix\x64\XenDesktop Setup\XenDesktopVDASetup.exe"
+#    Start-process $CitrixEXE
+#}
+
 # Monitor file modifications
 do {
     $recentFiles = Get-RecentlyModifiedFiles

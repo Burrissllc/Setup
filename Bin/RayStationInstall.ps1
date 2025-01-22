@@ -273,7 +273,7 @@ if ($Settings.RAYSTATION.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
       exit 1
     }
 
-    if ($GenerateSelfSignedCert -match "y" -and $IndexServiceServer -match $env:COMPUTERNAME -or [string]::IsNullOrEmpty($IndexServiceServer)) {
+    if ($GenerateSelfSignedCert -match "y" -and $IndexServiceServer -match $env:COMPUTERNAME -or [string]::IsNullOrEmpty($IndexServiceServer) -and $GenerateSelfSignedCert -match "y") {
 
 
       Import-Module "$runlocation\Bin\PSBouncyCastle.New\PSBouncyCastle.psm1"

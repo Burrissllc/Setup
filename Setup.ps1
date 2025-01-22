@@ -540,7 +540,7 @@ $SkipGPUInstall = $settings.GPU.OMITTEDSERVERS
 if ($Settings.general.CLEANUP -match "y" -and $Settings.GENERAL.INSTALLGPUDRIVER -match "n") {
     #Write-Host "Setting Machine to Cleanup on Next Boot" -ForegroundColor Green
     Write-PSULog -Severity Info -Message "Setting Machine to Cleanup on Next Boot"
-    $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+    $RunOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
     Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\Cleanup.ps1"
 }
 if ( $settings.general.Cleanup -match "y" -and $settings.GENERAL.INSTALLGPUDRIVER -match "y") {
@@ -550,7 +550,7 @@ if ( $settings.general.Cleanup -match "y" -and $settings.GENERAL.INSTALLGPUDRIVE
 if ($Settings.general.CLEANUP -match "y" -and $Settings.GENERAL.INSTALLGPUDRIVER -match "y" -and $SkipGPUInstall -contains $env:COMPUTERNAME) {
     #Write-Host "Setting Machine to Cleanup on Next Boot" -ForegroundColor Green
     Write-PSULog -Severity Info -Message "Setting Machine to Cleanup on Next Boot"
-    $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+    $RunOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
     Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\Cleanup.ps1"
 }
 

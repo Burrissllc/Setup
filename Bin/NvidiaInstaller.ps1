@@ -122,9 +122,9 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
         Write-PSULog -Severity Info -Message "Finished Installing the Display Driver"
 
 
-        $DriverScript = Test-Path "$RunLocation\bin\NvidiaPerformance.ps1"
-        if ($DriverScript -eq $true) {
-            $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+
+        if (Test-Path "$RunLocation\bin\NvidiaPerformance.ps1") {
+            $RunOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
             Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\NvidiaPerformance.ps1"
             #Write-Host "Cards will be optimized on next boot." -ForegroundColor Green
             Write-PSULog -Severity Info -Message "Cards will be optimized on next boot."
@@ -169,44 +169,82 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
     if ($null -ne $NVSMILocation) {
 
         $NvidiaQuery = & "$NVSMILocation\nvidia-smi.exe" -q
-        $GPUType = $NvidiaQuery | Where-Object { $_ -match 'Virtualization Mode\s*:' } | % { $_.Split(":")[1] }
-        $GPUType = $GPUType.replace(' ', '')
+        if ($NvidiaQuery -match "NVIDIA-SMI has failed") {
+            $NoGPU = $true
+        }
+        else {
+            $NoGPU = $false
+        }
+        if ($NoGPU) {
+            #Write-Host "No Nvidia GPU Detected" -ForegroundColor Red
+            Write-PSULog -Severity Warn -Message "No Nvidia GPU Detected"
+        }
+        else {
+            #Write-Host "Nvidia GPU Detected" -ForegroundColor Green
+            Write-PSULog -Severity Info -Message "Nvidia GPU Detected"
+            $GPUType = $NvidiaQuery | Where-Object { $_ -match 'Virtualization Mode\s*:' } | % { $_.Split(":")[1] }
+            $GPUType = $GPUType.replace(' ', '')
 
-        if ($GPUType -notmatch "None") {
+            if ($GPUType -notmatch "None") {
 
-            if ($GPUType -match "VGPU") {
+                if ($GPUType -match "VGPU") {
 
-                if (Test-Path -Path $Settings.GPU.NVIDIALICENSETOKENLOCATION) {
-                    #Write-Host "Copying Nvidia License Token" -ForegroundColor Green
-                    Write-PSULog -Severity Info -Message "Copying Nvidia License Token"
-                    $token = $Settings.GPU.NVIDIALICENSETOKENLOCATION
-                    $TokenDir = $token | split-path
-                    $tokenName = $token | Split-Path -Leaf
-                    try {
-                        #Copy-Item -Path $token -Destination "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\" -Force
-                        robocopy $TokenDir "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken" $tokenName
-                    }
-                    catch {
-                        Write-PSULog -Severity Error -Message "Failed to copy License token to C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\"
-                    }
-                    $TokenName = split-path $token -Leaf -Resolve
-                    $licensePath = "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\$tokenName"
-                    if (!(Test-path -Path $licensePath)) {
-                        Write-PSULog -Severity Error -Message "Token File not in correct License Directory. Atempting to copy again"
+                    if (Test-Path -Path $Settings.GPU.NVIDIALICENSETOKENLOCATION) {
+                        #Write-Host "Copying Nvidia License Token" -ForegroundColor Green
+                        Write-PSULog -Severity Info -Message "Copying Nvidia License Token"
+                        $token = $Settings.GPU.NVIDIALICENSETOKENLOCATION
+                        $TokenDir = $token | split-path
+                        $tokenName = $token | Split-Path -Leaf
                         try {
-                            Copy-Item -Path $token -Destination "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\" -Force
-                            if (!(Test-path -Path $licensePath)) {
-                                Write-PSULog -Severity Error -Message "Failed to Copy Token Again. Please move it manually."
-                            }
+                            #Copy-Item -Path $token -Destination "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\" -Force
+                            robocopy $TokenDir "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken" $tokenName
                         }
                         catch {
                             Write-PSULog -Severity Error -Message "Failed to copy License token to C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\"
                         }
+                        $TokenName = split-path $token -Leaf -Resolve
+                        $licensePath = "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\$tokenName"
+                        if (!(Test-path -Path $licensePath)) {
+                            Write-PSULog -Severity Error -Message "Token File not in correct License Directory. Atempting to copy again"
+                            try {
+                                Copy-Item -Path $token -Destination "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\" -Force
+                                if (!(Test-path -Path $licensePath)) {
+                                    Write-PSULog -Severity Error -Message "Failed to Copy Token Again. Please move it manually."
+                                }
+                            }
+                            catch {
+                                Write-PSULog -Severity Error -Message "Failed to copy License token to C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\"
+                            }
+                        }
+                        $ServiceName = 'NVDisplay.ContainerLocalSystem'
+                        $arrService = Get-Service -Name $ServiceName
+                        #Write-Host "Restarting Nvidia Display Container Service" -ForegroundColor Green
+                        Write-PSULog -Severity Info -Message "Restarting Nvidia Display Container Service" 
+                        Restart-Service -Name $ServiceName -Force
+                        while ($arrService.Status -ne 'Running') {
+                            Start-Service $ServiceName
+                            #write-host $ServiceName $arrService.status -ForegroundColor Yellow
+                            Write-PSULog -Severity Info -Message $ServiceName $arrService.status
+                            #write-host 'Service starting' -ForegroundColor Yellow
+                            Write-PSULog -Severity Info -Message 'Service starting'
+                            Start-Sleep -seconds 5
+                            $arrService.Refresh()
+                        } 
                     }
+                }
+
+                elseif ($GPUType -match "Pass-Through") {
+                    $RegistryPath = "HKLM:\SOFTWARE\NVIDIA Corporation\Global\GridLicensing"
+                    $RegistryPath2 = "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\GridLicensing"
+                    if (!(Test-path -Path $RegistryPath)) {
+                        mkdir $RegistryPath | Out-Null
+                    }
+                    Set-ItemProperty -Path $RegistryPath -Name "FeatureType" -Value "2"
+                    Set-ItemProperty -Path $RegistryPath2 -Name "FeatureType" -Value "2"
+                    #New-Item RegistryKey -Path $RegistryPath -Name "FeatureType" -Value "2"
                     $ServiceName = 'NVDisplay.ContainerLocalSystem'
                     $arrService = Get-Service -Name $ServiceName
-                    #Write-Host "Restarting Nvidia Display Container Service" -ForegroundColor Green
-                    Write-PSULog -Severity Info -Message "Restarting Nvidia Display Container Service" 
+                    Write-Host "Restarting Nvidia Display Container Service" -ForegroundColor Green
                     Restart-Service -Name $ServiceName -Force
                     while ($arrService.Status -ne 'Running') {
                         Start-Service $ServiceName
@@ -218,97 +256,72 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
                         $arrService.Refresh()
                     } 
                 }
-            }
-
-            elseif ($GPUType -match "Pass-Through") {
-                $RegistryPath = "HKLM:\SOFTWARE\NVIDIA Corporation\Global\GridLicensing"
-                $RegistryPath2 = "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\GridLicensing"
-                if (!(Test-path -Path $RegistryPath)) {
-                    mkdir $RegistryPath | Out-Null
-                }
-                Set-ItemProperty -Path $RegistryPath -Name "FeatureType" -Value "2"
-                Set-ItemProperty -Path $RegistryPath2 -Name "FeatureType" -Value "2"
-                #New-Item RegistryKey -Path $RegistryPath -Name "FeatureType" -Value "2"
-                $ServiceName = 'NVDisplay.ContainerLocalSystem'
-                $arrService = Get-Service -Name $ServiceName
-                Write-Host "Restarting Nvidia Display Container Service" -ForegroundColor Green
-                Restart-Service -Name $ServiceName -Force
-                while ($arrService.Status -ne 'Running') {
-                    Start-Service $ServiceName
-                    #write-host $ServiceName $arrService.status -ForegroundColor Yellow
-                    Write-PSULog -Severity Info -Message $ServiceName $arrService.status
-                    #write-host 'Service starting' -ForegroundColor Yellow
-                    Write-PSULog -Severity Info -Message 'Service starting'
-                    Start-Sleep -seconds 5
-                    $arrService.Refresh()
-                } 
-            }
-            [xml]$NvidiaQuery = & "$NVSMILocation\nvidia-smi.exe" -q -x
-
-            $LicenseStatus = $NvidiaQuery.nvidia_smi_log.gpu.vgpu_software_licensed_product.license_status | % { $_.Split(" ")[0] }
-
-            if ($LicenseStatus -match "Unlicensed") {
-
-                #Write-Host "Nvidia License Status: $LicenseStatus" -ForegroundColor Red
-                Write-PSULog -Severity Warn -Message "Nvidia License Status: $LicenseStatus"
-                #Write-Host "Querying License Status Every 5 Seconds" -ForegroundColor Yellow
-                Write-PSULog -Severity Info -Message "Querying License Status Every 5 Seconds"
-
-            }
-
-
-            $BreakoutTimer = 0
-            While ($LicenseStatus -match "Unlicensed" -or $BreakoutTimer -ge 12) {
-
                 [xml]$NvidiaQuery = & "$NVSMILocation\nvidia-smi.exe" -q -x
 
                 $LicenseStatus = $NvidiaQuery.nvidia_smi_log.gpu.vgpu_software_licensed_product.license_status | % { $_.Split(" ")[0] }
 
-                if ($LicenseStatus -eq "Licensed") {
+                if ($LicenseStatus -match "Unlicensed") {
 
-                    #Write-Host "Acquired Nvidia License" -ForegroundColor Green
-                    Write-PSULog -Severity Info -Message "Acquired Nvidia License"
-
-                }
-
-                Start-sleep -Seconds 5
-
-                $BreakoutTimer++
-
-                if ($BreakoutTimer -eq 12) {
-
-                    #Write-Host "Unable to obtain Nvidia License, operation timed out. Please check connection to server." -ForegroundColor Red
-                    Write-PSULog -Severity Error -Message "Unable to obtain Nvidia License, operation timed out. Please check connection to server."
-                    break
+                    #Write-Host "Nvidia License Status: $LicenseStatus" -ForegroundColor Red
+                    Write-PSULog -Severity Warn -Message "Nvidia License Status: $LicenseStatus"
+                    #Write-Host "Querying License Status Every 5 Seconds" -ForegroundColor Yellow
+                    Write-PSULog -Severity Info -Message "Querying License Status Every 5 Seconds"
 
                 }
 
-            }
+
+                $BreakoutTimer = 0
+                While ($LicenseStatus -match "Unlicensed" -or $BreakoutTimer -ge 12) {
+
+                    [xml]$NvidiaQuery = & "$NVSMILocation\nvidia-smi.exe" -q -x
+
+                    $LicenseStatus = $NvidiaQuery.nvidia_smi_log.gpu.vgpu_software_licensed_product.license_status | ForEach-Object { $_.Split(" ")[0] }
+
+                    if ($LicenseStatus -eq "Licensed") {
+
+                        #Write-Host "Acquired Nvidia License" -ForegroundColor Green
+                        Write-PSULog -Severity Info -Message "Acquired Nvidia License"
+
+                    }
+
+                    Start-sleep -Seconds 5
+
+                    $BreakoutTimer++
+
+                    if ($BreakoutTimer -eq 12) {
+
+                        #Write-Host "Unable to obtain Nvidia License, operation timed out. Please check connection to server." -ForegroundColor Red
+                        Write-PSULog -Severity Error -Message "Unable to obtain Nvidia License, operation timed out. Please check connection to server."
+                        break
+
+                    }
+
+                }
     
-            $UseHWRender = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
-            New-ItemProperty -path $UseHWRender -name "bEnumerateHWBeforeSW" -value "1" -PropertyType DWORD -force
-            #Write-Host "Setting Windows to use Hardware to render remote sessions." -ForegroundColor Green
-            Write-PSULog -Severity Info -Message "Setting Windows to use Hardware to render remote sessions."
-            #Write-host "Please note that the machine will need to be rebooted for this to take effect" -ForegroundColor Yellow
-            Write-PSULog -Severity Info -Message "Please note that the machine will need to be rebooted for this to take effect"
-            try {
-                Write-PSULog -Severity Info -Message "Disabling Microsoft Basic Display Adapter"
-                $Null = Disable-PnpDevice -InstanceId (Get-PnpDevice -FriendlyName "Microsoft Basic Display Adapter" -Class Display -Status Ok).InstanceId -Confirm:$false
-                $Null = Disable-PnpDevice -InstanceId (Get-PnpDevice -FriendlyName "Microsoft Basic Display Adapter" -Class Display -Status Error).InstanceId -Confirm:$false
-            }
-            catch {
+                $UseHWRender = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
+                New-ItemProperty -path $UseHWRender -name "bEnumerateHWBeforeSW" -value "1" -PropertyType DWORD -force
+                #Write-Host "Setting Windows to use Hardware to render remote sessions." -ForegroundColor Green
+                Write-PSULog -Severity Info -Message "Setting Windows to use Hardware to render remote sessions."
+                #Write-host "Please note that the machine will need to be rebooted for this to take effect" -ForegroundColor Yellow
+                Write-PSULog -Severity Info -Message "Please note that the machine will need to be rebooted for this to take effect"
+                try {
+                    Write-PSULog -Severity Info -Message "Disabling Microsoft Basic Display Adapter"
+                    $Null = Disable-PnpDevice -InstanceId (Get-PnpDevice -FriendlyName "Microsoft Basic Display Adapter" -Class Display -Status Ok).InstanceId -Confirm:$false
+                    $Null = Disable-PnpDevice -InstanceId (Get-PnpDevice -FriendlyName "Microsoft Basic Display Adapter" -Class Display -Status Error).InstanceId -Confirm:$false
+                }
+                catch {
+
+                }
+                #Write-host "Disabling Microsoft Basic Display Adapter" -ForegroundColor Green
+        
 
             }
-            #Write-host "Disabling Microsoft Basic Display Adapter" -ForegroundColor Green
-        
 
         }
 
+        Write-PSULog -Severity Info -Message "Configuring Nvidia Control Panel Settings"
+        & $RunLocation\bin\GPUSetup.ps1 -wait
     }
-
-    Write-PSULog -Severity Info -Message "Configuring Nvidia Control Panel Settings"
-    & $RunLocation\bin\GPUSetup.ps1 -wait
-
 }
 else {
 
