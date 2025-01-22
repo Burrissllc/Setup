@@ -588,22 +588,44 @@ try {
                         }
 
                         if ($null -ne $NVSMILocation) {
-                            [xml]$NvidiaQuery = & "$NVSMILocation\nvidia-smi.exe" -q -x
-                            $GPUType = $NvidiaQuery.nvidia_smi_log.gpu.gpu_virtualization_mode.virtualization_mode
-
-                            if ($GPUType -match "VGPU") {
-                                # Token Check
-                                $tokenExists = (Get-ChildItem "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken").Name -match ".tok"
-                                $global:checkCount++
-                                if ($tokenExists) { $global:passedChecks++ }
-                                $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "NVIDIA License Token" -Status $tokenExists))
-
+                            try {
                                 [xml]$NvidiaQuery = & "$NVSMILocation\nvidia-smi.exe" -q -x
-                                $LicenseStatus = $NvidiaQuery.nvidia_smi_log.gpu.vgpu_software_licensed_product.license_status | ForEach-Object { $_.Split(" ")[0] }
-                                $Licensed = $LicenseStatus -eq "Licensed"
+                                if ($NvidiaQuery -match "NVIDIA-SMI has failed") {
+                                    $NoGPU = $true
+                                }
+                                else {
+                                    $NoGPU = $false
+                                }
+                            }
+                            Catch {
+                                $errorOccurred = $true
+                                $null = $errorMessages.Add("NVIDIA GPU configuration check failed`: $_")
+                                $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "NVIDIA GPU Configuration" -Status $false))
+                            }
+                            if ($NoGPU) {
+                                $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "NVIDIA GPU Configuration" -Status $false))
+                            }
+                            else {
                                 $global:checkCount++
-                                if ($Licensed) { $global:passedChecks++ }
-                                $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "NVIDIA License Status" -Status $Licensed))
+                                $global:passedChecks++
+                                $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "NVIDIA GPU Configuration" -Status $true))
+                            
+                                $GPUType = $NvidiaQuery.nvidia_smi_log.gpu.gpu_virtualization_mode.virtualization_mode
+
+                                if ($GPUType -match "VGPU") {
+                                    # Token Check
+                                    $tokenExists = (Get-ChildItem "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken").Name -match ".tok"
+                                    $global:checkCount++
+                                    if ($tokenExists) { $global:passedChecks++ }
+                                    $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "NVIDIA License Token" -Status $tokenExists))
+
+                                    [xml]$NvidiaQuery = & "$NVSMILocation\nvidia-smi.exe" -q -x
+                                    $LicenseStatus = $NvidiaQuery.nvidia_smi_log.gpu.vgpu_software_licensed_product.license_status | ForEach-Object { $_.Split(" ")[0] }
+                                    $Licensed = $LicenseStatus -eq "Licensed"
+                                    $global:checkCount++
+                                    if ($Licensed) { $global:passedChecks++ }
+                                    $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "NVIDIA License Status" -Status $Licensed))
+                                }
                             }
                         }
                     }
