@@ -113,5 +113,5 @@ if ((Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework S
     }
 
 }
-
+Write-PSULog -Severity Info -Message "Finished Installing .net 4.8"
 #Stop-Transcript

@@ -152,6 +152,7 @@ if ([string]::IsNullOrEmpty($Settings.SERVICES.DICOMSERVICESERVER) -or $Settings
     else {
         Write-PSULog -Severity Error -Message "Unable to Locate DICOM Installer Package. Skipping Install" 
     }
+    Write-PSULog -Severity End -Message "Finished DICOM Service Install"
 }
 
 else {

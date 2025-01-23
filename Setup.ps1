@@ -25,6 +25,8 @@ set-ExecutionPolicy Unrestricted
 
 $RunLocation = split-path -parent $MyInvocation.MyCommand.Definition
 
+Start-Transcript -Path "$RunLocation\Logs\setup.log" -NoClobber -Confirm:$false
+
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
 
@@ -546,6 +548,11 @@ if ($Settings.general.CLEANUP -match "y" -and $Settings.GENERAL.INSTALLGPUDRIVER
 if ( $settings.general.Cleanup -match "y" -and $settings.GENERAL.INSTALLGPUDRIVER -match "y") {
     #Write-Host "Skipping Setting Machine Cleanup until GPU optimizes" -ForegroundColor Yellow
     Write-PSULog -Severity Warn -Message "Skipping Setting Machine Cleanup until GPU optimizes"
+    if (Test-Path "$RunLocation\bin\NvidiaPerformance.ps1") {
+        Write-PSULog -Severity Info -Message "Setting GPU(s) to optimize next boot"
+        $RunOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+        Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\NvidiaPerformance.ps1"
+    }
 }
 if ($Settings.general.CLEANUP -match "y" -and $Settings.GENERAL.INSTALLGPUDRIVER -match "y" -and $SkipGPUInstall -contains $env:COMPUTERNAME) {
     #Write-Host "Setting Machine to Cleanup on Next Boot" -ForegroundColor Green

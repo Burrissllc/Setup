@@ -322,6 +322,7 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
         Write-PSULog -Severity Info -Message "Configuring Nvidia Control Panel Settings"
         & $RunLocation\bin\GPUSetup.ps1 -wait
     }
+    Write-PSULog -Severity End -Message "Nvidia Driver Install Complete"
 }
 else {
 

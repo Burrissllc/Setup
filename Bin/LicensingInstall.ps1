@@ -236,6 +236,7 @@ if ($Settings.LICENSING.DESIGNATEDSERVER -contains $env:computername -or $null -
             Write-PSULog -Severity Error -Message "Unable to Move License File to C:\Program Files\RaySearch Laboratories\LicenseFile"
         }
     }
+    Write-PSULog -Severity End -Message "Finished LMX Install"
 }
 else {
     Write-PSULog -Severity Info -Message "Skipping LMX Install because Machine was not listed as a designated server."

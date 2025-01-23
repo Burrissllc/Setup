@@ -144,9 +144,11 @@ Switch ($ReadHost1) {
 Write-PSULog -Severity Info -Message "Removing Leftover Reg Keys"
 $RegistryPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
 $RegistryRunOncePath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
+$RegistryRunOnceUserPath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
 $MachineSetupKeyPath = "HKLM:\SOFTWARE\MachineSetup"
 
 if (Get-ItemProperty -Path $RegistryRunOncePath -Name "NextRun" -ErrorAction SilentlyContinue) { Remove-ItemProperty -Path $RegistryRunOncePath -Name "NextRun" }
+if (Get-ItemProperty -Path $RegistryRunOnceUserPath -Name "NextRun" -ErrorAction SilentlyContinue) { Remove-ItemProperty -Path $RegistryRunOnceUserPath -Name "NextRun" }
 if (Get-ItemProperty -Path $RegistryPath -Name "AutoAdminLogon" -ErrorAction SilentlyContinue) { Remove-ItemProperty -Path $RegistryPath -Name "AutoAdminLogon" }
 if (Get-ItemProperty -Path $RegistryPath -Name "DefaultUsername" -ErrorAction SilentlyContinue) { Remove-ItemProperty -Path $RegistryPath -Name "DefaultUsername" }
 if (Get-ItemProperty -Path $RegistryPath -Name "DefaultPassword" -ErrorAction SilentlyContinue) { Remove-ItemProperty -Path $RegistryPath -Name "DefaultPassword" }

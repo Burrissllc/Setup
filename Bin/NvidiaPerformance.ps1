@@ -284,7 +284,7 @@ Write-PSULog -Severity Info -Message "All installer processes completed."
 Write-PSULog -Severity Info -Message "Configuring Nvidia Control Panel Settings"
 & $RunLocation\bin\GPUSetup.ps1 -wait
 
-
+Write-PSULog -Severity Info -Message "Nvidia Performance Script Completed"
 #Stop-Transcript
 $Readhost = $Settings.general.AUTOREBOOT
 Switch ($ReadHost) {

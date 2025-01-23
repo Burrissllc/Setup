@@ -90,7 +90,7 @@ $RemoveNvidiaDriver = $Settings.GPU.REMOVECURRENTDRIVER
 
 if ($RemoveNvidiaDriver -match "y") {
 
-    $ServerType = $Settings.general.SERVERTYPE
+    #$ServerType = $Settings.general.SERVERTYPE
 
     #Adds Reg Key to stop Automatic Driver Install
     if ($Null -eq (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -name "ExcludeWUDriversInQualityUpdate" -errorAction SilentlyContinue)) {
@@ -110,12 +110,12 @@ if ($RemoveNvidiaDriver -match "y") {
     Write-PSULog -Severity Info -Message "Finished Removing all Nvidia Components. Please reboot before re-installing"
 
     #Sets the Nvidia Driver to install on next boot
-    if ($ServerType -match "app") {
-        #Write-Host "Setting Nvidia driver to install on next boot" -ForegroundColor Green
-        Write-PSULog -Severity Info -Message "Setting Nvidia driver to install on next boot"
-        $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-        Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\NvidiaInstaller.ps1"
-    }
+    #if ($ServerType -match "app") {
+    #    #Write-Host "Setting Nvidia driver to install on next boot" -ForegroundColor Green
+    #    Write-PSULog -Severity Info -Message "Setting Nvidia driver to install on next boot"
+    #    $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+    #    Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\NvidiaInstaller.ps1"
+    #}
 
     
     #$Readhost = $Settings.general.AUTOREBOOT

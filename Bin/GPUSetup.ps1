@@ -186,15 +186,19 @@ if ($Null -ne $GPUInstalled) {
             [xml]$NvidiaQuery = & "$NVSMILocation\nvidia-smi.exe" -q -x
             if ($NvidiaQuery -match "NVIDIA-SMI has failed") {
                 $NoGPU = $true
+                Write-PSULog -Severity Warn -Message "Nvidia GPU not detected. Skipping card optimization."
+            }
+            else {
+                $NoGPU = $false
             }
         }
         catch {
             Write-PSULog -Severity Error -Message "Failed to query Nvidia GPU"
+            Write-PSULog -Severity Warn -Message "Nvidia GPU not detected. Skipping card optimization."
             $NoGPU = $true
         }
 
-        if ($NoGPU -ne $true) {
-            Write-PSULog -Severity Warn -Message "Nvidia GPU not detected. Skipping card optimization."
+        if ($NoGPU -eq $false) {
         
             $AllGPUs = $NvidiaQuery.SelectNodes("/nvidia_smi_log/gpu")
 
@@ -315,6 +319,7 @@ if ($Null -ne $GPUInstalled) {
             Remove-Item $OpenGLFile -ErrorAction SilentlyContinue
             Remove-Item $MyPath -ErrorAction SilentlyContinue
         }
+        Write-PSULog -Severity Info -Message "Nvidia GPU control panel settings configured"
     }
     else {
         Write-PSULog -Severity Warn -Message ".net 4.8 not detected Machine may need a reboot"

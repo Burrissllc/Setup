@@ -546,6 +546,13 @@ if ([string]::IsNullOrEmpty($Settings.SERVICES.LICENSEAGENTSERVER) -or $Settings
 
   }
 
+  if ($settings.GENERAL.INSTALLGPUDRIVER -eq "y") {
+    if (Test-Path "$RunLocation\bin\NvidiaPerformance.ps1") {
+      $RunOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+      Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\NvidiaPerformance.ps1"
+    }
+  }
+  Write-PSULog -Severity End -Message "Finished License Agent Install"
 }
 else {
 
