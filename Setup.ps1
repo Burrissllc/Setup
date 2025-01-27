@@ -518,7 +518,7 @@ if ($settings.DESIGNATEDSQLSERVER -contains $env:computername -or $null -eq $set
 
             #Write-Host "Fixing FileStream Directory" -ForegroundColor Green
             Write-PSULog -Severity Start -Message "Fixing FileStream Directory"
-            & $RunLocation\bin\sql\FileStreamPerformance.ps1 -FileStreamDirectory "$FILESTREAMDRIVE':\'" -FixProblems "fix" -wait
+            & $RunLocation\bin\FileStreamPerformance.ps1 -FileStreamDirectory "$FILESTREAMDRIVE':\'" -FixProblems "fix" -wait
 
         }
 
