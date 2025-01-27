@@ -534,7 +534,7 @@ if ($settings.DESIGNATEDSQLSERVER -contains $env:computername -or $null -eq $set
 
         #Write-Host "Installing SSMS" -ForegroundColor Green
         Write-PSULog -Severity Start -Message "Installing SSMS"
-        & $RunLocation\bin\SSMSInstall.ps1 -wait
+        & $RunLocation\bin\InstallSSMS.ps1 -wait
 
     }
 }
@@ -575,7 +575,7 @@ $InstallNvidiaDriver = $Settings.GENERAL.INSTALLGPUDRIVER
 if ($InstallNvidiaDriver -match "y") {
     #Write-Host "Attempting to Install GPU Driver" -ForegroundColor Green
     Write-PSULog -Severity Start -Message "Attempting to Install GPU Driver"
-    & $RunLocation\bin\NvidiaInstaller.ps1 -wait
+    & $RunLocation\bin\InstallNvidiaDriver.ps1 -wait
 }
 
 
@@ -586,7 +586,7 @@ Switch ($CitrixInstall) {
     Y {
         #Write-Host "Attempting to Install Citrix." -ForegroundColor Green
         Write-PSULog -Severity Start -Message "Attempting to Install Citrix."
-        & $RunLocation\bin\CitrixInstall.ps1 -wait
+        & $RunLocation\bin\InstallCitrix.ps1 -wait
     }
     N {
         #Write-Host "Skipping Citrix VDA Install" -ForegroundColor Green
@@ -602,7 +602,7 @@ Switch ($CitrixInstall) {
 if ($Settings.GENERAL.INSTALLLMX -match "y") {
     #Write-Host "Attempting to Install RayStation Licensing"
     Write-PSULog -Severity Start -Message "Attempting to Install RayStation Licensing"
-    & $RunLocation\bin\LicensingInstall.ps1 -wait
+    & $RunLocation\bin\InstallLicensing.ps1 -wait
 }
 #Runs the Machine Info Script
 
@@ -611,7 +611,7 @@ if ($Settings.GENERAL.INSTALLLMX -match "y") {
 if ($settings.GENERAL.INSTALLRAYSTATION -match "y") {
     #Write-Host "Attempting to Install RayStation" -ForegroundColor Green
     Write-PSULog -Severity Start -Message "Attempting to Install RayStation"
-    & $RunLocation\bin\RayStationInstall.ps1 -wait
+    & $RunLocation\bin\InstallRayStation.ps1 -wait
 }
 
 if ($settings.GENERAL.BUILDRAYSTATIONGPUCONFIGS -match "y") {

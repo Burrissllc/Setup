@@ -9,7 +9,7 @@
     This script does not take any parameters.
 
 .EXAMPLE
-    .\RayStationInstall.ps1
+    .\InstallRayStation.ps1
     Runs the RayStation installation script with the settings defined in Setup.json.
 
 .NOTES

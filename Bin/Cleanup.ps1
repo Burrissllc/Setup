@@ -26,6 +26,9 @@ set-location $RunLocation
 Set-Location ..
 $RunLocation = get-location
 $RunLocation = $RunLocation.Path
+
+Start-Transcript -Path "$RunLocation\Logs\setup.log" -NoClobber -Confirm:$false
+
 $Settings = Get-Content "$RunLocation\Setup.json" | ConvertFrom-Json
 if ([string]::IsNullOrEmpty($Settings.GENERAL.REMOTELOGGINGLOCATION) -ne $True) {
 

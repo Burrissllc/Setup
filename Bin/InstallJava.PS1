@@ -100,7 +100,51 @@ Switch ($INSTALLJAVA) {
         if (Test-Connection 8.8.8.8 -Count 1 -Quiet) {
             #Write-Host "Installing Java" -ForegroundColor Yellow
             Write-PSULog -Severity Start -Message "Installing Java"
-            & $RunLocation\bin\OnlineJavaInstall.ps1
+            # Fetch the latest OpenJDK download link dynamically from Adoptium GitHub releases
+
+            # GitHub API URL to get the latest release info
+            $githubApiUrl = "https://api.github.com/repos/adoptium/temurin11-binaries/releases/latest"
+
+            # Set the User-Agent header to make the request
+            $headers = @{ "User-Agent" = "Mozilla/5.0" }
+
+            # Make the API request to get the latest release info
+            $response = Invoke-RestMethod -Uri $githubApiUrl -Headers $headers
+
+            # Find the MSI download URL in the assets section
+            $msiUrl = $response.assets | Where-Object { $_.name -like "*msi" -and $_.name -match "jre_x64" } | Select-Object -ExpandProperty browser_download_url
+
+            # Validate if a valid URL is found
+            if (-not $msiUrl) {
+                Write-PSULog -Severity Error -Message "Could not find MSI download link in the latest release."
+                exit 1
+            }
+
+            Write-PSULog -Severity Info -Message "Latest OpenJDK MSI found: $msiUrl"
+
+            # Working directory path for download
+            $WorkingDirectory = "$RunLocation\bin\java\"
+
+            # Check if working directory exists, create if not
+            If (!(Test-Path -Path $WorkingDirectory -PathType Container)) { 
+                Write-PSULog -Severity Info -Message "Creating working directory at $WorkingDirectory"
+                New-Item -Path $WorkingDirectory  -ItemType directory 
+            }
+
+            # Download the latest OpenJDK MSI
+            $destination = "$WorkingDirectory\openjdk.msi"
+            Write-PSULog -Severity Info -Message "Downloading OpenJDK from $msiUrl"
+            $client = New-Object System.Net.WebClient
+            $client.DownloadFile($msiUrl, $destination)
+
+            # Install OpenJDK silently
+            Write-PSULog -Severity Info -Message "Installing OpenJDK from $destination"
+            Start-Process -FilePath "$WorkingDirectory\openjdk.msi" -ArgumentList "ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome INSTALLDIR=`"c:\Program Files\Temurin\`" /quiet" -Wait
+
+            # Clean up
+            Write-PSULog -Severity Info -Message "Cleaning up OpenJDK Install Folder"
+            Remove-Item $WorkingDirectory\openjdk.msi -Force
+
             #Write-Host "Finished Installing Java" -ForegroundColor Green
             Write-PSULog -Severity Info -Message "Finished Installing Java"
         }

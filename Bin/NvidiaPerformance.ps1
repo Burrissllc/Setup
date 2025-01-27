@@ -26,6 +26,9 @@ set-location $RunLocation
 Set-Location ..
 $RunLocation = get-location
 $RunLocation = $RunLocation.Path
+
+Start-Transcript -Path "$RunLocation\Logs\setup.log" -NoClobber -Confirm:$false
+
 #$Path = "$RunLocation\Logs\NvidiaPerformance.log"
 
 #if(!(Test-Path $Path)) { 
@@ -209,25 +212,15 @@ if ($Settings.GENERAL.CLEANUP -match "y") {
     Write-PSULog -Severity Info -Message "Setting Machine to Cleanup on Next Boot"
     $RunOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
     Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\Cleanup.ps1"
+
 }
-if ($Settings.GENERAL.CLEANUP -match "n" -and $settings.GENERAL.INSTALLCITRIX -match "y") {
-    Write-PSULog -Severity Info -Message "Finishing the Citrix Install"
-    $CitrixEXE = "$RunLocation\bin\Citrix\x64\XenDesktop Setup\XenDesktopVDASetup.exe"
-    Start-process $CitrixEXE
-    if ((get-process | Where-Object { $_.ProcessName -match "XenDesktopVdaSetup" })) {
 
-        #Write-host "Waiting for Citrix  Setup to Complete" -ForegroundColor Green
-        Write-PSULog -Severity Info -Message "Waiting for Citrix  Setup to Complete"
+while ((get-process | Where-Object { $_.ProcessName -match "XenDesktopVdaSetup" })) {
 
-    }
+    start-sleep -Seconds 5
 
-
-    while ((get-process | Where-Object { $_.ProcessName -match "XenDesktopVdaSetup" })) {
-
-        start-sleep -Seconds 5
-
-    }
 }
+
 #Disabled the Nvidia Tray Icon
 #$TrayIcon = "HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\NvTray"
 $TrayIcon = "HKLM:\SOFTWARE\NVIDIA Corporation\NvTray"

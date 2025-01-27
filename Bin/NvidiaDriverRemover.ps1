@@ -114,7 +114,7 @@ if ($RemoveNvidiaDriver -match "y") {
     #    #Write-Host "Setting Nvidia driver to install on next boot" -ForegroundColor Green
     #    Write-PSULog -Severity Info -Message "Setting Nvidia driver to install on next boot"
     #    $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-    #    Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\NvidiaInstaller.ps1"
+    #    Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\InstallNvidiaDriver.ps1"
     #}
 
     

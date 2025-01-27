@@ -262,12 +262,12 @@ if (($Settings.GENERAL.INSTALLLICENSEAGENT -match "Y") -and !([string]::IsNullOr
 }
 
 
-$DistributeAccount = Read-Host "Is the distributution account different than installation account?(y/n)"
+$DistributeAccount = Read-Host "Is the package distributution account different than installation account?(y/n)"
 
 Switch ($DistributeAccount) {
   Y {
-    $DistributeUsername = Read-Host "Enter the Distribution Account Username(domain\username)"
-    $DistributionPassword = Read-Host "Enter the Distribution Account Password" -AsSecureString 
+    $DistributeUsername = Read-Host "Enter the package Distribution Account Username(domain\username)"
+    $DistributionPassword = Read-Host "Enter the package Distribution Account Password" -AsSecureString 
     $DistributionCreds = New-Object System.Management.Automation.PSCredential ($DistributeUsername, $DistributionPassword)
     $Domain = $DistributeUsername.split("\")[0]
     if ($Domain -notmatch '`.' -or $Domain -notmatch 'localhost') {
@@ -696,7 +696,7 @@ ForEach ($machine in $MachineList) {
     $source_path = $source
     $destination_path = $Dest
 
-    $job = Start-Job -ScriptBlock { param($source_path, $destination_path, $machine) Robocopy.exe $source_path $destination_path\setup /MIR /NDL /NJH /NJS /XD $source_path\bin\VSCode-win32-x64-1.82.3 $source_path\.git $source_path\.vscode | % { $data = $_.Split([char]9); if ("$($data[4])" -ne "") { $file = "$($data[4])" }; $Percent = ($($data[0]).Replace('%', "").Replace(' ', "")); Write-Progress "Percentage $($data[0])" -PercentComplete $Percent -Activity "$machine Robocopy" -CurrentOperation "$($file)"  -ErrorAction SilentlyContinue; } }  -name "Start $machine Transfer" -ArgumentList $source_path, $destination_path, $machine
+    $job = Start-Job -ScriptBlock { param($source_path, $destination_path, $machine) Robocopy.exe $source_path $destination_path\setup /MIR /NDL /NJH /NJS /XD $source_path\Utils $source_path\.git $source_path\.vscode | % { $data = $_.Split([char]9); if ("$($data[4])" -ne "") { $file = "$($data[4])" }; $Percent = ($($data[0]).Replace('%', "").Replace(' ', "")); Write-Progress "Percentage $($data[0])" -PercentComplete $Percent -Activity "$machine Robocopy" -CurrentOperation "$($file)"  -ErrorAction SilentlyContinue; } }  -name "Start $machine Transfer" -ArgumentList $source_path, $destination_path, $machine
     #WriteJobProgress($job);
   }
   Catch {

@@ -203,7 +203,7 @@ Catch {
 #Enables .net 3.5
 #Write-Host "Enabling .net 3.5" -ForegroundColor Yellow
 Write-PSULog -Severity Info -Message "Enabling .net 3.5"
-Add-WindowsCapability -Online -Name NetFx3~~~~ -Source $RunLocation\bin\.net
+Add-WindowsCapability -Online -Name NetFx3~~~~ -Source $RunLocation\bin\.net | Out-Null
 #Write-Host "Enabled .net 3.5" -ForegroundColor Green
 Write-PSULog -Severity Info -Message "Enabled .net 3.5"
 

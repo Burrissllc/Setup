@@ -10,7 +10,7 @@
     This script does not take any parameters.
 
 .EXAMPLE
-    .\SSMSInstall.ps1
+    .\InstallSSMS.ps1
     Runs the script to install SSMS if configured to do so.
 
 .NOTES

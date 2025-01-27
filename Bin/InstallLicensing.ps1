@@ -10,7 +10,7 @@
     This script does not take any parameters.
 
 .EXAMPLE
-    .\LicensingInstall.ps1
+    .\InstallLicensing.ps1
     Runs the script to install and configure the LM-X license server.
 
 .NOTES

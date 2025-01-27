@@ -15,7 +15,7 @@
     Requires: Run as Administrator
 
 .EXAMPLE
-    .\NvidiaInstaller.ps1
+    .\InstallNvidiaDriver.ps1
     Runs the script to install and configure Nvidia GPU drivers based on the settings in Setup.json.
 
 #>
@@ -144,8 +144,8 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
     Else {
         #Write-Host "Unable to locate GPU driver specified in the setup.json file. Please Install the Driver Manually" -ForegroundColor Red
         Write-PSULog -Severity Error -Message "Unable to locate GPU driver specified in the setup.json file. Please Install the Driver Manually"
-        #Write-Host "Please correct location in the config and run $RunLocation\bin\NvidiaInstaller.ps1 again." -ForegroundColor Red
-        Write-PSULog -Severity Error -Message "Please correct location in the config and run $RunLocation\bin\NvidiaInstaller.ps1 again."
+        #Write-Host "Please correct location in the config and run $RunLocation\bin\InstallNvidiaDriver.ps1 again." -ForegroundColor Red
+        Write-PSULog -Severity Error -Message "Please correct location in the config and run $RunLocation\bin\InstallNvidiaDriver.ps1 again."
     }
 
     #$Readhost = $Settings.general.AUTOREBOOT
@@ -197,7 +197,7 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
                         $tokenName = $token | Split-Path -Leaf
                         try {
                             #Copy-Item -Path $token -Destination "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\" -Force
-                            robocopy $TokenDir "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken" $tokenName
+                            robocopy $TokenDir "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken" $tokenName | Out-Null
                         }
                         catch {
                             Write-PSULog -Severity Error -Message "Failed to copy License token to C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\"
@@ -207,7 +207,7 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
                         if (!(Test-path -Path $licensePath)) {
                             Write-PSULog -Severity Error -Message "Token File not in correct License Directory. Atempting to copy again"
                             try {
-                                Copy-Item -Path $token -Destination "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\" -Force
+                                Copy-Item -Path $token -Destination "C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\" -Force | Out-Null
                                 if (!(Test-path -Path $licensePath)) {
                                     Write-PSULog -Severity Error -Message "Failed to Copy Token Again. Please move it manually."
                                 }
@@ -239,8 +239,8 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
                     if (!(Test-path -Path $RegistryPath)) {
                         mkdir $RegistryPath | Out-Null
                     }
-                    Set-ItemProperty -Path $RegistryPath -Name "FeatureType" -Value "2"
-                    Set-ItemProperty -Path $RegistryPath2 -Name "FeatureType" -Value "2"
+                    Set-ItemProperty -Path $RegistryPath -Name "FeatureType" -Value "2" | Out-Null
+                    Set-ItemProperty -Path $RegistryPath2 -Name "FeatureType" -Value "2" | Out-Null
                     #New-Item RegistryKey -Path $RegistryPath -Name "FeatureType" -Value "2"
                     $ServiceName = 'NVDisplay.ContainerLocalSystem'
                     $arrService = Get-Service -Name $ServiceName
@@ -299,18 +299,18 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
                 }
     
                 $UseHWRender = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
-                New-ItemProperty -path $UseHWRender -name "bEnumerateHWBeforeSW" -value "1" -PropertyType DWORD -force
+                New-ItemProperty -path $UseHWRender -name "bEnumerateHWBeforeSW" -value "1" -PropertyType DWORD -force | Out-Null
                 #Write-Host "Setting Windows to use Hardware to render remote sessions." -ForegroundColor Green
                 Write-PSULog -Severity Info -Message "Setting Windows to use Hardware to render remote sessions."
                 #Write-host "Please note that the machine will need to be rebooted for this to take effect" -ForegroundColor Yellow
                 Write-PSULog -Severity Info -Message "Please note that the machine will need to be rebooted for this to take effect"
                 try {
                     Write-PSULog -Severity Info -Message "Disabling Microsoft Basic Display Adapter"
-                    $Null = Disable-PnpDevice -InstanceId (Get-PnpDevice -FriendlyName "Microsoft Basic Display Adapter" -Class Display -Status Ok).InstanceId -Confirm:$false
-                    $Null = Disable-PnpDevice -InstanceId (Get-PnpDevice -FriendlyName "Microsoft Basic Display Adapter" -Class Display -Status Error).InstanceId -Confirm:$false
+                    $Null = Disable-PnpDevice -InstanceId (Get-PnpDevice -FriendlyName "Microsoft Basic Display Adapter" -Class Display -Status Ok).InstanceId -Confirm:$false | Out-Null
+                    $Null = Disable-PnpDevice -InstanceId (Get-PnpDevice -FriendlyName "Microsoft Basic Display Adapter" -Class Display -Status Error).InstanceId -Confirm:$false | Out-Null
                 }
                 catch {
-
+                    $null
                 }
                 #Write-host "Disabling Microsoft Basic Display Adapter" -ForegroundColor Green
         

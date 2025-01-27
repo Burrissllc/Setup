@@ -11,7 +11,7 @@
     This script does not take any parameters.
 
 .EXAMPLE
-    .\CitrixInstall.ps1
+    .\InstallCitrix.ps1
     Runs the script to install Citrix VDA if configured to do so.
 
 .NOTES
@@ -102,7 +102,7 @@ if ($Settings.CITRIX.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
             $DriveLetter = $DriveLetter + ":\"
             #Write-Host "Copying contents of Citrix ISO to $RunLocation\bin\Citrix" -ForegroundColor Yellow
             Write-PSULog -Severity Info -Message "Copying contents of Citrix ISO to $RunLocation\bin\Citrix"
-            robocopy $DriveLetter "$RunLocation\bin\Citrix\" /E /NFL /NDL /NJH /NJS /nc /ns /np
+            robocopy $DriveLetter "$RunLocation\bin\Citrix\" /E /NFL /NDL /NJH /NJS /nc /ns /np /NFL /NDL | Out-Null
             #Write-host "Copied contents of Citrix iso to $RunLocation\bin\Citrix" -ForegroundColor Green
             Write-PSULog -Severity Info -Message "Copied contents of Citrix iso to $RunLocation\bin\Citrix"
             Dismount-DiskImage -InputObject $DiskImage
@@ -163,11 +163,11 @@ if ($Settings.CITRIX.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
         $SeamlessFlags = "HKLM:\System\CurrentControlSet\Control\Citrix\wfshell\TWI"
         if (!(Test-Path $SeamlessFlags)) {
             Write-PSULog -Severity Info -Message "Setting the Seamless Flag for Citrix"
-            New-Item $SeamlessFlags -Force -ErrorAction SilentlyContinue | New-ItemProperty -Name "SeamlessFlags" -Value "0x20" -Type DWord
+            New-Item $SeamlessFlags -Force -ErrorAction SilentlyContinue | New-ItemProperty -Name "SeamlessFlags" -Value "0x20" -Type DWord | Out-Null
         }
         else {
             Write-PSULog -Severity Info -Message "Setting the Seamless Flag for Citrix"
-            New-ItemProperty -Name "SeamlessFlags" -Value "0x20" -Type DWord -Path $SeamlessFlags -Force
+            New-ItemProperty -Name "SeamlessFlags" -Value "0x20" -Type DWord -Path $SeamlessFlags -Force | Out-Null
         }
 
         #Stop-Transcript

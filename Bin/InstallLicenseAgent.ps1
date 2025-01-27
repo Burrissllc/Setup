@@ -303,7 +303,7 @@ if ([string]::IsNullOrEmpty($Settings.SERVICES.LICENSEAGENTSERVER) -or $Settings
 
   if ($GenerateSelfSignedCert -match "n" -and $SECUREHOSTING -match "y" -and [string]::IsNullOrEmpty($CERTSUBJECT) -or [string]::IsNullOrEmpty($CERTSTORE) -or [string]::IsNullOrEmpty($CERTLOCATION)) {
 
-    Write-PSULog -Severity Error -Message "Missing Certificate Details. Falling back to Unsecure."
+    Write-PSULog -Severity Warn -Message "Missing Certificate Details. Falling back to Unsecure."
 
     $CERTSUBJECT = ""
     $CERTSTORE = ""
@@ -546,10 +546,29 @@ if ([string]::IsNullOrEmpty($Settings.SERVICES.LICENSEAGENTSERVER) -or $Settings
 
   }
 
+  $sleepInterval = 30
+  function Get-InstallerProcesses {
+    Get-Process | Where-Object { 
+      $_.Name -match "msiexec|install|setup|XenDesktopVdaSetup|Python" 
+    }
+  }
+
+  do {
+    $installers = Get-InstallerProcesses
+    if ($installers) {
+      Write-PSULog -Severity Info -Message "Installer processes still running. Waiting $sleepInterval seconds..."
+      Write-PSULog -Severity Info -Message "Running processes: $($installers.Name -join ', ')"
+      Start-Sleep -Seconds $sleepInterval
+    }
+  } while ($installers)
+
+  Write-PSULog -Severity Info -Message "All installer processes completed."
+
   if ($settings.GENERAL.INSTALLGPUDRIVER -eq "y") {
     if (Test-Path "$RunLocation\bin\NvidiaPerformance.ps1") {
-      $RunOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-      Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\NvidiaPerformance.ps1"
+      write-PSULog -Severity Info -Message "Setting up Nvidia Performance Script to run on next boot."
+      $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+      Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\NvidiaPerformance.ps1" -force
     }
   }
   Write-PSULog -Severity End -Message "Finished License Agent Install"
