@@ -508,7 +508,7 @@ if ($settings.DESIGNATEDSQLSERVER -contains $env:computername -or $null -eq $set
         }
 
         Write-PSULog -Severity Start -Message "Starting SQL Install"
-        $InstallSQL = "$RunLocation\bin\SQL\SQLInstallNew.ps1"
+        $InstallSQL = "$RunLocation\bin\InstallSQL.ps1"
         #$args = "-IsoPath `"$ISOPATH`" -Features `"$Features`" -InstallDir `"$InstallDir`" -DataDir `"$DataDir`" -BackupDir `"$BackupDir`" -TempDBDDir `"$TEMPDBDIR`" -TempLogDir `"$TempLogDir`" -FilestreamShareName `"$FILESTREAMSHARENAME`" -Port `"$Port`" -InstanceName `"$InstanceName`" -SaPassword `"$SaPassword`" -ServiceAccountName `"$ServiceAccountName`" -ServiceAccountPassword `"$ServiceAccountPassword`" -SystemAdminAccounts `"$Env:USERDOMAIN\$Env:USERNAME`" -ProductKey `"$ProductKey`" -UseBitsTransfer `"$USETRANSFERBITS`" -EnableProtocols `"$EnableProtocols`""
         & $installSQL -IsoPath $ISOPATH -Features $Features -InstallDir $InstallDir -DataDir $DataDir -BackupDir $BackupDir -TempDBDDir $TEMPDBDIR -TempLogDir $TempLogDir -FilestreamShareName $FILESTREAMSHARENAME -Port $Port -InstanceName $InstanceName -SaPassword $SaPassword -ServiceAccountName $ServiceAccountName -ServiceAccountPassword $ServiceAccountPassword -SystemAdminAccounts $Env:USERDOMAIN\$Env:USERNAME -ProductKey $ProductKey -UseBitsTransfer $USETRANSFERBITS -EnableProtocols $EnableProtocols
 

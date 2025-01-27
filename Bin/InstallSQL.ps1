@@ -62,7 +62,7 @@
     Enable SQL Server protocols: TCP/IP, Named Pipes.
 
 .EXAMPLE
-    .\SQLInstallNew.ps1 -IsoPath "C:\SQLServer2019.iso" -Features "SQLEngine" -InstanceName "RAYSTATION" -SaPassword "Zxcvb12345"
+    .\InstallSQL.ps1 -IsoPath "C:\SQLServer2019.iso" -Features "SQLEngine" -InstanceName "RAYSTATION" -SaPassword "Zxcvb12345"
     This command installs SQL Server with the specified ISO path, features, instance name, and sa password.
 
 .NOTES
