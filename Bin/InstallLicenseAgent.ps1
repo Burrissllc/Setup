@@ -546,7 +546,7 @@ if ([string]::IsNullOrEmpty($Settings.SERVICES.LICENSEAGENTSERVER) -or $Settings
 
   }
 
-  $sleepInterval = 30
+  $sleepInterval = 60
   function Get-InstallerProcesses {
     Get-Process | Where-Object { 
       $_.Name -match "msiexec|install|setup|XenDesktopVdaSetup|Python" 

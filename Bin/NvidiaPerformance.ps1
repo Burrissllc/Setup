@@ -210,7 +210,7 @@ else {
 if ($Settings.GENERAL.CLEANUP -match "y") {
     #Write-Host "Setting Machine to Cleanup on Next Boot" -ForegroundColor Green
     Write-PSULog -Severity Info -Message "Setting Machine to Cleanup on Next Boot"
-    $RunOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+    $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
     Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\Cleanup.ps1"
 
 }
