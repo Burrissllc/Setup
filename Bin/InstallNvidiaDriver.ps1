@@ -125,8 +125,15 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
 
         if (Test-Path "$RunLocation\bin\NvidiaPerformance.ps1") {
             $RunOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-            Set-ItemProperty $RunOnceKey "NextRun" "C:\Windows\System32\WindowsPowerShell\v1.0\Powershell.exe -ExecutionPolicy Unrestricted -File $RunLocation\bin\NvidiaPerformance.ps1"
-            #Write-Host "Cards will be optimized on next boot." -ForegroundColor Green
+            if (!(Test-Path -Path $RunOnceKey)) {
+                New-Item -Path $RunOnceKey -Force | Out-Null
+            }
+    
+            $PowerShellPath = '"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"'
+            $ScriptPath = "`"$RunLocation\bin\NvidiaPerformance.ps1`""
+            $Command = "$PowerShellPath -ExecutionPolicy Unrestricted -File $ScriptPath"
+    
+            Set-ItemProperty -Path $RunOnceKey -Name "NextRun" -Value $Command
             Write-PSULog -Severity Info -Message "Cards will be optimized on next boot."
         }
 
