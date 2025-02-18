@@ -158,8 +158,10 @@ function Disable-InternetExplorerESC {
     Write-PSULog -Severity Info -Message "IE Enhanced Security Configuration (ESC) has been disabled."
 }
 function Disable-UserAccessControl {
-    Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 00000000 -Force
+    #Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 00000000 -Force
     #Write-Host "User Access Control (UAC) has been disabled." -ForegroundColor Green
+    New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 0 -PropertyType DWORD -Force
+    New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "PromptOnSecureDesktop" -Value 0 -PropertyType DWORD -Force
     Write-PSULog -Severity Info -Message "User Access Control (UAC) has been disabled." 
 }
 try {

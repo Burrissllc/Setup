@@ -304,7 +304,7 @@ try {
 
         # UAC Check
         try {
-            $uacStatus = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System").EnableLUA -eq 0
+            $uacStatus = if ((Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System").EnableLUA -eq 0 -or (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System").ConsentPromptBehaviorAdmin -eq 0) { $true } else { $false }
             $global:checkCount++
             if ($uacStatus) { $global:passedChecks++ }
             $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "UAC Disabled" -Status $uacStatus))
@@ -608,7 +608,8 @@ try {
                             else {
                                 $global:checkCount++
                                 $global:passedChecks++
-                                $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "NVIDIA GPU Configuration" -Status $true))
+                                $DriverVersion = $NvidiaQuery.nvidia_smi_log.driver_version
+                                $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "NVIDIA GPU Configuration" -Status $true -Details "Driver Version: $DriverVersion"))
                             
                                 $GPUType = $NvidiaQuery.nvidia_smi_log.gpu.gpu_virtualization_mode.virtualization_mode
 

@@ -121,6 +121,9 @@
         "DESIGNATEDSQLSERVER": []
     },
     "GPU": {
+        "OMITTEDSERVERS": [
+            ""
+        ],
         "DRIVERLOCATION": "C:\\Setup\\Packages\\529.11_grid_win10_win11_server2019_server2022_dch_64bit_international.exe",
         "CLEANINSTALL": "N",
         "NVIDIALICENSETOKENLOCATION": "C:\\Setup\\Packages\\client_configuration_token_08-17-2023-21-53-17.tok",

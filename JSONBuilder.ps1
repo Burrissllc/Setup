@@ -927,6 +927,7 @@ function Save-JSON {
             CITRIXISOLOCATION   = $window.FindName("textBoxCitrixIsoLocation").Text
         }
         GPU                 = @{
+            OMITTEDSERVERS             = @($window.FindName("listBoxGpuOmittedServers").Items)
             DRIVERLOCATION             = $window.FindName("textBoxDriverLocation").Text
             CLEANINSTALL               = if ($window.FindName("checkboxCleanInstall").IsChecked) { "Y" } else { "N" }
             REMOVECURRENTDRIVER        = if ($window.FindName("checkboxRemoveCurrentDriver").IsChecked) { "Y" } else { "N" }
