@@ -77,7 +77,7 @@ function Write-PSULog {
 # Monitor VDA install logs and processes
 $logPath = "$RunLocation\VDAInstallLogs"
 $timeout = 90
-$sleepInterval = 30
+$sleepInterval = 60
 
 function Get-RecentlyModifiedFiles {
     Get-ChildItem -Path $logPath -Recurse -File | 
