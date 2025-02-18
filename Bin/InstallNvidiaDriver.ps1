@@ -124,7 +124,7 @@ if ($Settings.GPU.OMITTEDSERVERS -notcontains $env:COMPUTERNAME ) {
 
 
         if (Test-Path "$RunLocation\bin\NvidiaPerformance.ps1") {
-            $RunOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+            $RunOnceKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
             if (!(Test-Path -Path $RunOnceKey)) {
                 New-Item -Path $RunOnceKey -Force | Out-Null
             }
