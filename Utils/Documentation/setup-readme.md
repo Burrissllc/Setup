@@ -148,6 +148,7 @@ The script includes comprehensive logging functionality:
 - Administrator privileges
 - Network access (for downloading components)
 - Sufficient disk space for installations
+- Remote Powershell Enabled
 
 ### Error Handling
 
@@ -165,6 +166,21 @@ The script includes comprehensive error checking:
 - Certain installations may require system reboots
 - All passwords are encrypted using AES encryption
 - The script creates detailed logs of all operations
+
+### Connection Troubleshooting
+
+- Getting the script to run properly will require logon banners to be disabled for the Auto-Login function to work properly.
+- The Machines will also have to have Remote PowerShell enabled. The Remote launcher script will check for this before the packages are transferred.
+- To enable Remote PowerShell run the following commands on each machine in PowerShell launched as an administrator
+  
+```Powershell
+Enable-PSRemoting -Force
+Set-Item wsman:\localhost\client\trustedhosts * -Force
+Restart-Service WinRM -Force
+winrm set winrm/config/winrs '@{MaxShellsPerUser="50"}'
+```
+
+- note the * can be replaced with IP of the deploying control machine.
 
 ## Setup.json Configuration Documentation
 

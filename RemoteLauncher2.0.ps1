@@ -48,14 +48,17 @@ Get-Job | Stop-Job
 Get-Job | Remove-Job
 
 if ((Get-ChildItem "$RunLocation\Logs").count -ge "1" -or (Get-ChildItem "$RunLocation\Logs\Reports").count -ge "1") {
-  $ClearLogs = read-Host "Would you like to purge old Log Files and Reports?(y/n)"
+  $ClearLogs = read-Host "Would you like to purge old Log Files and Reports?(Y/n)"
   Switch ($ClearLogs) {
     Y {
       Remove-Item -Path "$RunLocation\Logs\*.*" -Recurse -Force
       Remove-Item -Path "$RunLocation\Logs\Reports\*.*" -Recurse -Force   
     }
     N {  }
-    Default {  }
+    Default { 
+      Remove-Item -Path "$RunLocation\Logs\*.*" -Recurse -Force
+      Remove-Item -Path "$RunLocation\Logs\Reports\*.*" -Recurse -Force 
+     }
 
   }
 }
@@ -262,7 +265,7 @@ if (($Settings.GENERAL.INSTALLLICENSEAGENT -match "Y") -and !([string]::IsNullOr
 }
 
 
-$DistributeAccount = Read-Host "Is the package distributution account different than installation account?(y/n)"
+$DistributeAccount = Read-Host "Is the package distributution account different than installation account?(y/N)"
 
 Switch ($DistributeAccount) {
   Y {
@@ -339,10 +342,105 @@ else {
 
 }
 
-$DestinationDir = Read-host "Enter the remote Directory (Standard is C:\)"
-$DestinationDirOriginal = $DestinationDir.TrimEnd('\')
-$DestinationDir = $DestinationDir.Insert(1, '$')
-$DestinationDir = $DestinationDir -replace ':', ''
+function Get-ValidatedDestinationDirectory {
+    param(
+        [string]$DefaultPath = "C:\"
+    )
+    
+    do {
+        $IsValidInput = $true
+        $ErrorMessage = ""
+        
+        # Get user input
+        $UserInput = Read-Host "Enter the remote Directory (Standard is $DefaultPath)"
+        
+        # Use default if input is empty
+        if ([string]::IsNullOrWhiteSpace($UserInput)) {
+            $UserInput = $DefaultPath
+        }
+        
+        # Trim whitespace
+        $UserInput = $UserInput.Trim()
+        
+        # Validation checks
+        if ($UserInput.Length -eq 0) {
+            $IsValidInput = $false
+            $ErrorMessage = "Path cannot be empty"
+        }
+        elseif ($UserInput.Length -gt 248) {
+            # Windows path limit is typically 260, leaving room for filename
+            $IsValidInput = $false
+            $ErrorMessage = "Path is too long (maximum 248 characters)"
+        }
+        elseif ($UserInput -notmatch '^[A-Za-z]:') {
+            $IsValidInput = $false
+            $ErrorMessage = "Path must start with a drive letter (e.g., C:, D:)"
+        }
+        elseif ($UserInput -match '[<>"|?*]') {
+            $IsValidInput = $false
+            $ErrorMessage = 'Path contains invalid characters: < > ` " | ? *'
+        }
+        elseif ($UserInput -match '[\x00-\x1F]') {
+            $IsValidInput = $false
+            $ErrorMessage = "Path contains control characters"
+        }
+        elseif ($UserInput -match '\\{2,}') {
+            $IsValidInput = $false
+            $ErrorMessage = "Path contains consecutive backslashes"
+        }
+        elseif ($UserInput -match '\\\s+\\') {
+            $IsValidInput = $false
+            $ErrorMessage = "Path contains whitespace between backslashes"
+        }
+        elseif ($UserInput -match '\\\.+\\') {
+            $IsValidInput = $false
+            $ErrorMessage = "Path contains invalid directory names (dots only)"
+        }
+        
+        # Check for reserved Windows names
+        $ReservedNames = @('CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9')
+        $PathParts = $UserInput.Split('\') | Where-Object { $_ -ne '' }
+        
+        foreach ($Part in $PathParts) {
+            $PartName = $Part.Split('.')[0] # Remove extension if present
+            if ($ReservedNames -contains $PartName.ToUpper()) {
+                $IsValidInput = $false
+                $ErrorMessage = "Path contains reserved Windows name: $Part"
+                break
+            }
+        }
+        
+        if (-not $IsValidInput) {
+            Write-Host "Error: $ErrorMessage" -ForegroundColor Red
+            Write-Host "Please enter a valid Windows path." -ForegroundColor Yellow
+            Write-Host ""
+        }
+        
+    } while (-not $IsValidInput)
+    
+    # Clean and process the validated input
+    $DestinationDirOriginal = $UserInput.TrimEnd('\')
+    $DestinationDir = $UserInput.Insert(1, '$')
+    $DestinationDir = $DestinationDir -replace ':', ''
+    
+    # Return both original and processed paths
+    return @{
+        Original = $DestinationDirOriginal
+        Processed = $DestinationDir
+        Raw = $UserInput
+    }
+}
+
+# Example usage:
+$Result = Get-ValidatedDestinationDirectory
+
+$DestinationDirOriginal = $Result.Original
+$DestinationDir = $Result.Processed
+
+#$DestinationDir = Read-host "Enter the remote Directory (Standard is C:\)"
+#$DestinationDirOriginal = $DestinationDir.TrimEnd('\')
+#$DestinationDir = $DestinationDir.Insert(1, '$')
+#$DestinationDir = $DestinationDir -replace ':', ''
 
 
 Write-Host "Encrypting Passwords in Setup.json" -ForegroundColor Green
@@ -423,244 +521,213 @@ function WriteJobProgress {
 #_______________________________________________________________________________________________________________________
 $computers = @(Get-Content -Path "$RunLocation\RemoteMachines.txt")
 
-Write-Host "Checking if Logon Banner is Enabled on remote Machines" -ForegroundColor Green
+Write-Host "Checking remote connection and if Logon Banner is Enabled on remote Machines" -ForegroundColor Green
 
 # Maximum number of concurrent jobs
-$maxConcurrentJobs = 50  # Adjust this number based on your needs
+$maxConcurrentJobs = 50
 
-# Create a script block for the check
+# Enhanced connectivity check script block
 $checkScript = {
   param($computer)
-    
+  
+  $resultObj = [PSCustomObject]@{
+    ComputerName   = $computer
+    Status         = "Failed"
+    BannerEnabled  = $false
+    Error          = $null
+    ErrorCategory  = $null
+    TestConnection = $false
+    TestWSMan      = $false
+    TestPSRemoting = $false
+  }
+  
   try {
-    # Test connection before attempting to query
-    if (Test-Connection -ComputerName $computer -Count 1 -Quiet) {
+    # Test basic connectivity
+    if (-not (Test-Connection -ComputerName $computer -Count 1 -Quiet)) {
+      $resultObj.Error = "Host unreachable"
+      $resultObj.ErrorCategory = "Network"
+      return $resultObj
+    }
+    $resultObj.TestConnection = $true
+    
+    # Test WSMan
+    if (-not [bool](Test-WSMan -ComputerName $computer -ErrorAction SilentlyContinue)) {
+      $resultObj.Error = "WinRM not available"
+      $resultObj.ErrorCategory = "WinRM"
+      return $resultObj
+    }
+    $resultObj.TestWSMan = $true
+    
+    # Test PowerShell remoting and get banner info
+    try {
+      $result = Invoke-Command -ComputerName $computer -ScriptBlock {
+        $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+        try {
+          $regValues = Get-ItemProperty -Path $regPath -Name legalnoticetext, legalnoticecaption -ErrorAction SilentlyContinue
+          return @{
+            Success       = $true
+            BannerText    = $regValues.legalnoticetext
+            BannerCaption = $regValues.legalnoticecaption
+          }
+        }
+        catch {
+          return @{ Success = $false; Error = $_.Exception.Message }
+        }
+      } -ErrorAction Stop
+      
+      $resultObj.TestPSRemoting = $true
+      $resultObj.Status = "Success"
+      $resultObj.BannerEnabled = ($null -ne $result.BannerText -and $result.BannerText -ne "") -or 
+                                ($null -ne $result.BannerCaption -and $result.BannerCaption -ne "")
+    }
+    catch {
+      # Fallback to WMI
       try {
-        # Use PowerShell remoting to check registry
-        $result = Invoke-Command -ComputerName $computer -ScriptBlock {
-          $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
-                    
-          try {
-            $regValues = Get-ItemProperty -Path $regPath -ErrorAction Stop
-                        
-            return @{
-              Success       = $true
-              BannerText    = $regValues.legalnoticetext
-              BannerCaption = $regValues.legalnoticecaption
-              Error         = $null
-            }
-          }
-          catch {
-            return @{
-              Success       = $false
-              BannerText    = $null
-              BannerCaption = $null
-              Error         = $_.Exception.Message
-            }
-          }
-        } -ErrorAction Stop
-                
-        if ($result.Success) {
-          $resultObj = [PSCustomObject]@{
-            ComputerName  = $computer
-            Status        = "Success"
-            BannerEnabled = ($null -ne $result.BannerText -or $null -ne $result.BannerCaption)
-            BannerText    = if ($result.BannerText) { $result.BannerText } else { "Not Set" }
-            BannerCaption = if ($result.BannerCaption) { $result.BannerCaption } else { "Not Set" }
-            Error         = $null
-          }
-        }
-        else {
-          $resultObj = [PSCustomObject]@{
-            ComputerName  = $computer
-            Status        = "Failed"
-            BannerEnabled = $false
-            BannerText    = "Not Found"
-            BannerCaption = "Not Found"
-            Error         = $result.Error
-          }
-        }
+        $regProv = Get-WmiObject -List "StdRegProv" -ComputerName $computer -Namespace root\default -ErrorAction Stop
+        $HKLM = 2147483650
+        $key = "SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+        
+        $bannerText = $regProv.GetStringValue($HKLM, $key, "legalnoticetext").sValue
+        $bannerCaption = $regProv.GetStringValue($HKLM, $key, "legalnoticecaption").sValue
+        
+        $resultObj.Status = "Success"
+        $resultObj.TestPSRemoting = $false  # Mark as false since PS remoting failed, used WMI instead
+        $resultObj.Error = "PSRemoting Disabled"
+        $resultObj.ErrorCategory = "Access"
+        $resultObj.BannerEnabled = ($null -ne $bannerText -and $bannerText -ne "") -or 
+                                  ($null -ne $bannerCaption -and $bannerCaption -ne "")
       }
       catch {
-        # Handle PowerShell remoting errors
-        if ($_.Exception.Message -like "*Access is denied*") {
-          # Try alternative method using WMI
-          try {
-            $regProv = Get-WmiObject -List "StdRegProv" -ComputerName $computer -Namespace root\default
-            $HKLM = 2147483650
-            $key = "SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
-                        
-            $bannerText = $regProv.GetStringValue($HKLM, $key, "legalnoticetext").sValue
-            $bannerCaption = $regProv.GetStringValue($HKLM, $key, "legalnoticecaption").sValue
-                        
-            $resultObj = [PSCustomObject]@{
-              ComputerName  = $computer
-              Status        = "Success"
-              BannerEnabled = (([string]::IsNullOrEmpty($bannerText)) -or $null -eq $bannerCaption)
-              BannerText    = if ($bannerText) { $bannerText } else { "Not Set" }
-              BannerCaption = if ($bannerCaption) { $bannerCaption } else { "Not Set" }
-              Error         = $null
-            }
-          }
-          catch {
-            $resultObj = [PSCustomObject]@{
-              ComputerName  = $computer
-              Status        = "Failed"
-              BannerEnabled = $false
-              BannerText    = $null
-              BannerCaption = $null
-              Error         = "WMI access failed: $($_.Exception.Message)"
-            }
-          }
-        }
-        else {
-          $resultObj = [PSCustomObject]@{
-            ComputerName  = $computer
-            Status        = "Failed"
-            BannerEnabled = $false
-            BannerText    = $null
-            BannerCaption = $null
-            Error         = "Remote access error: $($_.Exception.Message)"
-          }
-        }
-      }
-    }
-    else {
-      $resultObj = [PSCustomObject]@{
-        ComputerName  = $computer
-        Status        = "Failed"
-        BannerEnabled = $false
-        BannerText    = $null
-        BannerCaption = $null
-        Error         = "Unable to connect to computer"
+        $resultObj.Error = "Access denied"
+        $resultObj.ErrorCategory = "Access"
       }
     }
   }
   catch {
-    $resultObj = [PSCustomObject]@{
-      ComputerName  = $computer
-      Status        = "Failed"
-      BannerEnabled = $false
-      BannerText    = $null
-      BannerCaption = $null
-      Error         = $_.Exception.Message
-    }
+    $resultObj.Error = $_.Exception.Message
+    $resultObj.ErrorCategory = "Unknown"
   }
-    
+  
   return $resultObj
 }
 
-# Initialize results array
+# Initialize and run parallel checks
 $results = @()
-
-# Create a queue of computers
 $computerQueue = [System.Collections.Queue]::new()
+$runningJobs = @{}
+
 foreach ($computer in $computers) {
   $computerQueue.Enqueue($computer)
 }
 
-# Initialize progress counter
 $totalComputers = $computers.Count
 $processedComputers = 0
 
-Write-Host "Starting parallel checks for $totalComputers computers..."
-
-# Initialize job tracking
-$runningJobs = @{}
-
 # Process all computers
 while ($computerQueue.Count -gt 0 -or $runningJobs.Count -gt 0) {
-  # Start new jobs if we have computers to process and are under the limit
+  # Start new jobs
   while ($computerQueue.Count -gt 0 -and $runningJobs.Count -lt $maxConcurrentJobs) {
     $computer = $computerQueue.Dequeue()
     $job = Start-Job -ScriptBlock $checkScript -ArgumentList $computer
     $runningJobs[$job.Id] = @{
-      Job       = $job
-      Computer  = $computer
-      StartTime = Get-Date
+      Job      = $job
+      Computer = $computer
     }
   }
-    
-  # Check for completed jobs
+  
+  # Check completed jobs
   $completedJobIds = @($runningJobs.Keys | Where-Object { $runningJobs[$_].Job.State -ne 'Running' })
-    
+  
   foreach ($jobId in $completedJobIds) {
     $jobInfo = $runningJobs[$jobId]
     $job = $jobInfo.Job
-        
-    # Get the results
+    
     try {
       $result = Receive-Job -Job $job -ErrorAction Stop
       if ($result) {
         $results += $result
       }
-      else {
-        # Handle null result
-        $results += [PSCustomObject]@{
-          ComputerName  = $jobInfo.Computer
-          Status        = "Failed"
-          BannerEnabled = $false
-          BannerText    = $null
-          BannerCaption = $null
-          Error         = "No result returned from job"
-        }
-      }
     }
     catch {
-      # Handle job failure
       $results += [PSCustomObject]@{
-        ComputerName  = $jobInfo.Computer
-        Status        = "Failed"
-        BannerEnabled = $false
-        BannerText    = $null
-        BannerCaption = $null
-        Error         = "Job failed: $($_.Exception.Message)"
+        ComputerName   = $jobInfo.Computer
+        Status         = "Failed"
+        Error          = "Job execution failed"
+        ErrorCategory  = "JobFailure"
+        TestConnection = $false
+        TestWSMan      = $false
+        TestPSRemoting = $false
+        BannerEnabled  = $false
       }
     }
-        
-    # Clean up the job
+    
     Remove-Job -Job $job
     $runningJobs.Remove($jobId)
-        
-    # Update progress
     $processedComputers++
-    $percentComplete = [math]::Round(($processedComputers / $totalComputers) * 100, 2)
-    Write-Progress -Activity "Checking computers" -Status "$processedComputers of $totalComputers complete ($percentComplete%)" -PercentComplete $percentComplete
   }
+  
+  Start-Sleep -Milliseconds 50
+}
+
+# Process results
+$FailedObjects = @()
+$successCount = ($results | Where-Object { $_.Status -eq 'Success' }).Count
+$failed = ($results | Where-Object { $_.Status -eq 'Failed' -or $_.TestConnection -eq $false -or $_.TestWSMan -eq $false -or $_.TestPSRemoting -eq $false})
+$FailedObjects += $failed
+$failedcount = ($FailedObjects | Measure-Object).Count
+$bannersEnabled = ($results | Where-Object { $_.BannerEnabled -eq $true }).Count
+
+# Connectivity statistics
+$pingSuccess = ($results | Where-Object { $_.TestConnection -eq $true }).Count
+$wsmanSuccess = ($results | Where-Object { $_.TestWSMan -eq $true }).Count
+$psRemotingSuccess = (($results | Where-Object { $_.TestPSRemoting -eq $true }) | Measure-Object).count
+
+Write-Host "Connectivity Tests: Ping=$pingSuccess/$totalComputers, WSMan=$wsmanSuccess/$totalComputers, PSRemoting=$psRemotingSuccess/$totalComputers" -ForegroundColor Cyan
+Write-Host "Banner Check Complete: $successCount/$totalComputers successful, $bannersEnabled have banners enabled" -ForegroundColor $(if ($bannersEnabled -gt 0) { 'Yellow' }else { 'Green' })
+
+# Handle results based on findings
+if ($bannersEnabled -gt 0) {
+  $banneredMachines = ($results | Where-Object { $_.BannerEnabled -eq $true }).ComputerName -join ', '
+  Write-Host "WARNING: Logon banners detected on: $banneredMachines" -ForegroundColor Yellow
+  Write-Host "This may cause issues with the Remote Setup Process." -ForegroundColor Yellow
+}
+elseif ($failedcount -gt 0) {
+  Write-Host "WARNING: $failedcount machine(s) failed connectivity checks:" -ForegroundColor Yellow
+  
+  # Display detailed failure information for each machine
+  foreach ($failedMachine in $FailedObjects) {
+    $failedTests = @()
     
-  # Brief pause to prevent CPU overload
-  Start-Sleep -Milliseconds 100
-}
-
-Write-Progress -Activity "Checking computers" -Completed
-
-
-# Display summary
-Write-Host "Total computers checked: $($results.Count)"
-Write-Host "Successful checks: $($results.Where({$_.Status -eq 'Success'}).Count)"
-Write-Host "Failed checks: $($results.Where({$_.Status -eq 'Failed'}).Count)"
-Write-Host "Computers with banner enabled: $($results.Where({$_.BannerEnabled -eq $true}).Count)"
-
-if ($results.BannerEnabled -contains "True") {
-  # Display detailed results in console
-  $results | Format-Table -Property ComputerName, Status, BannerEnabled, Error -AutoSize
-
-  Write-Host "A Logon Banner has been detected. Please note that this may cause issues with the Remote Setup Process." -ForegroundColor Yellow
-  Write-Host "Do you wish to continue with the Remote Setup Process? Press any key to continue..." -ForegroundColor Yellow
-  $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
-}
-elseif ($null -ne $results.error) {
-  Write-Host "An error occurred while checking for logon banners: $($results.error)" -ForegroundColor Red
-  Write-Host "Do you wish to continue with the Remote Setup Process? Press any key to continue..." -ForegroundColor Yellow
-  $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+    if ($failedMachine.TestConnection -eq $false) { $failedTests += "Ping" }
+    if ($failedMachine.TestWSMan -eq $false) { $failedTests += "WSMan" }
+    if ($failedMachine.TestPSRemoting -eq $false) { $failedTests += "PSRemoting" }
+    
+    $failedTestsString = $failedTests -join ', '
+    $errorInfo = if ($failedMachine.Error) { " ($($failedMachine.Error))" } else { "" }
+    
+    Write-Host "  - $($failedMachine.ComputerName): Failed [$failedTestsString]$errorInfo" -ForegroundColor Red
+  }
+  Write-Host "Please See the section in the read me file on resolving connectivity problems." -ForegroundColor Red
 }
 else {
-  Write-Host "No logon banners detected on any of the remote machines." -ForegroundColor Green
+  Write-Host "No logon banners detected on any remote machines." -ForegroundColor Green
 }
 
+try{
+  Write-Host "Do you wish to continue?" -ForegroundColor Yellow
+  $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+  }
+  Catch{
+  $cont = read-host "(Y/n)"
+  Switch($Cont){
+  Y{}
+  N{exit}
+  default{}
+  }
+  }
 #_______________________________________________________________________________________________________________________
   
-$SkipRename = Read-Host "Would you like to rename any machines(Y/N)"
+$SkipRename = Read-Host "Would you like to rename any machines(y/N)"
 
 ForEach ($machine in $MachineList) {
   if ($SkipRename -match "Y") {

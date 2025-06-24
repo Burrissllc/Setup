@@ -424,6 +424,30 @@ try {
                 $null = $errorMessages.Add("Adobe Reader check failed`: $_")
             }
         }
+
+        # Citrix Seamless Check
+        if ($InstalledSoftware | Where-Object { $_.GetValue('DisplayName') -match "Citrix" }) {
+            try {
+                $CitrixInstalled = $true
+                $global:checkCount++
+                $SeamlessFlags = "HKLM:\System\CurrentControlSet\Control\Citrix\wfshell\TWI"
+
+                if (!(Test-Path $SeamlessFlags)) {
+                    Write-PSULog -Severity Info -Message "Setting the Seamless Flag for Citrix"
+                    New-Item $SeamlessFlags -Force -ErrorAction SilentlyContinue | New-ItemProperty -Name "SeamlessFlags" -Value "0x20" -Type DWord | Out-Null
+                }
+                else {
+                    Write-PSULog -Severity Info -Message "Setting the Seamless Flag for Citrix"
+                    New-ItemProperty -Name "SeamlessFlags" -Value "0x20" -Type DWord -Path $SeamlessFlags -Force | Out-Null
+                }
+                if ($CitrixInstalled) { $global:passedChecks++ }
+                $null = $htmlRows.Add((Write-HTMLTableRow -CheckName "Citrix Installed" -Status $CitrixInstalled -Details "Seamless Flags set to 0x20"))
+            }
+            catch {
+                $errorOccurred = $true
+                $null = $errorMessages.Add("Citrix check failed`: $_")
+            }
+        }
     }
     catch {
         $errorOccurred = $true
@@ -641,6 +665,24 @@ try {
     catch {
         $errorOccurred = $true
         $null = $errorMessages.Add("NVIDIA GPU Checks section failed`: $_")
+    }
+
+    # Hardware Rendering for Remote Sessions
+    try {
+        $nvidiaDriver = Get-WmiObject Win32_VideoController | Where-Object { $_.Name -like "*NVIDIA*" }
+        $driverInstalled = $null -ne $nvidiaDriver
+        if ($driverInstalled) {
+            $UseHWRender = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
+            if (!(Test-Path $UseHWRender)) {
+                Write-PSULog -Severity Info -Message "Setting Windows to use Hardware to render remote sessions."
+                New-ItemProperty -path $UseHWRender -name "bEnumerateHWBeforeSW" -value "1" -PropertyType DWORD -force | Out-Null
+                Write-PSULog -Severity Info -Message "Setting Windows to use Hardware to render remote sessions."
+            } 
+        }
+    }
+    catch {
+        $errorOccurred = $true
+        $null = $errorMessages.Add("Failed to set Hardware rendering for remote sessions`: $_")
     }
 
     # RayStation Checks
