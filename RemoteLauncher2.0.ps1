@@ -47,7 +47,14 @@ Get-ChildItem -Path "$RunLocation\" -Recurse | Unblock-File
 Get-Job | Stop-Job
 Get-Job | Remove-Job
 
-if ((Get-ChildItem "$RunLocation\Logs").count -ge "1" -or (Get-ChildItem "$RunLocation\Logs\Reports").count -ge "1") {
+if (!(Test-Path "$RunLocation\Logs")) {
+  New-Item -ItemType Directory -Path "$RunLocation\Logs" | out-null
+}
+if (!(Test-Path "$RunLocation\Logs\Reports")) {
+  New-Item -ItemType Directory -Path "$RunLocation\Logs\Reports" | out-null
+}
+
+if ((Get-ChildItem "$RunLocation\Logs\" | ? ( $_.Name -notMatch "Reports" )).count -ge "1" -or (Get-ChildItem "$RunLocation\Logs\Reports").count -ge "1") {
   $ClearLogs = read-Host "Would you like to purge old Log Files and Reports?(Y/n)"
   Switch ($ClearLogs) {
     Y {
@@ -212,7 +219,7 @@ if (($Settings.GENERAL.INSTALLDICOM -match "Y") -and !([string]::IsNullOrEmpty($
 }
 if (($Settings.GENERAL.INSTALLLICENSEAGENT -match "Y") -and !([string]::IsNullOrEmpty($Settings.SERVICES.LICENSESETUPEXE))) {
   if (!(Test-path $Settings.SERVICES.LICENSESETUPEXE)) {
-    write-host "RRayStation License Agent Installer EXE Path Incorrect. Please correct and rerun"
+    write-host "RayStation License Agent Installer EXE Path Incorrect. Please correct and rerun"
     Break
   }
 }
